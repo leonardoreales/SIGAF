@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/Leonardo Reales/Desktop/proyecto_activos/**)",
+      "Bash(dir \"C:\\\\Users\\\\Leonardo Reales\\\\Desktop\\\\proyecto_activos\" /OD)",
+      "Bash(python -c \"import openpyxl; print\\('openpyxl OK'\\)\")",
+      "Bash(python -c \"import pandas; print\\('pandas OK'\\)\")",
+      "Bash(pip install *)"
+    ]
+  }
+}
