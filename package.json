@@ -1,0 +1,16 @@
+{
+  "name": "sigaf",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "Backend/api",
+    "shared",
+    "Frontend/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev --workspace=Backend/api",
+    "build:api": "npm run build --workspace=Backend/api",
+    "dev:web": "npm run dev --workspace=Frontend/web",
+    "build:web": "npm run build --workspace=Frontend/web"
+  }
+}
