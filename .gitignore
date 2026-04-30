@@ -2,3 +2,18 @@ node_modules/
 dist/
 .env
 *.log
+
+# Build artifacts
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
+
+# Binary / data files
+*.zip
+*.xlsx
+*.csv
+*.docx
+*.webp
+
+# Credentials
+*CONNECTION_STRING*

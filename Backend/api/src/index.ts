@@ -4,6 +4,7 @@ import cors from 'cors'
 import assetsRouter    from './interfaces/http/assets.router'
 import catalogsRouter  from './interfaces/http/catalogs.router'
 import authRouter      from './interfaces/http/auth.router'
+import syncRouter      from './interfaces/http/sync.router'
 import transfersRouter from './interfaces/http/transfers.router'
 import historyRouter   from './interfaces/http/history.router'
 import reportsRouter   from './interfaces/http/reports.router'
@@ -15,7 +16,7 @@ const app = express()
 app.use(cors({
   origin: process.env.FRONTEND_URL ?? 'http://localhost:5173',
   methods: ['GET', 'POST', 'PUT', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Sync-Secret'],
 }))
 app.use(express.json())
 
@@ -24,6 +25,7 @@ app.get('/health', (_req, res) => {
 })
 
 app.use('/auth',      authRouter)
+app.use('/sync',      syncRouter)          // POST /sync/notify (n8n) + GET /sync/events (SSE)
 app.use('/assets',    authenticate, assetsRouter)
 app.use('/catalogs',  authenticate, catalogsRouter)
 app.use('/transfers', authenticate, transfersRouter)

@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm'
+import { and, eq } from 'drizzle-orm'
 import { db } from './client'
 import {
   catalogBuildings,
@@ -7,11 +7,14 @@ import {
   catalogPeople,
 } from './schema'
 
-export function findBuildings() {
+export function findBuildings(cityCode = '1') {
   return db
     .select()
     .from(catalogBuildings)
-    .where(eq(catalogBuildings.active, true))
+    .where(and(
+      eq(catalogBuildings.active, true),
+      eq(catalogBuildings.cityCode, cityCode),
+    ))
     .orderBy(catalogBuildings.name)
 }
 

@@ -4,6 +4,7 @@ import { getAsset }    from '../../application/assets/getAsset'
 import { createAsset } from '../../application/assets/createAsset'
 import { updateAsset } from '../../application/assets/updateAsset'
 import { deleteAsset } from '../../application/assets/deleteAsset'
+import { getStats }    from '../../application/assets/getStats'
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
@@ -33,5 +34,11 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
   try {
     await deleteAsset(Number(req.params.id))
     res.status(204).send()
+  } catch (err) { next(err) }
+}
+
+export async function stats(_req: Request, res: Response, next: NextFunction) {
+  try {
+    res.json(await getStats())
   } catch (err) { next(err) }
 }

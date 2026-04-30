@@ -1,4 +1,4 @@
-import { eq, ilike, and, count } from 'drizzle-orm'
+import { eq, ilike, or, and, count, sql } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { db, pool } from './client'
 import { assets, catalogBuildings, catalogAssetTypes, catalogAreas } from './schema'
@@ -30,6 +30,8 @@ const BASE_FIELDS = {
   areaId:            assets.areaId,
   personId:          assets.personId,
   responsableRaw:    assets.responsableRaw,
+  maintenanceArea:   assets.maintenanceArea,
+  criticality:       assets.criticality,
   sourceSheet:       assets.sourceSheet,
   notes:             assets.notes,
   createdAt:         assets.createdAt,
@@ -56,7 +58,21 @@ function baseQuery() {
 
 function buildConditions(filter: Partial<AssetFilter>): SQL[] {
   const conds: SQL[] = []
-  if (filter.q)        conds.push(ilike(assets.name, `%${filter.q}%`))
+  if (filter.q) {
+    const term = `%${filter.q}%`
+    conds.push(
+      or(
+        ilike(assets.plate,          term),
+        ilike(assets.name,           term),
+        ilike(assets.serial,         term),
+        ilike(assets.brand,          term),
+        ilike(assets.model,          term),
+        ilike(assets.responsableRaw, term),
+        ilike(assets.location,       term),
+        ilike(assets.sourceSheet,    term),
+      )!
+    )
+  }
   if (filter.type)     conds.push(eq(assets.assetTypeCode, filter.type))
   if (filter.status)   conds.push(eq(assets.status, filter.status))
   if (filter.year)     conds.push(eq(assets.incorporationYear, filter.year))
@@ -82,6 +98,8 @@ function toUpdateValues(data: UpdateAsset): Partial<typeof assets.$inferInsert> 
   if (data.responsableRaw    !== undefined) v.responsableRaw    = data.responsableRaw
   if (data.status            !== undefined) v.status            = data.status
   if (data.incorporationYear !== undefined) v.incorporationYear = data.incorporationYear
+  if (data.maintenanceArea   !== undefined) v.maintenanceArea   = data.maintenanceArea ?? null
+  if (data.criticality       !== undefined) v.criticality       = data.criticality
   if (data.notes             !== undefined) v.notes             = data.notes
   return v
 }
@@ -93,10 +111,21 @@ export async function findMany(filter: AssetFilter) {
   const conds  = buildConditions(filter)
   const where  = conds.length ? and(...conds) : undefined
 
+  const orderExpr = filter.q
+    ? sql`CASE
+        WHEN ${assets.plate} = ${filter.q} THEN 1
+        WHEN ${assets.plate} ILIKE ${filter.q + '%'} THEN 2
+        WHEN ${assets.serial} = ${filter.q} THEN 3
+        WHEN ${assets.serial} ILIKE ${filter.q + '%'} THEN 4
+        WHEN ${assets.name} ILIKE ${'%' + filter.q + '%'} THEN 5
+        ELSE 9
+      END`
+    : assets.id
+
   const [rows, [{ total }]] = await Promise.all([
     baseQuery()
       .where(where)
-      .orderBy(assets.id)
+      .orderBy(orderExpr)
       .limit(filter.limit)
       .offset(offset),
     db.select({ total: count() })
@@ -161,6 +190,8 @@ export async function create(data: CreateAsset) {
       responsableRaw:    data.responsableRaw,
       status:            data.status,
       incorporationYear: data.incorporationYear,
+      maintenanceArea:   data.maintenanceArea,
+      criticality:       data.criticality ?? 'BAJO',
       notes:             data.notes,
     })
     .returning({ id: assets.id })

@@ -23,6 +23,8 @@ export interface AssetFormValues {
   status:            string
   incorporationYear: string
   referenceValue:    string
+  maintenanceArea:   string
+  criticality:       string
   notes:             string
 }
 
@@ -48,6 +50,8 @@ const EMPTY: AssetFormValues = {
   status:            'ACTIVO',
   incorporationYear: '',
   referenceValue:    '',
+  maintenanceArea:   '',
+  criticality:       'BAJO',
   notes:             '',
 }
 
@@ -75,6 +79,10 @@ function toCreatePayload(v: AssetFormValues) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     status:            v.status as any,
     incorporationYear: v.incorporationYear ? Number(v.incorporationYear) : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    maintenanceArea:   (v.maintenanceArea  || undefined) as any,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    criticality:       (v.criticality      || 'BAJO') as any,
     notes:             v.notes             || undefined,
   }
 }
@@ -97,6 +105,10 @@ function toUpdatePayload(v: AssetFormValues) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     status:            v.status as any,
     incorporationYear: v.incorporationYear ? Number(v.incorporationYear) : undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    maintenanceArea:   v.maintenanceArea ? (v.maintenanceArea as any) : null,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    criticality:       (v.criticality || 'BAJO') as any,
     notes:             v.notes             || undefined,
   }
 }
@@ -140,6 +152,8 @@ export function useAssetForm({ assetId, onSaved }: Options) {
       status:            asset.status            ?? 'ACTIVO',
       incorporationYear: String(asset.incorporationYear ?? ''),
       referenceValue:    asset.referenceValue    ?? '',
+      maintenanceArea:   asset.maintenanceArea   ?? '',
+      criticality:       asset.criticality       ?? 'BAJO',
       notes:             asset.notes             ?? '',
     })
   }, [asset])

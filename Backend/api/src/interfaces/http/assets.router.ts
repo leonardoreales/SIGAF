@@ -3,6 +3,7 @@ import * as controller from './assets.controller'
 
 const router = Router()
 
+router.get('/stats', controller.stats)   // debe ir antes de /:id
 router.get('/',      controller.list)
 router.get('/:id',   controller.getOne)
 router.post('/',     controller.create)

@@ -76,32 +76,45 @@ export default function ExportModal({ filters, onClose }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 space-y-5">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+      <div className="
+        w-full max-w-sm rounded-2xl shadow-xl p-6 space-y-5
+        bg-white dark:bg-mi-800
+        dark:shadow-[0_0_40px_rgba(10,2,44,0.5)]
+        dark:border dark:border-mi-700/40
+      ">
 
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <h2 className="text-base font-semibold flex items-center gap-2 text-gray-900 dark:text-mi-50">
             <Download size={16} />
             Exportar a Excel
           </h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="transition-colors text-gray-400 hover:text-gray-600 dark:text-mi-500 dark:hover:text-mi-200"
             aria-label="Cerrar"
           >
             <X size={18} />
           </button>
         </div>
 
+        {/* Controles */}
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">
+            <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-mi-400">
               Año de incorporación
             </label>
             <select
               value={year}
               onChange={e => setYear(e.target.value)}
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="
+                w-full px-3 py-2 text-sm border rounded-lg transition-colors
+                bg-white border-gray-300 text-gray-900
+                focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                dark:bg-mi-750 dark:border-mi-600 dark:text-mi-100
+                dark:focus:ring-mi-400
+              "
             >
               {YEAR_OPTIONS.map(o => (
                 <option key={o.value} value={o.value}>{o.label}</option>
@@ -114,27 +127,43 @@ export default function ExportModal({ filters, onClose }: Props) {
               type="checkbox"
               checked={applyFilters}
               onChange={e => setApplyFilters(e.target.checked)}
-              className="w-4 h-4 rounded border-gray-300 text-blue-600"
+              className="w-4 h-4 rounded border-gray-300 text-blue-600 dark:border-mi-600 dark:bg-mi-750 dark:accent-gold"
             />
-            <span className="text-sm text-gray-700">Aplicar filtros activos de la tabla</span>
+            <span className="text-sm text-gray-700 dark:text-mi-200">
+              Aplicar filtros activos de la tabla
+            </span>
           </label>
         </div>
 
+        {/* Error */}
         {error && (
-          <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</p>
+          <p className="text-xs rounded-lg px-3 py-2 bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
+            {error}
+          </p>
         )}
 
+        {/* Acciones */}
         <div className="flex gap-3 pt-1">
           <button
             onClick={onClose}
-            className="flex-1 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="
+              flex-1 py-2 text-sm rounded-lg transition-colors
+              border border-gray-300 text-gray-600 hover:bg-gray-50
+              dark:border-mi-600 dark:text-mi-300 dark:hover:bg-mi-750
+            "
           >
             Cancelar
           </button>
           <button
             onClick={handleExport}
             disabled={isExporting}
-            className="flex-1 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 active:bg-green-800 rounded-lg transition-colors disabled:opacity-60 flex items-center justify-center gap-2"
+            className="
+              flex-1 py-2 text-sm font-medium rounded-lg transition-colors
+              flex items-center justify-center gap-2
+              disabled:opacity-60
+              bg-emerald-600 hover:bg-emerald-700 text-white
+              dark:bg-gold dark:hover:bg-gold-500 dark:text-mi-900 dark:font-semibold
+            "
           >
             {isExporting ? (
               <><Loader2 size={14} className="animate-spin" /> Exportando…</>

@@ -1,11 +1,15 @@
 import type { Building, Area } from '../../../lib/api'
 import type { AssetFormValues, ChangeField } from './useAssetForm'
 
-const LBL = 'block text-xs font-medium text-gray-600 mb-1'
+const LBL = 'block text-xs font-medium mb-1 text-gray-600 dark:text-mi-400'
 const INP = [
-  'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg',
+  'w-full px-3 py-2 text-sm border rounded-lg transition-colors',
+  'bg-white border-gray-300 text-gray-900 placeholder-gray-400',
   'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent',
   'disabled:bg-gray-100 disabled:text-gray-500 disabled:cursor-not-allowed',
+  'dark:bg-mi-750 dark:border-mi-600 dark:text-mi-100 dark:placeholder-mi-500',
+  'dark:focus:ring-mi-400 dark:focus:border-transparent',
+  'dark:disabled:bg-mi-800 dark:disabled:text-mi-500 dark:disabled:border-mi-700',
 ].join(' ')
 
 interface Props {
@@ -19,8 +23,8 @@ interface Props {
 export default function FieldsUbicacion({ values, onChange, buildings, areas, isEdit }: Props) {
   return (
     <section>
-      <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
-        <span className="w-5 h-5 rounded-full bg-blue-100 text-blue-700 text-xs flex items-center justify-center font-bold select-none">
+      <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 text-gray-800 dark:text-mi-100">
+        <span className="w-5 h-5 rounded-full text-xs flex items-center justify-center font-bold select-none bg-blue-100 text-blue-700 dark:bg-mi-700 dark:text-gold">
           2
         </span>
         Ubicación
@@ -43,7 +47,7 @@ export default function FieldsUbicacion({ values, onChange, buildings, areas, is
             ))}
           </select>
           {isEdit && (
-            <p className="text-xs text-gray-400 mt-0.5">No modificable tras la creación</p>
+            <p className="text-xs mt-0.5 text-gray-400 dark:text-mi-500">No modificable tras la creación</p>
           )}
         </div>
 

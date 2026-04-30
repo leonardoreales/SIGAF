@@ -1,10 +1,12 @@
 import { Router } from 'express'
+import * as controller from './transfers.controller'
 
 const router = Router()
 
-// TODO: módulo de traslados entre ubicaciones y responsables
-router.all('*', (_req, res) => {
-  res.status(501).json({ error: 'NOT_IMPLEMENTED', message: 'Módulo de traslados próximamente' })
-})
+router.get('/stats', controller.stats)   // debe ir antes de /:id
+router.get('/',      controller.list)
+router.get('/:id',   controller.getOne)
+router.post('/',     controller.create)
+router.put('/:id',   controller.update)
 
 export default router
