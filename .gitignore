@@ -17,3 +17,19 @@ vite.config.js
 
 # Credentials
 *CONNECTION_STRING*
+
+# Local tool settings
+.claude/settings.local.json
+
+# Backups / scratch
+*.bak
+scratch/
+
+# Environment variants
+.env.*
+!.env.example
+
+# OS / coverage
+.DS_Store
+Thumbs.db
+coverage/
