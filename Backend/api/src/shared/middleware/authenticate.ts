@@ -3,10 +3,13 @@ import jwt from 'jsonwebtoken'
 import { AppError } from '../errors'
 
 export interface AuthUser {
-  sub:     string
-  email:   string
-  name:    string
-  picture: string
+  sub:        string
+  email:      string
+  name:       string
+  picture:    string
+  role:       string
+  cargo:      string
+  dependencia: string
 }
 
 export function authenticate(req: Request, res: Response, next: NextFunction) {

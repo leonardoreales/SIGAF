@@ -5,6 +5,7 @@ import { createAsset } from '../../application/assets/createAsset'
 import { updateAsset } from '../../application/assets/updateAsset'
 import { deleteAsset } from '../../application/assets/deleteAsset'
 import { getStats }    from '../../application/assets/getStats'
+import { getAdvancedStats } from '../../application/assets/getAdvancedStats'
 
 export async function list(req: Request, res: Response, next: NextFunction) {
   try {
@@ -40,5 +41,18 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
 export async function stats(_req: Request, res: Response, next: NextFunction) {
   try {
     res.json(await getStats())
+  } catch (err) { next(err) }
+}
+
+export async function advancedStats(req: Request, res: Response, next: NextFunction) {
+  try {
+    const groupBy = (req.query.groupBy as string ?? '').split(',').filter(Boolean)
+    const filters = {
+      buildingId:   req.query.buildingId   ? Number(req.query.buildingId)   : undefined,
+      buildingName: req.query.buildingName as string,
+      areaName:     req.query.areaName     as string,
+      floor:        req.query.floor        as string,
+    }
+    res.json(await getAdvancedStats(groupBy, filters))
   } catch (err) { next(err) }
 }

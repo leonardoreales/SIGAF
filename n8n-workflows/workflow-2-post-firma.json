@@ -1,0 +1,179 @@
+{
+  "name": "SIGAF – Confirmación Post-Firma",
+  "nodes": [
+    {
+      "id": "cc220001",
+      "name": "Webhook SIGAF firma completada",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, -96],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sigaf-firma-completada",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "webhookId": "sigaf-firma-completada"
+    },
+    {
+      "id": "cc220002",
+      "name": "Validar payload entrante",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [240, -96],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nconst requestNumber = (body.requestNumber || '').trim();\nconst senderEmail   = (body.senderEmail   || '').trim();\nconst status        = (body.status        || '').trim();\nconst formData      = body.formData || {};\nconst solicitante   = (formData.solicitante || '').trim();\nconst dependencia   = (formData.dependencia || '').trim();\n\nconst valid = !!(requestNumber && senderEmail && status === 'FIRMADA');\n\nreturn [{\n  json: {\n    valid,\n    requestNumber,\n    senderEmail,\n    status,\n    solicitante,\n    dependencia,\n    signedAt:    body.signedAt    || new Date().toISOString(),\n    signedBy:    body.signedBy    || '',\n    subject:     body.subject     || '',\n    docxDriveUrl: body.docxDriveUrl || '',\n    notes:       body.notes       || '',\n    itemsCount:  body.itemsCount  || 0,\n  }\n}];"
+      }
+    },
+    {
+      "id": "cc220003",
+      "name": "¿Payload válido?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, -96],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "valid-cond",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "cc220004",
+      "name": "Gmail – Enviar confirmación al solicitante",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2,
+      "position": [720, -96],
+      "parameters": {
+        "operation": "send",
+        "toList": "={{ $json.senderEmail }}",
+        "subject": "=✅ Solicitud {{ $json.requestNumber }} firmada – SIGAF Activos Fijos",
+        "message": "=<p>Estimado/a <strong>{{ $json.solicitante || $json.senderEmail }}</strong>,</p>\n<p>Su solicitud de traslado ha sido <strong>revisada y firmada</strong> correctamente en el sistema SIGAF.</p>\n<table cellpadding=\"6\" style=\"border-collapse:collapse;\">\n  <tr><td><strong>N° Solicitud</strong></td><td>{{ $json.requestNumber }}</td></tr>\n  <tr><td><strong>Estado</strong></td><td>FIRMADA</td></tr>\n  <tr><td><strong>Dependencia</strong></td><td>{{ $json.dependencia }}</td></tr>\n  <tr><td><strong>Activos gestionados</strong></td><td>{{ $json.itemsCount }}</td></tr>\n  <tr><td><strong>Fecha de firma</strong></td><td>{{ $json.signedAt }}</td></tr>\n  {{ $json.docxDriveUrl ? '<tr><td><strong>Documento</strong></td><td><a href=\"' + $json.docxDriveUrl + '\">Ver acta en Drive</a></td></tr>' : '' }}\n</table>\n<p>Este mensaje es generado automáticamente por SIGAF – Sistema de Gestión de Activos Fijos.<br>Corporación Universitaria Americana – Barranquilla.</p>",
+        "options": {
+          "replyTo": "activos.fijos@americana.edu.co"
+        }
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Xm08mH1uP16hUQMB",
+          "name": "Generador_actas"
+        }
+      }
+    },
+    {
+      "id": "cc220005",
+      "name": "Respuesta OK",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [960, -96],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ok-1",
+              "name": "ok",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "ok-2",
+              "name": "message",
+              "value": "=Confirmación enviada a {{ $('Validar payload entrante').first().json.senderEmail }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "cc220006",
+      "name": "Log – Payload inválido",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [720, 80],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err-1",
+              "name": "ok",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "err-2",
+              "name": "error",
+              "value": "Payload inválido: falta requestNumber, senderEmail o status != FIRMADA",
+              "type": "string"
+            },
+            {
+              "id": "err-3",
+              "name": "receivedBody",
+              "value": "={{ JSON.stringify($json) }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    }
+  ],
+  "connections": {
+    "Webhook SIGAF firma completada": {
+      "main": [
+        [{ "node": "Validar payload entrante", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validar payload entrante": {
+      "main": [
+        [{ "node": "¿Payload válido?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Payload válido?": {
+      "main": [
+        [{ "node": "Gmail – Enviar confirmación al solicitante", "type": "main", "index": 0 }],
+        [{ "node": "Log – Payload inválido", "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail – Enviar confirmación al solicitante": {
+      "main": [
+        [{ "node": "Respuesta OK", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "SIGAF" },
+    { "name": "Post-Firma" }
+  ],
+  "versionId": "sigaf-postfirma-v1",
+  "id": "sigaf-wf-002",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}

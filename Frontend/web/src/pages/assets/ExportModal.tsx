@@ -24,9 +24,8 @@ export default function ExportModal({ filters, onClose }: Props) {
     setIsExporting(true)
     setError(null)
     try {
-      const params: Record<string, string | number | undefined> = {
-        limit: 9999,
-        page:  1,
+      const baseParams: Record<string, string | number | undefined> = {
+        limit: 200,
         ...(year ? { year: Number(year) } : {}),
         ...(applyFilters ? {
           q:        filters.q        || undefined,
@@ -37,7 +36,15 @@ export default function ExportModal({ filters, onClose }: Props) {
         } : {}),
       }
 
-      const { data } = await apiAssets.list(params)
+      const first = await apiAssets.list({ ...baseParams, page: 1 })
+      const allData = [...first.data]
+
+      for (let page = 2; page <= first.meta.pages; page++) {
+        const { data: pageData } = await apiAssets.list({ ...baseParams, page })
+        allData.push(...pageData)
+      }
+
+      const data = allData
 
       const rows = data.map(a => ({
         'Plaqueta':           a.plate              ?? '',

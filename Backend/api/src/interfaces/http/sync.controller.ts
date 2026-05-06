@@ -3,6 +3,7 @@ import jwt                                      from 'jsonwebtoken'
 import { AppError }                             from '../../shared/errors'
 import { notifySync, getLastSync }              from '../../application/sync/notifySyncUseCase'
 import { sseManager }                           from '../../infrastructure/sse/SseManager'
+import { createTransferRequest }               from '../../application/transferRequests/createTransferRequest'
 
 // POST /sync/notify — llamado por n8n tras insertar activos (autenticado por secreto compartido)
 export async function notify(req: Request, res: Response, next: NextFunction) {
@@ -28,6 +29,21 @@ export async function notify(req: Request, res: Response, next: NextFunction) {
     })
 
     res.json({ ok: true, event_id: event.id, clients_notified: sseManager.connectedCount })
+  } catch (err) { next(err) }
+}
+
+// POST /sync/transfer-request — n8n envía una solicitud de traslado parseada del DOCX
+export async function ingestTransferRequest(req: Request, res: Response, next: NextFunction) {
+  try {
+    const secret = process.env.SYNC_SECRET
+    if (!secret) return next(new AppError(500, 'SYNC_SECRET no configurado', 'CONFIG_ERROR'))
+
+    if (req.headers['x-sync-secret'] !== secret) {
+      return next(new AppError(401, 'Secreto de sincronización inválido', 'UNAUTHORIZED'))
+    }
+
+    const request = await createTransferRequest(req.body)
+    res.status(201).json({ ok: true, request })
   } catch (err) { next(err) }
 }
 

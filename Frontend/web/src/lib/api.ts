@@ -1,9 +1,12 @@
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface AuthUser {
-  email:   string
-  name:    string
-  picture: string
+  email:       string
+  name:        string
+  picture:     string
+  role:        string
+  cargo:       string
+  dependencia: string
 }
 
 export interface Asset {
@@ -63,6 +66,7 @@ export interface AssetStats {
     total:             number
     activos:           number
     bajas:             number
+    valorBajas:        string
     enTraslado:        number
     revisionRequerida: number
     valorTotal:        string
@@ -257,4 +261,193 @@ export const apiTransfers = {
   create: (data: CreateTransferPayload)             => request<Transfer>('/transfers', { method: 'POST', body: JSON.stringify(data) }),
   update: (id: number, data: UpdateTransferPayload) => request<Transfer>(`/transfers/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   stats:  ()                                        => request<TransferStats>('/transfers/stats'),
+}
+
+// ── Transfer Requests ─────────────────────────────────────────────────────────
+
+export type TransferRequestStatus     = 'RECIBIDA' | 'REVISION' | 'APROBADA' | 'FIRMADA' | 'RECHAZADA'
+export type TransferRequestItemStatus = 'PENDIENTE' | 'EMPAREJADO' | 'TRASLADADO' | 'ERROR'
+
+export interface TransferRequestItem {
+  id:          number
+  requestId:   number
+  assetId:     number | null
+  assetPlate:  string | null
+  assetName:   string | null
+  plateRaw:    string | null
+  nameRaw:     string | null
+  serialRaw:   string | null
+  quantity:    number
+  matched:     boolean
+  transferId:  number | null
+  status:      TransferRequestItemStatus
+  notes:       string | null
+}
+
+export interface TransferRequest {
+  id:                  number
+  requestNumber:       string
+  subject:             string | null
+  senderEmail:         string | null
+  receivedAt:          string | null
+  rawText:             string | null
+  docxDriveUrl:        string | null
+  formData:            Record<string, unknown> | null
+  status:              TransferRequestStatus
+  autoSigned:          boolean
+  signatureEntrega:    string | null
+  signatureRecibe:     string | null
+  signatureAutoriza:   string | null
+  signedAt:            string | null
+  signedBy:            string | null
+  notes:               string | null
+  n8nWebhookSentAt:    string | null
+  createdAt:           string
+  updatedAt:           string
+  // Agrupaciones calculadas en la query
+  itemsCount:          number
+  itemsMatched:        number
+  items?:              TransferRequestItem[]
+}
+
+export interface TransferRequestListResponse {
+  data: TransferRequest[]
+  meta: { total: number; page: number; limit: number; pages: number }
+}
+
+export interface TransferRequestStats {
+  total:     number
+  recibida:  number
+  revision:  number
+  aprobada:  number
+  firmada:   number
+  rechazada: number
+}
+
+export interface UpdateTransferRequestPayload {
+  status?:            TransferRequestStatus
+  notes?:             string
+  signatureEntrega?:  string
+  signatureRecibe?:   string
+  signatureAutoriza?: string
+  signedBy?:          string
+}
+
+export const apiTransferRequests = {
+  list: (params: Record<string, string | number | undefined>) => {
+    const clean = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ) as Record<string, string>
+    const qs = new URLSearchParams(clean).toString()
+    return request<TransferRequestListResponse>(`/transfers/requests${qs ? `?${qs}` : ''}`)
+  },
+  get:    (id: number)                                    => request<TransferRequest>(`/transfers/requests/${id}`),
+  update: (id: number, data: UpdateTransferRequestPayload) => request<TransferRequest>(`/transfers/requests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  stats:  ()                                              => request<TransferRequestStats>('/transfers/requests/stats'),
+}
+
+// ── Users ─────────────────────────────────────────────────────────────────────
+
+export interface SystemUser {
+  id:           number
+  email:        string
+  role:         string
+  cargo:        string
+  dependencia:  string
+  name:         string | null
+  isActive:     boolean
+  lastLoginAt:  string | null
+  createdAt:    string
+  updatedAt:    string
+}
+
+export interface UpdateUserPayload {
+  role?:        string
+  cargo?:       string
+  dependencia?: string
+  isActive?:    boolean
+}
+
+export const apiUsers = {
+  list:   () =>
+    request<SystemUser[]>('/users'),
+  update: (email: string, data: UpdateUserPayload) =>
+    request<SystemUser>(`/users/${encodeURIComponent(email)}`, {
+      method: 'PUT',
+      body:   JSON.stringify(data),
+    }),
+}
+
+// ── Writeoffs ─────────────────────────────────────────────────────────────────
+
+export interface WriteoffAct {
+  id:               number
+  actaNumber:       string
+  date:             string | null
+  building:         string | null
+  reason:           string
+  status:           string
+  totalItems:       number
+  authorizedBy:     string | null
+  authorizedByRole: string | null
+  responsible:      string | null
+  responsibleRole:  string | null
+  notes:            string | null
+  createdAt:        string
+  matchedCount:     string
+  notFoundCount:    string
+  noRegistraCount:  string
+  referenceValue:   string | null
+}
+
+export interface WriteoffItem {
+  id:                  number
+  itemNumber:          number
+  plateSerial:         string | null
+  noRegistra:          boolean
+  assetId:             number | null
+  description:         string | null
+  assetType:           string | null
+  brandModel:          string | null
+  reconciledStatus:    string
+  assetPlate:          string | null
+  assetName:           string | null
+  assetBrand:          string | null
+  assetModel:          string | null
+  assetReferenceValue: string | null
+  assetCurrentStatus:  string | null
+}
+
+export interface WriteoffActDetail extends WriteoffAct {
+  updatedAt: string
+  items:     WriteoffItem[]
+}
+
+export interface WriteoffListResponse {
+  data: WriteoffAct[]
+  meta: { total: number; page: number; limit: number; pages: number }
+}
+
+export interface WriteoffStats {
+  totalActs:     number
+  totalItems:    number
+  matchedItems:  number
+  totalValue:    number
+  byReason:      Array<{ reason: string; count: string | number }>
+  byBuilding:    Array<{ building: string; count: string | number }>
+  reconciliation: Array<{ status: string; count: number }>
+}
+
+export const apiWriteoffs = {
+  list: (params: Record<string, string | number | undefined>) => {
+    const clean = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    ) as Record<string, string>
+    const qs = new URLSearchParams(clean).toString()
+    return request<WriteoffListResponse>(`/writeoffs${qs ? `?${qs}` : ''}`)
+  },
+  get:    (id: number)           => request<WriteoffActDetail>(`/writeoffs/${id}`),
+  stats:  ()                     => request<WriteoffStats>('/writeoffs/stats'),
+  create: (data: unknown)        => request<WriteoffActDetail>('/writeoffs', { method: 'POST', body: JSON.stringify(data) }),
+  update: (id: number, data: unknown) => request<WriteoffActDetail>(`/writeoffs/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
 }

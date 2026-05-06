@@ -83,16 +83,17 @@ export default function DashboardPage() {
     <div className="space-y-6">
 
       {/* ── Hero header ─────────────────────────────────────────────── */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-between gap-4 animate-card-in">
         <div>
-          <p className="text-xs font-mono tracking-widest text-gray-400 dark:text-mi-600 uppercase mb-1">
+          <p className="text-[10.5px] font-mono tracking-[0.18em] text-gray-400 dark:text-mi-600 uppercase mb-1.5">
             {formatDate()}
           </p>
-          <h1 className="text-2xl font-syne font-bold text-gray-900 dark:text-mi-50 leading-tight">
-            {getGreeting()}, {firstName}
+          <h1 className="text-[1.65rem] font-syne font-bold text-gray-900 dark:text-mi-50 leading-tight tracking-tight">
+            {getGreeting()},{' '}
+            <span className="text-gold-gradient">{firstName}</span>
           </h1>
-          <p className="text-sm text-gray-400 dark:text-mi-500 mt-0.5">
-            Corporación Universitaria Americana · Sistema de Activos Fijos
+          <p className="text-[12.5px] text-gray-400 dark:text-mi-500 mt-1">
+            Corporación Universitaria Americana · Activos Fijos
           </p>
         </div>
 
@@ -101,9 +102,9 @@ export default function DashboardPage() {
           <Link
             to="/assets"
             className="
-              flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors
-              bg-gray-100 hover:bg-gray-200 text-gray-600
-              dark:bg-white/[0.04] dark:hover:bg-white/[0.07] dark:text-mi-300
+              flex items-center gap-1.5 text-[12px] font-medium px-3.5 py-2 rounded-lg transition-all duration-150
+              bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-900
+              dark:bg-white/[0.06] dark:hover:bg-white/[0.09] dark:text-mi-300 dark:hover:text-white
             "
           >
             <Package2 size={13} />
@@ -113,9 +114,9 @@ export default function DashboardPage() {
             to="/assets"
             state={{ openCreate: true }}
             className="
-              flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg transition-colors
-              bg-mi-600 hover:bg-mi-500 text-white
-              dark:bg-mi-600 dark:hover:bg-mi-500 dark:border dark:border-mi-500/50
+              flex items-center gap-1.5 text-[12px] font-semibold px-3.5 py-2 rounded-lg transition-all duration-150
+              bg-gray-900 hover:bg-gray-800 text-white
+              dark:bg-gold dark:hover:bg-gold-300 dark:text-mi-950
             "
           >
             <Plus size={13} />
@@ -124,15 +125,16 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* ── KPI cards ───────────────────────────────────────────────── */}
+      {/* ── KPI cards — with stagger ─────────────────────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
         <KpiCard
           icon={Package2}
           label="Total activos"
           value={t ? fmt(t.total) : '—'}
-          sub={t ? `${fmt(t.nuevos30d)} nuevos en 30 días` : undefined}
+          sub={t ? `${fmt(t.nuevos30d)} nuevos este mes` : undefined}
           color="default"
           loading={statsLoading}
+          className="stagger-1"
         />
         <KpiCard
           icon={CheckCircle2}
@@ -141,14 +143,16 @@ export default function DashboardPage() {
           sub={t ? pct(t.activos, t.total) + ' del total' : undefined}
           color="emerald"
           loading={statsLoading}
+          className="stagger-2"
         />
         <KpiCard
           icon={Trash2}
           label="Dados de baja"
           value={t ? fmt(t.bajas) : '—'}
-          sub={t ? pct(t.bajas, t.total) + ' del total' : undefined}
+          sub={t ? `Valor total: ${fmtCOP(t.valorBajas)}` : undefined}
           color="red"
           loading={statsLoading}
+          className="stagger-3"
         />
         <KpiCard
           icon={AlertCircle}
@@ -157,19 +161,21 @@ export default function DashboardPage() {
           sub="Sin placa o con errores"
           color="amber"
           loading={statsLoading}
+          className="stagger-4"
         />
         <KpiCard
           icon={Landmark}
           label="Valor referencial"
           value={t ? fmtCOP(t.valorTotal) : '—'}
-          sub="Suma de valores de adquisición"
+          sub="Suma de adquisición"
           color="gold"
           loading={statsLoading}
+          className="stagger-5"
         />
       </div>
 
       {/* ── Main grid ───────────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 xl:grid-cols-5 gap-6" style={{ minHeight: '480px' }}>
+      <div className="grid grid-cols-1 xl:grid-cols-5 gap-5" style={{ minHeight: '480px' }}>
 
         {/* Charts — izquierda */}
         <div className="xl:col-span-3 flex flex-col gap-4">
@@ -201,16 +207,16 @@ export default function DashboardPage() {
             className="
               flex items-center gap-3 px-4 py-3 rounded-xl
               border border-dashed border-gray-200 dark:border-white/[0.06]
-              bg-gray-50/50 dark:bg-white/[0.01]
-              opacity-60
+              bg-gray-50/60 dark:bg-white/[0.015]
+              opacity-55 transition-opacity hover:opacity-80
             "
           >
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-white/[0.04]">
-              <mod.icon size={15} className="text-gray-400 dark:text-mi-600" />
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-white/[0.05] shrink-0">
+              <mod.icon size={14} className="text-gray-400 dark:text-mi-600" />
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-medium text-gray-500 dark:text-mi-500 truncate">{mod.label}</p>
-              <p className="text-[10px] font-mono text-gray-400 dark:text-mi-700 uppercase tracking-widest">Próximamente</p>
+              <p className="text-[12px] font-medium text-gray-500 dark:text-mi-500 truncate">{mod.label}</p>
+              <p className="text-[10px] font-mono text-gray-400 dark:text-mi-700 uppercase tracking-widest mt-0.5">Próximamente</p>
             </div>
           </div>
         ))}

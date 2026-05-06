@@ -1,7 +1,7 @@
 import {
   pgTable, serial, varchar, text, char,
   integer, boolean, numeric, date, timestamp,
-  uniqueIndex,
+  uniqueIndex, jsonb,
 } from 'drizzle-orm/pg-core'
 
 export const catalogCities = pgTable('catalog_cities', {
@@ -108,13 +108,155 @@ export const transfers = pgTable('transfers', {
   n8nNotified:       boolean('n8n_notified').notNull().default(false),
   n8nWebhookSentAt:  timestamp('n8n_webhook_sent_at', { withTimezone: true }),
 
-  // Firma (futuro flujo automático)
+  // Firma
   signatureOrigin:   text('signature_origin'),
   signatureDest:     text('signature_dest'),
   signedAt:          timestamp('signed_at', { withTimezone: true }),
+
+  // Origen de la solicitud
+  source:            varchar('source', { length: 20 }).notNull().default('MANUAL'),
+  requestId:         integer('request_id'),
 
   createdAt:         timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt:         timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 }, (t) => ({
   transferNumberIdx: uniqueIndex('transfers_number_idx').on(t.transferNumber),
 }))
+
+export const transferRequests = pgTable('transfer_requests', {
+  id:                 serial('id').primaryKey(),
+  requestNumber:      varchar('request_number', { length: 20 }).notNull(),
+
+  // Datos del correo
+  subject:            text('subject'),
+  senderEmail:        varchar('sender_email', { length: 200 }),
+  receivedAt:         timestamp('received_at', { withTimezone: true }),
+
+  // Contenido extraído
+  rawText:            text('raw_text'),
+  docxDriveUrl:       text('docx_drive_url'),
+  formData:           jsonb('form_data').$type<Record<string, unknown>>(),
+
+  // Estado
+  status:             varchar('status', { length: 20 }).notNull().default('RECIBIDA'),
+
+  // Firma
+  autoSigned:         boolean('auto_signed').notNull().default(false),
+  signatureEntrega:   text('signature_entrega'),
+  signatureRecibe:    text('signature_recibe'),
+  signatureAutoriza:  text('signature_autoriza'),
+  signedAt:           timestamp('signed_at', { withTimezone: true }),
+  signedBy:           varchar('signed_by', { length: 200 }),
+
+  notes:              text('notes'),
+  n8nWebhookSentAt:   timestamp('n8n_webhook_sent_at', { withTimezone: true }),
+
+  createdAt:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const transferRequestItems = pgTable('transfer_request_items', {
+  id:         serial('id').primaryKey(),
+  requestId:  integer('request_id').notNull(),
+  assetId:    integer('asset_id'),
+
+  // Datos crudos del DOCX
+  plateRaw:   varchar('plate_raw', { length: 30 }),
+  nameRaw:    varchar('name_raw', { length: 300 }),
+  serialRaw:  varchar('serial_raw', { length: 200 }),
+  quantity:   integer('quantity').notNull().default(1),
+
+  // Matching
+  matched:    boolean('matched').notNull().default(false),
+
+  // Traslado generado
+  transferId: integer('transfer_id'),
+
+  status:     varchar('status', { length: 20 }).notNull().default('PENDIENTE'),
+  notes:      text('notes'),
+
+  createdAt:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:  timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const systemUsers = pgTable('system_users', {
+  id:          serial('id').primaryKey(),
+  email:       varchar('email', { length: 200 }).notNull().unique(),
+  role:        varchar('role', { length: 30 }).notNull().default('VIEWER'),
+  cargo:       varchar('cargo', { length: 200 }).notNull().default('Usuario General'),
+  dependencia: varchar('dependencia', { length: 200 }).notNull().default('General'),
+  name:        varchar('name', { length: 200 }),
+  isActive:    boolean('is_active').notNull().default(true),
+  lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
+  createdAt:   timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:   timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const maintenanceSchedules = pgTable('maintenance_schedules', {
+  id:              serial('id').primaryKey(),
+  assetId:         integer('asset_id').references(() => assets.id),
+  activityName:    varchar('activity_name', { length: 300 }).notNull(),
+  maintenanceType: varchar('maintenance_type', { length: 50 }).notNull(),
+  frequency:       varchar('frequency', { length: 100 }),
+  scheduledDate:   date('scheduled_date').notNull(),
+  responsibleArea: varchar('responsible_area', { length: 100 }).notNull(),
+  status:          varchar('status', { length: 30 }).notNull().default('PROGRAMADO'),
+  notes:           text('notes'),
+  createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:       timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const maintenanceExecutions = pgTable('maintenance_executions', {
+  id:              serial('id').primaryKey(),
+  scheduleId:      integer('schedule_id').references(() => maintenanceSchedules.id),
+  executionDate:   date('execution_date').notNull(),
+  performedBy:     varchar('performed_by', { length: 200 }),
+  observations:    text('observations'),
+  supportStatus:   varchar('support_status', { length: 30 }).notNull().default('PENDIENTE'),
+  validatedBy:     integer('validated_by').references(() => systemUsers.id),
+  validatedAt:     timestamp('validated_at', { withTimezone: true }),
+  createdAt:       timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const maintenanceSupports = pgTable('maintenance_supports', {
+  id:              serial('id').primaryKey(),
+  executionId:     integer('execution_id').references(() => maintenanceExecutions.id),
+  fileUrl:         text('file_url').notNull(),
+  fileType:        varchar('file_type', { length: 100 }), // Acta, Informe, Foto
+  uploadedAt:      timestamp('uploaded_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── BAJAS DE ACTIVOS ──────────────────────────────────────────────────────────
+
+export const writeoffActs = pgTable('writeoff_acts', {
+  id:               serial('id').primaryKey(),
+  actaNumber:       varchar('acta_number', { length: 20 }).notNull().unique(),
+  date:             date('date'),
+  building:         varchar('building', { length: 100 }),
+  reason:           varchar('reason', { length: 60 }).notNull(),
+  status:           varchar('status', { length: 30 }).notNull().default('COMPLETADA'),
+  // Datos administrativos: almacenados pero no protagonistas en la UI
+  authorizedBy:     varchar('authorized_by', { length: 300 }),
+  authorizedByRole: varchar('authorized_by_role', { length: 200 }),
+  responsible:      varchar('responsible', { length: 300 }),
+  responsibleRole:  varchar('responsible_role', { length: 200 }),
+  totalItems:       integer('total_items').notNull().default(0),
+  notes:            text('notes'),
+  createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:        timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const writeoffItems = pgTable('writeoff_items', {
+  id:               serial('id').primaryKey(),
+  writeoffActId:    integer('writeoff_act_id').notNull().references(() => writeoffActs.id, { onDelete: 'cascade' }),
+  itemNumber:       integer('item_number').notNull(),
+  plateSerial:      varchar('plate_serial', { length: 100 }),
+  noRegistra:       boolean('no_registra').notNull().default(false),
+  assetId:          integer('asset_id').references(() => assets.id),
+  description:      varchar('description', { length: 300 }),
+  assetType:        varchar('asset_type', { length: 100 }),
+  brandModel:       varchar('brand_model', { length: 200 }),
+  // MATCHED | NOT_FOUND | NO_REGISTRA | EMPTY
+  reconciledStatus: varchar('reconciled_status', { length: 30 }).notNull().default('PENDING'),
+  createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})

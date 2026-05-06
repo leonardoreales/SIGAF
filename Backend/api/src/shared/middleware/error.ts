@@ -25,5 +25,8 @@ export function errorHandler(
   }
 
   console.error('[SIGAF]', err)
-  res.status(500).json({ error: 'INTERNAL_ERROR', message: 'Error interno del servidor' })
+  res.status(500).json({ 
+    error: 'INTERNAL_ERROR', 
+    message: err instanceof Error ? err.message : 'Error interno del servidor' 
+  })
 }

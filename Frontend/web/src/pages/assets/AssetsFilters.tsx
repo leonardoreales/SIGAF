@@ -23,17 +23,17 @@ interface Props {
 
 const INPUT_CLS =
   'w-full py-2 px-3 text-sm rounded-lg transition-colors ' +
-  'bg-white border border-gray-300 text-gray-900 placeholder-gray-400 ' +
-  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ' +
-  'dark:bg-mi-750 dark:border-mi-600 dark:text-mi-100 dark:placeholder-mi-500 ' +
-  'dark:focus:ring-mi-400 dark:focus:border-transparent'
+  'bg-white border border-gray-200 text-gray-900 placeholder-gray-400 ' +
+  'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 ' +
+  'dark:bg-mi-800 dark:border-mi-700/60 dark:text-mi-100 dark:placeholder-mi-500 ' +
+  'dark:focus:ring-gold/30 dark:focus:border-gold/50'
 
 const SELECT_CLS =
   'w-full py-2 px-3 text-sm rounded-lg transition-colors ' +
-  'bg-white border border-gray-300 text-gray-900 ' +
-  'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent ' +
-  'dark:bg-mi-750 dark:border-mi-600 dark:text-mi-100 ' +
-  'dark:focus:ring-mi-400 dark:focus:border-transparent'
+  'bg-white border border-gray-200 text-gray-900 ' +
+  'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 ' +
+  'dark:bg-mi-800 dark:border-mi-700/60 dark:text-mi-100 ' +
+  'dark:focus:ring-gold/30 dark:focus:border-gold/50'
 
 const LBL = 'block text-xs font-medium text-gray-500 dark:text-mi-400 mb-1'
 
@@ -74,7 +74,7 @@ export default function AssetsFilters({ value, onChange }: Props) {
     <div className="
       rounded-xl border p-4
       bg-white border-gray-200
-      dark:bg-mi-800 dark:border-mi-700/50
+      dark:bg-mi-900/40 dark:border-white/[0.05]
     ">
       <div className="flex flex-wrap gap-3 items-end">
 

@@ -60,14 +60,14 @@ function SkeletonRows() {
 
 export default function AssetsTable({ data, meta, isLoading, searchQuery, onPageChange, onEdit }: Props) {
   return (
-    <div className="rounded-xl border overflow-hidden bg-white border-gray-200 dark:bg-mi-800 dark:border-mi-700/50">
+    <div className="rounded-xl border overflow-hidden bg-white border-gray-200 dark:bg-mi-900 dark:border-white/[0.05]">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="
               border-b text-left
-              bg-gray-50 border-gray-200 text-gray-600
-              dark:bg-mi-850 dark:border-mi-700/50 dark:text-mi-400
+              bg-gray-50/80 border-gray-200 text-gray-600
+              dark:bg-mi-850 dark:border-white/[0.05] dark:text-mi-400
             ">
               <th className="px-4 py-3 font-medium whitespace-nowrap">Plaqueta</th>
               <th className="px-4 py-3 font-medium">Nombre</th>
@@ -97,7 +97,7 @@ export default function AssetsTable({ data, meta, isLoading, searchQuery, onPage
                   key={asset.id}
                   className="
                     row-fade transition-colors
-                    hover:bg-gray-50 dark:hover:bg-mi-750/50
+                    hover:bg-gray-50/80 dark:hover:bg-white/[0.03]
                   "
                 >
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -155,8 +155,8 @@ export default function AssetsTable({ data, meta, isLoading, searchQuery, onPage
       {!isLoading && meta.pages > 1 && (
         <div className="
           flex items-center justify-between px-4 py-3 border-t
-          bg-gray-50 border-gray-200 text-gray-500
-          dark:bg-mi-850 dark:border-mi-700/50 dark:text-mi-400
+          bg-gray-50/60 border-gray-100 text-gray-500
+          dark:bg-mi-900/40 dark:border-white/[0.04] dark:text-mi-500
         ">
           <span className="text-xs">
             Página {meta.page} de {meta.pages}

@@ -171,3 +171,140 @@ export type TransferReason = z.infer<typeof TransferReasonSchema>
 export type CreateTransfer = z.infer<typeof CreateTransferSchema>
 export type UpdateTransfer = z.infer<typeof UpdateTransferSchema>
 export type TransferFilter = z.infer<typeof TransferFilterSchema>
+
+// ── USERS ─────────────────────────────────────────────────────────────────────
+
+export const RoleSchema = z.enum(['ADMIN', 'ACTIVOS_FIJOS', 'COMPRAS', 'VIEWER'])
+
+export const UpdateUserSchema = z.object({
+  role:        RoleSchema.optional(),
+  cargo:       z.string().min(2).max(200).optional(),
+  dependencia: z.string().min(2).max(200).optional(),
+  isActive:    z.boolean().optional(),
+})
+
+export type Role       = z.infer<typeof RoleSchema>
+export type UpdateUser = z.infer<typeof UpdateUserSchema>
+
+// ── TRANSFER REQUESTS ────────────────────────────────────────────────────────
+
+export const TransferRequestStatusSchema = z.enum([
+  'RECIBIDA',
+  'REVISION',
+  'APROBADA',
+  'FIRMADA',
+  'RECHAZADA',
+])
+
+export const TransferRequestItemStatusSchema = z.enum([
+  'PENDIENTE',
+  'EMPAREJADO',
+  'TRASLADADO',
+  'ERROR',
+])
+
+const TransferRequestItemSchema = z.object({
+  plateRaw:  z.string().max(30).optional(),
+  nameRaw:   z.string().max(300).optional(),
+  serialRaw: z.string().max(200).optional(),
+  quantity:  z.number().int().positive().default(1),
+})
+
+export const CreateTransferRequestSchema = z.object({
+  subject:      z.string().optional(),
+  senderEmail:  z.string().email().optional(),
+  receivedAt:   z.string().optional(),
+  rawText:      z.string().optional(),
+  docxDriveUrl: z.string().optional(),
+  formData:     z.record(z.unknown()).optional(),
+  items:        z.array(TransferRequestItemSchema).default([]),
+  signatures:   z.object({
+    entrega:  z.string().nullable().optional(),
+    recibe:   z.string().nullable().optional(),
+    autoriza: z.string().nullable().optional(),
+  }).optional(),
+})
+
+export const UpdateTransferRequestSchema = z.object({
+  status:             TransferRequestStatusSchema.optional(),
+  notes:              z.string().optional(),
+  signatureEntrega:   z.string().optional(),
+  signatureRecibe:    z.string().optional(),
+  signatureAutoriza:  z.string().optional(),
+  signedBy:           z.string().optional(),
+})
+
+export const TransferRequestFilterSchema = z.object({
+  page:   z.coerce.number().int().positive().default(1),
+  limit:  z.coerce.number().int().min(1).max(200).default(50),
+  q:      z.string().optional(),
+  status: TransferRequestStatusSchema.optional(),
+})
+
+export type TransferRequestStatus     = z.infer<typeof TransferRequestStatusSchema>
+export type TransferRequestItemStatus = z.infer<typeof TransferRequestItemStatusSchema>
+export type CreateTransferRequest     = z.infer<typeof CreateTransferRequestSchema>
+export type UpdateTransferRequest     = z.infer<typeof UpdateTransferRequestSchema>
+export type TransferRequestFilter     = z.infer<typeof TransferRequestFilterSchema>
+
+// ── WRITEOFFS (BAJAS) ────────────────────────────────────────────────────────
+
+export const WriteoffStatusSchema = z.enum(['BORRADOR', 'EN_REVISION', 'COMPLETADA', 'RECHAZADA'])
+
+export const WriteoffReasonSchema = z.enum([
+  'DAÑO',
+  'OBSOLESCENCIA',
+  'DETERIORO_MOBILIARIO',
+  'CAMBIO_MOBILIARIO',
+  'REEMPLAZO_MOBILIARIO',
+  'VENTA_VEHICULOS',
+  'DESUSO',
+  'BAJA',
+])
+
+export const WriteoffFilterSchema = z.object({
+  page:     z.coerce.number().int().positive().default(1),
+  limit:    z.coerce.number().int().min(1).max(200).default(50),
+  q:        z.string().optional(),
+  building: z.string().optional(),
+  reason:   z.string().optional(),
+  status:   z.string().optional(),
+})
+
+export const CreateWriteoffActSchema = z.object({
+  actaNumber:       z.string().max(20),
+  date:             z.string().optional(),
+  building:         z.string().max(100).optional(),
+  reason:           z.string().max(60),
+  status:           WriteoffStatusSchema.default('COMPLETADA'),
+  authorizedBy:     z.string().max(300).optional(),
+  authorizedByRole: z.string().max(200).optional(),
+  responsible:      z.string().max(300).optional(),
+  responsibleRole:  z.string().max(200).optional(),
+  notes:            z.string().optional(),
+})
+
+export const UpdateWriteoffActSchema = z.object({
+  status:  WriteoffStatusSchema.optional(),
+  notes:   z.string().optional(),
+})
+
+export type WriteoffStatus      = z.infer<typeof WriteoffStatusSchema>
+export type WriteoffReason      = z.infer<typeof WriteoffReasonSchema>
+export type WriteoffFilter      = z.infer<typeof WriteoffFilterSchema>
+export type CreateWriteoffAct   = z.infer<typeof CreateWriteoffActSchema>
+export type UpdateWriteoffAct   = z.infer<typeof UpdateWriteoffActSchema>
+
+// ── RECEPCIONES — Reglas de serial por tipo ──────────────────────────────────
+
+export type SerialRule = 'required' | 'optional' | 'disabled'
+
+// Keyed by AssetTypeCode ('45'|'55'|'60'|'65'|'70'|'75')
+export const ASSET_TYPE_SERIAL_RULES: Record<string, SerialRule> = {
+  '45': 'optional',   // EQUIPO MÉDICO Y CIENTÍFICO
+  '55': 'required',   // MAQUINARIA Y EQUIPO
+  '60': 'required',   // EQUIPOS DE TRANSPORTE, TRACCIÓN Y ELEVACIÓN
+  '65': 'disabled',   // MUEBLES, ENSERES Y EQUIPO DE OFICINA
+  '70': 'required',   // EQUIPOS DE COMUNICACIÓN Y COMPUTACIÓN
+  '75': 'disabled',   // PLANTAS, DUCTOS Y TÚNELES
+}

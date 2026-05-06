@@ -123,8 +123,8 @@ export default function AssetsPage() {
             onClick={openCreate}
             className="
               flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors
-              bg-blue-600 hover:bg-blue-700 text-white
-              dark:bg-mi-600 dark:hover:bg-mi-500 dark:text-mi-50 dark:border dark:border-mi-500/50
+              bg-gray-900 hover:bg-gray-800 text-white
+              dark:bg-gold dark:hover:bg-gold-300 dark:text-mi-950 dark:font-semibold
             "
           >
             <Plus size={16} />

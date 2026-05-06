@@ -37,9 +37,9 @@ export default function AssetFormModal({ assetId, onClose, onSaved }: Props) {
     >
       <div className="
         w-full max-w-2xl rounded-2xl shadow-2xl
-        bg-white dark:bg-mi-800
-        dark:shadow-[0_0_60px_rgba(10,2,44,0.6)]
-        dark:border dark:border-mi-700/40
+        bg-white dark:bg-mi-850
+        dark:shadow-[0_0_0_1px_rgba(255,255,255,0.05),0_30px_80px_rgba(0,0,0,0.7)]
+        dark:border dark:border-mi-700/30
       ">
 
         {/* Header */}
@@ -116,8 +116,8 @@ export default function AssetFormModal({ assetId, onClose, onSaved }: Props) {
             {/* Footer */}
             <div className="
               flex items-center justify-end gap-3 px-6 py-4 rounded-b-2xl border-t
-              bg-gray-50 border-gray-200
-              dark:bg-mi-850 dark:border-mi-700/50
+              bg-gray-50/60 border-gray-100
+              dark:bg-mi-900/40 dark:border-white/[0.04]
             ">
               <button
                 type="button"
@@ -136,8 +136,8 @@ export default function AssetFormModal({ assetId, onClose, onSaved }: Props) {
                 className="
                   px-4 py-2 text-sm font-medium rounded-lg transition-colors min-w-[130px] text-center
                   disabled:opacity-60 disabled:cursor-not-allowed
-                  bg-blue-600 hover:bg-blue-700 text-white
-                  dark:bg-gold dark:hover:bg-gold-500 dark:text-mi-900 dark:font-semibold
+                  bg-gray-900 hover:bg-gray-800 text-white
+                  dark:bg-gold dark:hover:bg-gold-300 dark:text-mi-950 dark:font-semibold
                 "
               >
                 {isSaving ? 'Guardando…' : isEdit ? 'Guardar cambios' : 'Crear activo'}

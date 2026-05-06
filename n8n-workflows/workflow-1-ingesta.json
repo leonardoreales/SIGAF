@@ -1,0 +1,399 @@
+{
+  "name": "SIGAF – Ingesta de Solicitudes F-AF-039",
+  "nodes": [
+    {
+      "id": "68a20031",
+      "name": "Gmail Activos Fijos - Producción",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1,
+      "position": [0, -96],
+      "parameters": {
+        "pollTimes": {
+          "item": [{ "mode": "everyMinute" }]
+        },
+        "filters": {},
+        "simple": true
+      },
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Xm08mH1uP16hUQMB",
+          "name": "Generador_actas"
+        }
+      }
+    },
+    {
+      "id": "aab96e42",
+      "name": "Normalizar y clasificar correo candidato",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [224, -96],
+      "parameters": {
+        "jsCode": "// Extrae metadatos del correo y detecta adjunto DOCX (formulario F-AF-039)\nconst msg = $input.first().json;\n\nconst subject   = (msg.subject   || msg.Subject   || '').trim();\nconst fromRaw   = (msg.from      || msg.From      || '').trim();\nconst fromEmail = fromRaw.match(/<([^>]+)>/) ? fromRaw.match(/<([^>]+)>/)[1] : fromRaw.trim();\nconst date      = msg.date || msg.Date || new Date().toISOString();\nconst messageId = msg.id  || msg.messageId || '';\nconst threadId  = msg.threadId || '';\n\nconst attachments = Array.isArray(msg.attachments) ? msg.attachments : [];\nconst docxAtt = attachments.find(a => {\n  const name = (a.name || a.filename || '').toLowerCase();\n  return name.endsWith('.docx');\n});\n\nconst isCandidate = !!docxAtt;\n\nreturn [{\n  json: {\n    subject,\n    fromRaw,\n    fromEmail,\n    date,\n    messageId,\n    threadId,\n    isCandidate,\n    docxAttachment: docxAtt || null,\n  }\n}];"
+      }
+    },
+    {
+      "id": "1ff6d131",
+      "name": "¿Correo candidato?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [448, -96],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-001",
+              "leftValue": "={{ $json.isCandidate }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "bb110003",
+      "name": "Descartar - Email no candidato",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [672, 80],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "discard-1",
+              "name": "descartado",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "discard-2",
+              "name": "motivo",
+              "value": "El correo no contiene adjunto DOCX (F-AF-039)",
+              "type": "string"
+            },
+            {
+              "id": "discard-3",
+              "name": "subject",
+              "value": "={{ $json.subject }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "1cec21f9",
+      "name": "Preparar documento seleccionado",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [672, -96],
+      "parameters": {
+        "jsCode": "// Preserva el contexto del correo y expone datos del adjunto para el nodo de subida\nconst json = $input.first().json;\nconst att  = json.docxAttachment || {};\n\nreturn [{\n  json: {\n    subject:      json.subject,\n    fromRaw:      json.fromRaw,\n    fromEmail:    json.fromEmail,\n    date:         json.date,\n    messageId:    json.messageId,\n    threadId:     json.threadId,\n    fileName:     att.name || att.filename || 'formulario-F-AF-039.docx',\n    attachmentId: att.id   || att.attachmentId || null,\n    mimeType:     att.mimeType || 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',\n  }\n}];"
+      }
+    },
+    {
+      "id": "7a367cce",
+      "name": "Subir DOCX a Drive",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [896, -96],
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ $json.fileName }}",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "/"
+        },
+        "inputDataFieldName": "data",
+        "options": {
+          "simplifyOutput": false
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "id": "22ea5969",
+      "name": "Convertir DOCX a Google Doc",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1120, -96],
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}/copy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\"mimeType\": \"application/vnd.google-apps.document\", \"name\": \"{{ $('Preparar documento seleccionado').first().json.fileName }}\"}",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "fields", "value": "id,name,webViewLink" }
+          ]
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "id": "4d80eac2",
+      "name": "Registrar Google Doc convertido",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1344, -96],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "gdoc-1",
+              "name": "googleDocId",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "gdoc-2",
+              "name": "googleDocUrl",
+              "value": "={{ $json.webViewLink || ('https://docs.google.com/document/d/' + $json.id) }}",
+              "type": "string"
+            },
+            {
+              "id": "gdoc-3",
+              "name": "googleDocName",
+              "value": "={{ $json.name }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "d75a9f9e",
+      "name": "Unir contexto original con Google Doc",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1568, -96],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {
+          "clashHandling": {
+            "values": {
+              "resolveClash": "preferInput2"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "209d9133",
+      "name": "Exportar Google Doc como TXT",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [1792, -96],
+      "parameters": {
+        "method": "GET",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.googleDocId }}/export",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            { "name": "mimeType", "value": "text/plain" }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          }
+        }
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "id": "04b97928",
+      "name": "Merge (final)",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2016, -96],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineAll",
+        "options": {
+          "clashHandling": {
+            "values": {
+              "resolveClash": "preferInput1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "bb110001",
+      "name": "Parsear F-AF-039 y construir payload SIGAF",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2240, -96],
+      "parameters": {
+        "jsCode": "function safeStr(v) {\n  if (v == null) return '';\n  if (typeof v === 'string') return v.trim();\n  return String(v).trim();\n}\n\nconst item = $input.first();\nconst json = item.json || {};\n\n// Metadatos del correo (vienen del Merge final)\nconst subject     = safeStr(json.subject || json.Subject);\nconst senderEmail = safeStr(json.fromEmail || json.senderEmail || json.from || json.From || '').replace(/^.*<([^>]+)>.*$/, '$1');\nconst receivedAt  = safeStr(json.date || json.Date || json.receivedAt);\nconst googleDocUrl = safeStr(json.googleDocUrl || json.docUrl || json.webViewLink || '');\nconst fromRaw     = safeStr(json.fromRaw || json.from || json.From || '');\nconst senderName  = fromRaw.replace(/<[^>]+>/g, '').trim();\n\n// El texto plano exportado llega en 'data' (respuesta text del httpRequest) o en campos del merge\nlet rawText = safeStr(json.googleDocPlainText || json.plainText || json.data || json.body || json.text || '');\n\n// Si llega en base64 (edge case), decodificar\nif (rawText.length > 100 && /^[A-Za-z0-9+/]+=*$/.test(rawText.slice(0, 80))) {\n  try { rawText = Buffer.from(rawText, 'base64').toString('utf-8'); } catch (_) {}\n}\n\n// Parsear campo etiquetado del formulario\nfunction parseField(text, pattern) {\n  const re = new RegExp(pattern + '[:\\\\s]*([^\\n]+)', 'i');\n  const m = text.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst solicitante = parseField(rawText, 'SOLICITANTE') || senderName;\nconst dependencia = parseField(rawText, 'DEPENDENCIA');\nconst fecha       = parseField(rawText, 'FECHA');\nconst motivo      = parseField(rawText, 'MOTIVO|DESCRIPCI[O\\u00d3]N|JUSTIFICACI[O\\u00d3]N|OBJETO');\n\n// Parsear tabla de activos (columnas separadas por tabs o espacios dobles)\nconst items = [];\nconst lines = rawText.split('\\n');\nlet tableStarted = false;\n\nfor (const raw of lines) {\n  const line = raw.trim();\n  if (!line) continue;\n\n  let cols;\n  if (line.includes('\\t')) {\n    cols = line.split('\\t').map(c => c.trim());\n  } else {\n    cols = line.split(/\\s{2,}/).map(c => c.trim()).filter(Boolean);\n  }\n\n  if (cols.length < 2) continue;\n\n  // Detectar fila de encabezado de la tabla de activos\n  if (/PLACA|N[°\\u00bao]\\.|DESCRIPCI|ART[\\u00cdI]CULO|SERIAL|CANTIDAD/i.test(line)) {\n    tableStarted = true;\n    continue;\n  }\n  if (!tableStarted) continue;\n\n  const plateRaw  = cols[0] || null;\n  const nameRaw   = cols[1] || null;\n  const serialRaw = cols[2] || null;\n  const qty       = parseInt(cols[3] || '1', 10);\n  const quantity  = isNaN(qty) ? 1 : qty;\n\n  if (plateRaw || nameRaw) {\n    items.push({ plateRaw, nameRaw, serialRaw, quantity });\n  }\n}\n\nconst sigafPayload = {\n  subject,\n  senderEmail,\n  receivedAt: receivedAt || new Date().toISOString(),\n  docxDriveUrl: googleDocUrl,\n  rawText,\n  formData: { solicitante, dependencia, fecha, motivo },\n  items,\n};\n\nreturn [{\n  json: {\n    sigafPayload,\n    _meta: {\n      itemsFound:  items.length,\n      solicitante,\n      dependencia,\n      senderEmail,\n    }\n  }\n}];"
+      }
+    },
+    {
+      "id": "bb110002",
+      "name": "POST → SIGAF /sync/transfer-request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4,
+      "position": [2464, -96],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SIGAF_API_URL }}/sync/transfer-request",
+        "authentication": "none",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json.sigafPayload) }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-Sync-Secret",
+              "value": "={{ $env.SIGAF_SYNC_SECRET }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true,
+              "responseFormat": "json"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Activos Fijos - Producción": {
+      "main": [
+        [{ "node": "Normalizar y clasificar correo candidato", "type": "main", "index": 0 }]
+      ]
+    },
+    "Normalizar y clasificar correo candidato": {
+      "main": [
+        [{ "node": "¿Correo candidato?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Correo candidato?": {
+      "main": [
+        [{ "node": "Preparar documento seleccionado", "type": "main", "index": 0 }],
+        [{ "node": "Descartar - Email no candidato",  "type": "main", "index": 0 }]
+      ]
+    },
+    "Preparar documento seleccionado": {
+      "main": [
+        [
+          { "node": "Subir DOCX a Drive",                          "type": "main", "index": 0 },
+          { "node": "Unir contexto original con Google Doc",       "type": "main", "index": 1 }
+        ]
+      ]
+    },
+    "Subir DOCX a Drive": {
+      "main": [
+        [{ "node": "Convertir DOCX a Google Doc", "type": "main", "index": 0 }]
+      ]
+    },
+    "Convertir DOCX a Google Doc": {
+      "main": [
+        [{ "node": "Registrar Google Doc convertido", "type": "main", "index": 0 }]
+      ]
+    },
+    "Registrar Google Doc convertido": {
+      "main": [
+        [{ "node": "Unir contexto original con Google Doc", "type": "main", "index": 0 }]
+      ]
+    },
+    "Unir contexto original con Google Doc": {
+      "main": [
+        [
+          { "node": "Exportar Google Doc como TXT", "type": "main", "index": 0 },
+          { "node": "Merge (final)",                "type": "main", "index": 1 }
+        ]
+      ]
+    },
+    "Exportar Google Doc como TXT": {
+      "main": [
+        [{ "node": "Merge (final)", "type": "main", "index": 0 }]
+      ]
+    },
+    "Merge (final)": {
+      "main": [
+        [{ "node": "Parsear F-AF-039 y construir payload SIGAF", "type": "main", "index": 0 }]
+      ]
+    },
+    "Parsear F-AF-039 y construir payload SIGAF": {
+      "main": [
+        [{ "node": "POST → SIGAF /sync/transfer-request", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": [
+    { "name": "SIGAF" },
+    { "name": "Ingesta" }
+  ],
+  "versionId": "sigaf-ingesta-v2",
+  "id": "sigaf-wf-001",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}
