@@ -301,7 +301,7 @@ export default function SettingsPage() {
               </h3>
               <p className="text-xs text-gray-500 dark:text-mi-400 mt-0.5">Asigna roles, cargos y dependencias a los usuarios del sistema.</p>
             </div>
-            <ChevronRight size={16} className="text-gray-300 dark:text-mi-600" />
+            <ChevronRight size={16} className="text-gray-300 dark:text-mi-400" />
           </div>
           <UserManagementTable />
         </div>

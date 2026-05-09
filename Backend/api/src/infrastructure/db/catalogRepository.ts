@@ -5,6 +5,7 @@ import {
   catalogAssetTypes,
   catalogAreas,
   catalogPeople,
+  assets,
 } from './schema'
 
 export function findBuildings(cityCode = '1') {
@@ -40,4 +41,16 @@ export function findPeople() {
     .from(catalogPeople)
     .where(eq(catalogPeople.active, true))
     .orderBy(catalogPeople.fullName)
+}
+
+export function findAreasByBuilding(buildingId: number) {
+  return db
+    .selectDistinct({ id: catalogAreas.id, name: catalogAreas.name })
+    .from(catalogAreas)
+    .innerJoin(assets, eq(assets.areaId, catalogAreas.id))
+    .where(and(
+      eq(assets.buildingId, buildingId),
+      eq(catalogAreas.active, true),
+    ))
+    .orderBy(catalogAreas.name)
 }

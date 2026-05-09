@@ -111,7 +111,7 @@ export default function TransfersTable({ data, meta, isLoading, onPageChange, on
                       {t.assetName}
                     </p>
                     {t.assetPlate && (
-                      <p className="font-mono text-[10px] text-gray-400 dark:text-mi-600 mt-0.5">
+                      <p className="font-mono text-[10px] text-gray-400 dark:text-mi-400 mt-0.5">
                         {t.assetPlate}
                       </p>
                     )}
@@ -125,7 +125,7 @@ export default function TransfersTable({ data, meta, isLoading, onPageChange, on
 
                   <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
                     <span className="flex items-center gap-1 text-gray-600 dark:text-mi-300">
-                      <ArrowRight size={12} className="shrink-0 text-gray-400 dark:text-mi-600" />
+                      <ArrowRight size={12} className="shrink-0 text-gray-400 dark:text-mi-400" />
                       <span className="truncate block max-w-[120px]">
                         {t.destBuildingName ?? '—'}
                       </span>

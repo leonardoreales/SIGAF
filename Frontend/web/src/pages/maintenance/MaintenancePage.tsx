@@ -259,7 +259,7 @@ export default function MaintenancePage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-gray-50/50 dark:bg-white/[0.02] text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase tracking-widest">
+              <tr className="bg-gray-50/50 dark:bg-white/[0.02] text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase tracking-widest">
                 <th className="px-6 py-4 font-semibold">Actividad / Activo</th>
                 <th className="px-6 py-4 font-semibold">Tipo</th>
                 <th className="px-6 py-4 font-semibold">Área Responsable</th>
@@ -299,7 +299,7 @@ export default function MaintenancePage() {
                         <span className="text-[14px] font-bold text-gray-900 dark:text-mi-100 group-hover:text-gold transition-colors leading-tight">
                           {task.activityName}
                         </span>
-                        <span className="text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase tracking-tighter mt-1">
+                        <span className="text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase tracking-tighter mt-1">
                           {task.assetPlate || 'SIN PLACA'}
                         </span>
                       </div>
@@ -357,7 +357,7 @@ export default function MaintenancePage() {
                             <ShieldCheck size={16} />
                           </button>
                         )}
-                        <button className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 dark:text-mi-600 transition-all">
+                        <button className="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/[0.06] text-gray-400 dark:text-mi-400 transition-all">
                           <MoreVertical size={16} />
                         </button>
                       </div>
@@ -382,16 +382,16 @@ export default function MaintenancePage() {
             </div>
             <div className="p-6 flex flex-col gap-4">
               <div>
-                <p className="text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase mb-1">Activo</p>
+                <p className="text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase mb-1">Activo</p>
                 <p className="text-sm font-bold text-gray-900 dark:text-white">{selectedTask?.activityName}</p>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase">Fecha Real</label>
+                  <label className="text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase">Fecha Real</label>
                   <input type="date" className="bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white" />
                 </div>
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase">Ejecutor</label>
+                  <label className="text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase">Ejecutor</label>
                   <select className="bg-gray-50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl px-3 py-2 text-sm text-gray-900 dark:text-white">
                     <option>Personal Propio</option>
                     <option>Proveedor Externo</option>
@@ -399,9 +399,9 @@ export default function MaintenancePage() {
                 </div>
               </div>
               <div className="flex flex-col gap-1.5">
-                <label className="text-[11px] font-mono text-gray-400 dark:text-mi-600 uppercase">Subir Soporte (PDF/JPG)</label>
+                <label className="text-[11px] font-mono text-gray-400 dark:text-mi-400 uppercase">Subir Soporte (PDF/JPG)</label>
                 <div className="border-2 border-dashed border-gray-200 dark:border-white/[0.1] rounded-2xl p-8 flex flex-col items-center gap-2 cursor-pointer hover:border-gold transition-colors">
-                  <Upload size={24} className="text-gray-300 dark:text-mi-700" />
+                  <Upload size={24} className="text-gray-300 dark:text-mi-500" />
                   <p className="text-[12px] text-gray-500 dark:text-mi-500">Arrastra o haz clic para subir</p>
                 </div>
               </div>

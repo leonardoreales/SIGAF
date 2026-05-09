@@ -62,10 +62,10 @@ export default function Layout() {
             <div className="flex items-center gap-3">
               {pageSection && (
                 <>
-                  <span className="font-mono text-[10px] tracking-[0.18em] text-gray-400 dark:text-mi-600 uppercase hidden sm:block">
+                  <span className="font-mono text-[10px] tracking-[0.18em] text-gray-400 dark:text-mi-400 uppercase hidden sm:block">
                     {pageSection}
                   </span>
-                  <span className="text-gray-300 dark:text-mi-700 hidden sm:block">/</span>
+                  <span className="text-gray-300 dark:text-mi-500 hidden sm:block">/</span>
                 </>
               )}
               <span className="font-syne font-semibold text-[14px] text-gray-800 dark:text-mi-100 tracking-tight">

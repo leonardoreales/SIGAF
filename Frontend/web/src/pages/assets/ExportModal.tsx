@@ -47,27 +47,52 @@ export default function ExportModal({ filters, onClose }: Props) {
       const data = allData
 
       const rows = data.map(a => ({
-        'Plaqueta':           a.plate              ?? '',
-        'Nombre':             a.name,
-        'Tipo':               a.assetTypeName       ?? '',
-        'Cuenta PUC':         a.pucAccount          ?? '',
-        'Marca':              a.brand               ?? '',
-        'Modelo':             a.model               ?? '',
-        'Serial':             a.serial              ?? '',
-        'Cantidad':           a.quantity,
-        'Valor ($)':          a.referenceValue      ?? '',
-        'Edificio':           a.buildingName        ?? '',
-        'Piso':               a.floor               ?? '',
-        'Bloque':             a.block               ?? '',
-        'Ubicación':          a.location            ?? '',
-        'Área':               a.areaName            ?? '',
-        'Responsable':        a.responsableRaw      ?? '',
-        'Estado':             a.status,
-        'Año Incorporación':  a.incorporationYear != null ? a.incorporationYear : 'Inicial',
-        'Notas':              a.notes               ?? '',
+        'PLACA':                  a.plate          ?? '',
+        'NOMBRE DEL ACTIVO':      a.name,
+        'DESCRIPCIÓN DEL ACTIVO': a.description    ?? '',
+        'TIPO DE ACTIVO':         a.assetTypeName  ?? '',
+        'CUENTA CONTABLE':        a.pucAccount     ?? '',
+        'MARCA':                  a.brand          ?? '',
+        'MODELO':                 a.model          ?? '',
+        'SERIAL':                 a.serial         ?? '',
+        'EDIFICIO':               a.buildingName   ?? '',
+        'PISO':                   a.floor          ?? '',
+        'UBICACIÓN/ÁREA':         a.location       ?? '',
+        'ÁREA RESPONSABLE':       a.areaName       ?? '',
+        'CANTIDAD':               a.quantity,
+        'VALOR DE REFERENCIA':    a.referenceValue != null ? parseFloat(a.referenceValue) : '',
+        'FECHA INGRESO':          a.createdAt
+                                    ? new Date(a.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+                                    : '',
       }))
 
       const ws = XLSX.utils.json_to_sheet(rows)
+
+      ws['!cols'] = [
+        { wch: 14 },  // PLACA
+        { wch: 32 },  // NOMBRE DEL ACTIVO
+        { wch: 42 },  // DESCRIPCIÓN DEL ACTIVO
+        { wch: 32 },  // TIPO DE ACTIVO
+        { wch: 16 },  // CUENTA CONTABLE
+        { wch: 16 },  // MARCA
+        { wch: 16 },  // MODELO
+        { wch: 22 },  // SERIAL
+        { wch: 16 },  // EDIFICIO
+        { wch: 8  },  // PISO
+        { wch: 38 },  // UBICACIÓN/ÁREA
+        { wch: 22 },  // ÁREA RESPONSABLE
+        { wch: 10 },  // CANTIDAD
+        { wch: 20 },  // VALOR DE REFERENCIA
+        { wch: 14 },  // FECHA INGRESO
+      ]
+
+      // Formato COP ($  #,##0) en todas las celdas de VALOR DE REFERENCIA (col M, índice 12)
+      const sheetRange = XLSX.utils.decode_range(ws['!ref'] ?? 'A1')
+      for (let r = 1; r <= sheetRange.e.r; r++) {
+        const cell = ws[XLSX.utils.encode_cell({ r, c: 13 })]
+        if (cell && cell.t === 'n') cell.z = '"$"\ #,##0'
+      }
+
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Activos')
 

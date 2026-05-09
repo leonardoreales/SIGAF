@@ -1,0 +1,25 @@
+- generic [ref=e3]:
+  - button [ref=e4] [cursor=pointer]:
+    - img [ref=e5]
+  - generic [ref=e9]:
+    - generic [ref=e10]:
+      - img "Logo" [ref=e11]
+      - generic [ref=e12]:
+        - paragraph [ref=e13]: Corporación Universitaria
+        - paragraph [ref=e14]: AMERICANA
+        - paragraph [ref=e15]: Gestión de Activos Fijos
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - heading "Bienvenido" [level=2] [ref=e20]
+        - paragraph [ref=e21]: Acceda con su identidad institucional corporativa
+        - generic [ref=e24]: "@americana.edu.co"
+      - generic [ref=e28]:
+        - button "Iniciar sesión con Google. Se abre en una pestaña nueva." [ref=e30] [cursor=pointer]:
+          - generic [ref=e32]:
+            - img [ref=e35]
+            - generic [ref=e42]: Iniciar sesión con Google
+        - iframe
+      - generic [ref=e44]:
+        - img [ref=e45]
+        - generic [ref=e47]: Protocolo de Seguridad AES-256
+    - paragraph [ref=e48]: SIGAF Enterprise v1.0

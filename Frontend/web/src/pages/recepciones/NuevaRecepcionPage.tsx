@@ -108,7 +108,7 @@ export default function NuevaRecepcionPage() {
           <ChevronLeft size={16} />
         </button>
         <div>
-          <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-mi-600 mb-0.5">
+          <nav className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-mi-400 mb-0.5">
             <button
               onClick={() => navigate('/recepciones')}
               className="hover:text-gray-600 dark:hover:text-mi-400 transition-colors"

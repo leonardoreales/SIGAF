@@ -1,5 +1,6 @@
 import type { Person } from '../../../lib/api'
 import type { AssetFormValues, ChangeField } from './useAssetForm'
+import { fmtCOP } from '../../../lib/utils'
 
 const LBL = 'block text-xs font-medium mb-1 text-gray-600 dark:text-mi-400'
 const INP = [
@@ -112,13 +113,20 @@ export default function FieldsAsignacion({ values, onChange, people }: Props) {
           <label className={LBL}>Valor de referencia ($)</label>
           <input
             type="number"
-            value={values.referenceValue}
+            value={values.referenceValue !== '' && values.referenceValue != null
+              ? Number(values.referenceValue)
+              : ''}
             onChange={e => onChange('referenceValue', e.target.value)}
             min={0}
-            step="0.01"
-            placeholder="0.00"
+            step="1"
+            placeholder="0"
             className={INP}
           />
+          {values.referenceValue && Number(values.referenceValue) > 0 && (
+            <p className="text-[10px] text-gray-400 dark:text-mi-400 mt-1">
+              = {fmtCOP(values.referenceValue)}
+            </p>
+          )}
         </div>
 
         <div>

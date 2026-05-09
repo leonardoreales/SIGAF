@@ -128,7 +128,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
         {!collapsed && (
           <>
             <span className="flex-1 truncate">{label}</span>
-            <Lock size={10} className="shrink-0 text-gray-300 dark:text-mi-700" />
+            <Lock size={10} className="shrink-0 text-gray-300 dark:text-mi-500" />
           </>
         )}
       </div>
@@ -177,7 +177,7 @@ function NavItemRow({ item, collapsed }: { item: NavItem; collapsed: boolean }) 
           )}
 
           {status === 'soon' && (
-            <span className="font-mono text-[9px] tracking-widest bg-gray-100 text-gray-400 border border-gray-200 dark:bg-mi-800 dark:text-mi-600 dark:border-mi-700/50 px-1.5 py-px rounded-sm uppercase leading-normal">
+            <span className="font-mono text-[9px] tracking-widest bg-gray-100 text-gray-400 border border-gray-200 dark:bg-mi-800 dark:text-mi-400 dark:border-mi-700/50 px-1.5 py-px rounded-sm uppercase leading-normal">
               pronto
             </span>
           )}
@@ -275,7 +275,7 @@ export default function Sidebar() {
           className={cn(
             'flex items-center justify-center shrink-0 rounded-md transition-colors',
             'text-gray-400 hover:text-gray-700 hover:bg-gray-100',
-            'dark:text-mi-600 dark:hover:text-mi-300 dark:hover:bg-white/[0.06]',
+            'dark:text-mi-400 dark:hover:text-mi-200 dark:hover:bg-white/[0.06]',
             collapsed ? 'w-8 h-8' : 'w-6 h-6',
           )}
           title={collapsed ? 'Expandir menú' : 'Colapsar menú'}
@@ -297,14 +297,14 @@ export default function Sidebar() {
                   onClick={() => toggleSection(section.id)}
                   className="w-full flex items-center gap-1.5 px-1.5 mb-1.5 group"
                 >
-                  <span className="font-mono text-[9px] tracking-[0.2em] text-gray-400 dark:text-mi-700 uppercase whitespace-nowrap group-hover:text-gray-600 dark:group-hover:text-mi-500 transition-colors duration-150">
+                  <span className="font-mono text-[9px] tracking-[0.2em] text-gray-400 dark:text-mi-500 uppercase whitespace-nowrap group-hover:text-gray-600 dark:group-hover:text-mi-300 transition-colors duration-150">
                     {section.title}
                   </span>
                   <div className="flex-1 h-px bg-gradient-to-r from-gray-200/80 dark:from-mi-800/90 to-transparent" />
                   <ChevronDown
                     size={9}
                     className={cn(
-                      'shrink-0 text-gray-300 dark:text-mi-700 group-hover:text-gray-400 dark:group-hover:text-mi-600 transition-all duration-200',
+                      'shrink-0 text-gray-300 dark:text-mi-500 group-hover:text-gray-400 dark:group-hover:text-mi-400 transition-all duration-200',
                       isClosed && '-rotate-90',
                     )}
                   />

@@ -9,7 +9,7 @@ export default function ComingSoonPage({ title }: Props) {
     <div className="flex flex-col items-center justify-center py-32 gap-4 select-none">
       <Construction
         size={48}
-        className="text-gray-300 dark:text-mi-600"
+        className="text-gray-300 dark:text-mi-500"
         strokeWidth={1.5}
       />
       <div className="text-center">

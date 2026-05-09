@@ -1,14 +1,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Search, X } from 'lucide-react'
+import {
+  Search, X, Building2, Layers, CircleDot,
+  CalendarDays, ChevronDown, MapPin,
+} from 'lucide-react'
 import { apiCatalogs } from '../../lib/api'
+import { useTheme } from '../../context/ThemeContext'
 import type { FiltersState } from './AssetsPage'
 
 const STATUS_OPTIONS = [
   { value: 'ACTIVO',           label: 'Activo' },
-  { value: 'BAJA',             label: 'Baja' },
-  { value: 'EN_TRASLADO',      label: 'En traslado' },
   { value: 'EN_MANTENIMIENTO', label: 'En mantenimiento' },
+  { value: 'EN_TRASLADO',      label: 'En traslado' },
+  { value: 'BAJA',             label: 'Baja' },
   { value: 'DADO_DE_BAJA',     label: 'Dado de baja' },
 ]
 
@@ -21,30 +25,131 @@ interface Props {
   onChange: (partial: Partial<FilterFields>) => void
 }
 
-const INPUT_CLS =
-  'w-full py-2 px-3 text-sm rounded-lg transition-colors ' +
-  'bg-white border border-gray-200 text-gray-900 placeholder-gray-400 ' +
-  'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 ' +
-  'dark:bg-mi-800 dark:border-mi-700/60 dark:text-mi-100 dark:placeholder-mi-500 ' +
-  'dark:focus:ring-gold/30 dark:focus:border-gold/50'
+// ── FilterSelect ──────────────────────────────────────────────────────────────
 
-const SELECT_CLS =
-  'w-full py-2 px-3 text-sm rounded-lg transition-colors ' +
-  'bg-white border border-gray-200 text-gray-900 ' +
-  'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold/60 ' +
-  'dark:bg-mi-800 dark:border-mi-700/60 dark:text-mi-100 ' +
-  'dark:focus:ring-gold/30 dark:focus:border-gold/50'
+interface SelectProps {
+  icon:        React.ElementType
+  value:       string
+  onChange:    (v: string) => void
+  placeholder: string
+  maxWidth?:   number
+  children:    React.ReactNode
+}
 
-const LBL = 'block text-xs font-medium text-gray-500 dark:text-mi-400 mb-1'
+function FilterSelect({ icon: Icon, value, onChange, placeholder, maxWidth = 200, children }: SelectProps) {
+  const [focused, setFocused] = useState(false)
+  const { isDark } = useTheme()
+  const isActive = Boolean(value)
+  const goldText   = isDark ? '#F5C842' : '#9C6E22'
+  const goldFocus  = isDark ? '#F5C842' : '#D9AB44'
+  const goldActive = isDark ? '#E6B220' : '#C8931A'
+
+  return (
+    <div style={{ position: 'relative', flexShrink: 0 }}>
+      <Icon
+        size={13}
+        style={{
+          position: 'absolute', left: 10, top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+          color: isActive ? goldActive : focused ? goldFocus : 'var(--tbl-text-sub)',
+          transition: 'color 0.15s',
+          zIndex: 1,
+        }}
+      />
+      <select
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={{
+          appearance: 'none',
+          WebkitAppearance: 'none',
+          padding: '7.5px 26px 7.5px 28px',
+          fontSize: 13,
+          border: `1px solid ${
+            focused ? goldFocus :
+            isActive ? 'rgba(217,171,68,0.50)' :
+            'var(--flt-border)'
+          }`,
+          borderRadius: 10,
+          background: isActive ? 'rgba(217,171,68,0.07)' : 'var(--flt-input)',
+          color: isActive ? goldText : 'var(--tbl-text)',
+          fontWeight: isActive ? 600 : 400,
+          outline: 'none',
+          cursor: 'pointer',
+          transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
+          boxShadow: focused ? '0 0 0 3px rgba(217,171,68,0.18)' : 'none',
+          maxWidth,
+          minWidth: 110,
+          textOverflow: 'ellipsis',
+        }}
+      >
+        <option value="">{placeholder}</option>
+        {children}
+      </select>
+      <ChevronDown
+        size={11}
+        style={{
+          position: 'absolute', right: 9, top: '50%',
+          transform: 'translateY(-50%)',
+          pointerEvents: 'none',
+          color: 'var(--tbl-text-sub)',
+        }}
+      />
+    </div>
+  )
+}
+
+// ── ActiveChip ────────────────────────────────────────────────────────────────
+
+function ActiveChip({ label, onRemove }: { label: string; onRemove: () => void }) {
+  const { isDark } = useTheme()
+  const goldText = isDark ? '#F5C842' : '#9C6E22'
+
+  return (
+    <span style={{
+      display: 'inline-flex', alignItems: 'center', gap: 5,
+      padding: '3px 6px 3px 10px',
+      borderRadius: 20,
+      background: 'rgba(217,171,68,0.10)',
+      border: '1px solid rgba(217,171,68,0.28)',
+      color: goldText,
+      fontSize: 12, fontWeight: 500,
+      whiteSpace: 'nowrap',
+    }}>
+      {label}
+      <button
+        onClick={onRemove}
+        style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          width: 16, height: 16, borderRadius: '50%',
+          background: 'rgba(217,171,68,0.20)',
+          border: 'none', cursor: 'pointer',
+          color: goldText, padding: 0,
+          transition: 'background 0.12s',
+          flexShrink: 0,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(217,171,68,0.40)')}
+        onMouseLeave={e => (e.currentTarget.style.background = 'rgba(217,171,68,0.20)')}
+      >
+        <X size={9} />
+      </button>
+    </span>
+  )
+}
+
+// ── AssetsFilters ─────────────────────────────────────────────────────────────
 
 export default function AssetsFilters({ value, onChange }: Props) {
-  const [localQ, setLocalQ] = useState(value.q)
+  const [localQ, setLocalQ]         = useState(value.q)
+  const [searchFocused, setSearchFocused] = useState(false)
+  const { isDark } = useTheme()
+  const goldText = isDark ? '#F5C842' : '#9C6E22'
   const mounted = useRef(false)
 
-  // Sync when filters are reset externally (e.g. clearAll)
   useEffect(() => { setLocalQ(value.q) }, [value.q])
 
-  // Debounce: dispara búsqueda 300ms después del último keystroke
   useEffect(() => {
     if (!mounted.current) { mounted.current = true; return }
     const t = setTimeout(() => onChange({ q: localQ.trim() }), 300)
@@ -56,129 +161,240 @@ export default function AssetsFilters({ value, onChange }: Props) {
     queryFn:  apiCatalogs.buildings,
     staleTime: Infinity,
   })
-
   const { data: assetTypes } = useQuery({
     queryKey: ['catalog', 'assetTypes'],
     queryFn:  apiCatalogs.assetTypes,
     staleTime: Infinity,
   })
 
+  const selectedBuilding = buildings?.find(b => b.code === value.building)
+  const buildingId = selectedBuilding?.id ?? null
+
+  const { data: areas } = useQuery({
+    queryKey:  ['catalog', 'areas', buildingId],
+    queryFn:   () => apiCatalogs.areasByBuilding(buildingId!),
+    enabled:   buildingId !== null,
+    staleTime: Infinity,
+  })
+
   function clearAll() {
     setLocalQ('')
-    onChange({ q: '', building: '', type: '', status: '', year: '' })
+    onChange({ q: '', building: '', type: '', status: '', year: '', area: '' })
   }
 
-  const hasActive = value.q || value.building || value.type || value.status || value.year
+  const activeChips: { key: keyof FilterFields; label: string }[] = []
+  if (value.building) {
+    const b = buildings?.find(b => b.code === value.building)
+    activeChips.push({ key: 'building', label: b?.name ?? value.building })
+  }
+  if (value.area) {
+    const a = areas?.find(a => String(a.id) === value.area)
+    activeChips.push({ key: 'area', label: a?.name ?? value.area })
+  }
+  if (value.type) {
+    const t = assetTypes?.find(t => t.code === value.type)
+    activeChips.push({ key: 'type', label: t?.name ?? value.type })
+  }
+  if (value.status) {
+    const s = STATUS_OPTIONS.find(s => s.value === value.status)
+    activeChips.push({ key: 'status', label: s?.label ?? value.status })
+  }
+  if (value.year) {
+    activeChips.push({ key: 'year', label: value.year })
+  }
 
   return (
-    <div className="
-      rounded-xl border p-4
-      bg-white border-gray-200
-      dark:bg-mi-900/40 dark:border-white/[0.05]
-    ">
-      <div className="flex flex-wrap gap-3 items-end">
+    <div style={{
+      background: 'var(--flt-bg)',
+      border: '1px solid var(--flt-border)',
+      borderRadius: 14,
+      overflow: 'hidden',
+      boxShadow: '0 1px 0 rgba(0,0,0,0.02), 0 4px 18px rgba(13,27,74,0.04)',
+    }}>
 
-        {/* Búsqueda */}
-        <div className="flex-1 min-w-[200px]">
-          <label className={LBL}>Buscar</label>
-          <div className="relative">
-            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-mi-500 pointer-events-none" />
-            <input
-              type="text"
-              value={localQ}
-              onChange={e => setLocalQ(e.target.value)}
-              placeholder="Placa, nombre, serial, marca, modelo…"
-              className={INPUT_CLS + ' pl-9' + (localQ ? ' pr-8' : '')}
-            />
-            {localQ && (
-              <button
-                type="button"
-                onClick={() => setLocalQ('')}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-mi-500 dark:hover:text-mi-300 transition-colors"
-                aria-label="Limpiar búsqueda"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+      {/* ── Fila única: Búsqueda + Filtros ───────────────────────────────── */}
+      <div style={{
+        padding: '9px 14px',
+        display: 'flex',
+        gap: 8,
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        borderBottom: activeChips.length > 0 ? '1px solid var(--flt-border)' : 'none',
+      }}>
+
+        {/* Search */}
+        <div style={{
+          position: 'relative',
+          flex: '1 1 220px',
+          minWidth: 180,
+          borderRadius: 9,
+          border: `1px solid ${searchFocused ? (isDark ? '#F5C842' : '#D9AB44') : 'var(--flt-border)'}`,
+          boxShadow: searchFocused ? '0 0 0 3px rgba(217,171,68,0.15)' : 'none',
+          background: 'var(--flt-input)',
+          transition: 'border-color 0.15s, box-shadow 0.15s',
+        }}>
+          <Search
+            size={14}
+            style={{
+              position: 'absolute', left: 11, top: '50%',
+              transform: 'translateY(-50%)',
+              color: searchFocused ? (isDark ? '#F5C842' : '#D9AB44') : 'var(--tbl-text-sub)',
+              pointerEvents: 'none',
+              transition: 'color 0.15s',
+            }}
+          />
+          <input
+            type="text"
+            value={localQ}
+            onChange={e => setLocalQ(e.target.value)}
+            onFocus={() => setSearchFocused(true)}
+            onBlur={() => setSearchFocused(false)}
+            placeholder="Buscar por placa, nombre, serial, marca…"
+            style={{
+              width: '100%',
+              padding: '7.5px 34px',
+              fontSize: 13,
+              border: 'none',
+              borderRadius: 8,
+              background: 'transparent',
+              color: 'var(--tbl-text)',
+              outline: 'none',
+              boxSizing: 'border-box',
+            }}
+          />
+          {localQ && (
+            <button
+              type="button"
+              onClick={() => setLocalQ('')}
+              style={{
+                position: 'absolute', right: 10, top: '50%',
+                transform: 'translateY(-50%)',
+                color: 'var(--tbl-text-sub)',
+                background: 'none', border: 'none',
+                cursor: 'pointer', padding: 3,
+                display: 'flex', alignItems: 'center',
+              }}
+            >
+              <X size={13} />
+            </button>
+          )}
         </div>
 
-        {/* Edificio */}
-        <div className="min-w-[160px]">
-          <label className={LBL}>Edificio</label>
-          <select
-            value={value.building}
-            onChange={e => onChange({ building: e.target.value })}
-            className={SELECT_CLS}
-          >
-            <option value="">Todos</option>
-            {buildings?.map(b => (
-              <option key={b.id} value={b.code}>{b.name}</option>
-            ))}
-          </select>
-        </div>
+        {/* Divider */}
+        <div style={{ width: 1, height: 24, background: 'var(--flt-border)', flexShrink: 0 }} />
 
-        {/* Tipo */}
-        <div className="min-w-[150px]">
-          <label className={LBL}>Tipo</label>
-          <select
-            value={value.type}
-            onChange={e => onChange({ type: e.target.value })}
-            className={SELECT_CLS}
-          >
-            <option value="">Todos</option>
-            {assetTypes?.map(t => (
-              <option key={t.code} value={t.code}>{t.name}</option>
-            ))}
-          </select>
-        </div>
+        <FilterSelect
+          icon={Building2}
+          value={value.building}
+          onChange={v => onChange({ building: v, area: '' })}
+          placeholder="Edificio"
+          maxWidth={190}
+        >
+          {buildings?.map(b => <option key={b.id} value={b.code}>{b.name}</option>)}
+        </FilterSelect>
 
-        {/* Estado */}
-        <div className="min-w-[155px]">
-          <label className={LBL}>Estado</label>
-          <select
-            value={value.status}
-            onChange={e => onChange({ status: e.target.value })}
-            className={SELECT_CLS}
+        {value.building && (
+          <FilterSelect
+            icon={MapPin}
+            value={value.area}
+            onChange={v => onChange({ area: v })}
+            placeholder="Área"
+            maxWidth={190}
           >
-            <option value="">Todos</option>
-            {STATUS_OPTIONS.map(s => (
-              <option key={s.value} value={s.value}>{s.label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Año */}
-        <div className="w-[110px]">
-          <label className={LBL}>Año</label>
-          <select
-            value={value.year}
-            onChange={e => onChange({ year: e.target.value })}
-            className={SELECT_CLS}
-          >
-            <option value="">Todos</option>
-            {YEAR_OPTIONS.map(y => (
-              <option key={y} value={y}>{y}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Limpiar */}
-        {hasActive && (
-          <button
-            onClick={clearAll}
-            className="
-              flex items-center gap-1.5 text-sm py-2 whitespace-nowrap transition-colors
-              text-gray-500 hover:text-red-600
-              dark:text-mi-400 dark:hover:text-red-400
-            "
-          >
-            <X size={14} />
-            Limpiar
-          </button>
+            {areas?.map(a => <option key={a.id} value={String(a.id)}>{a.name}</option>)}
+          </FilterSelect>
         )}
 
+        <FilterSelect
+          icon={Layers}
+          value={value.type}
+          onChange={v => onChange({ type: v })}
+          placeholder="Tipo de activo"
+          maxWidth={200}
+        >
+          {assetTypes?.map(t => <option key={t.code} value={t.code}>{t.name}</option>)}
+        </FilterSelect>
+
+        <FilterSelect
+          icon={CircleDot}
+          value={value.status}
+          onChange={v => onChange({ status: v })}
+          placeholder="Estado"
+          maxWidth={175}
+        >
+          {STATUS_OPTIONS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
+        </FilterSelect>
+
+        <FilterSelect
+          icon={CalendarDays}
+          value={value.year}
+          onChange={v => onChange({ year: v })}
+          placeholder="Año"
+          maxWidth={120}
+        >
+          {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
+        </FilterSelect>
+
+        {/* Spacer */}
+        <div style={{ flex: 1 }} />
+
+        {/* Contador + limpiar */}
+        {activeChips.length > 0 && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
+            <span style={{
+              fontSize: 11,
+              fontFamily: '"JetBrains Mono", monospace',
+              background: 'rgba(217,171,68,0.10)',
+              border: '1px solid rgba(217,171,68,0.22)',
+              color: goldText,
+              borderRadius: 20,
+              padding: '2px 8px',
+              fontWeight: 600,
+            }}>
+              {activeChips.length} {activeChips.length === 1 ? 'filtro' : 'filtros'}
+            </span>
+            <button
+              onClick={clearAll}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                fontSize: 12, color: 'var(--tbl-text-sub)',
+                background: 'none', border: 'none', cursor: 'pointer',
+                padding: '2px 4px', whiteSpace: 'nowrap',
+                transition: 'color 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#DC2626')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--tbl-text-sub)')}
+            >
+              <X size={12} /> Limpiar todo
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* ── Fila 3: Chips activos ─────────────────────────────────────────── */}
+      {activeChips.length > 0 && (
+        <div style={{
+          padding: '8px 14px',
+          display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center',
+          background: 'rgba(217,171,68,0.025)',
+        }}>
+          <span style={{
+            fontSize: 10.5, color: 'var(--tbl-text-sub)',
+            fontWeight: 600, letterSpacing: '0.08em',
+            textTransform: 'uppercase', marginRight: 2,
+            fontFamily: '"JetBrains Mono", monospace',
+          }}>
+            Filtrado por:
+          </span>
+          {activeChips.map(chip => (
+            <ActiveChip
+              key={chip.key}
+              label={chip.label}
+              onRemove={() => onChange({ [chip.key]: '' } as Partial<FilterFields>)}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

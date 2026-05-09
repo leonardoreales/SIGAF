@@ -77,6 +77,7 @@ function buildConditions(filter: Partial<AssetFilter>): SQL[] {
   if (filter.status)   conds.push(eq(assets.status, filter.status))
   if (filter.year)     conds.push(eq(assets.incorporationYear, filter.year))
   if (filter.building) conds.push(eq(catalogBuildings.code, filter.building))
+  if (filter.areaId)   conds.push(eq(assets.areaId, filter.areaId))
   return conds
 }
 

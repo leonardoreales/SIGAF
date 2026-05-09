@@ -5,7 +5,7 @@ import {
   ChevronRight, ArrowLeft, BarChart3, Filter,
   TrendingUp, Box, Search, Download
 } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { cn, fmtCOP } from '../../lib/utils'
 import DistributionChart from '../dashboard/DistributionChart'
 
 interface StatItem {
@@ -114,7 +114,7 @@ export default function StatisticsPage() {
 
         <div className="flex items-center gap-3">
           <div className="relative group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-gold transition-colors" size={14} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-mi-500 group-focus-within:text-gold transition-colors" size={14} />
             <input 
               type="text" 
               placeholder={`Buscar ${groupBy}...`}
@@ -123,7 +123,7 @@ export default function StatisticsPage() {
               className="pl-9 pr-4 py-2 bg-white/50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl text-xs focus:ring-2 focus:ring-gold/20 focus:border-gold outline-none transition-all w-48 lg:w-64"
             />
           </div>
-          <button className="p-2.5 bg-white/50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl text-gray-500 hover:text-gold transition-all">
+          <button className="p-2.5 bg-white/50 dark:bg-white/[0.03] border border-gray-200 dark:border-white/[0.08] rounded-xl text-gray-500 dark:text-mi-400 hover:text-gold transition-all">
             <Download size={16} />
           </button>
         </div>
@@ -154,7 +154,7 @@ export default function StatisticsPage() {
               "shrink-0 flex items-center gap-2 px-4 py-2 rounded-xl text-[12px] transition-all border",
               hierarchy.length === 0 
                 ? "bg-mi-900 border-mi-800 text-gold shadow-lg shadow-gold/10" 
-                : "bg-white/40 dark:bg-white/[0.02] border-gray-200 dark:border-white/[0.05] text-gray-400 dark:text-mi-600 hover:border-gold/30 hover:text-mi-300"
+                : "bg-white/40 dark:bg-white/[0.02] border-gray-200 dark:border-white/[0.05] text-gray-400 dark:text-mi-400 hover:border-gold/30 hover:text-mi-200"
             )}
           >
             <Box size={14} />
@@ -163,7 +163,7 @@ export default function StatisticsPage() {
 
           {hierarchy.map((step, idx) => (
             <div key={idx} className="flex items-center gap-2 animate-in slide-in-from-left-4 duration-500" style={{ animationDelay: `${idx * 100}ms` }}>
-              <ChevronRight size={14} className="text-gray-300 dark:text-mi-800" />
+              <ChevronRight size={14} className="text-gray-300 dark:text-mi-400" />
               <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gold/5 border border-gold/20 text-gold text-[12px] shadow-sm">
                 <span className="opacity-50 uppercase font-mono text-[9px]">{step.type}:</span>
                 <span className="font-semibold">{step.label}</span>
@@ -204,7 +204,7 @@ export default function StatisticsPage() {
           <div className="absolute -right-4 -top-4 p-8 text-gold/[0.03] group-hover:text-gold/[0.08] transition-all duration-500">
             <TrendingUp size={120} strokeWidth={1} />
           </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-600 mb-2">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-400 mb-2">
             Activos en Vista
           </p>
           <div className="flex items-baseline gap-2">
@@ -217,7 +217,7 @@ export default function StatisticsPage() {
             <div className="h-1 flex-1 bg-gray-100 dark:bg-white/5 rounded-full overflow-hidden">
                <div className="h-full bg-gold w-[65%]" />
             </div>
-            <span className="text-[10px] font-mono text-gray-400">65% cap.</span>
+            <span className="text-[10px] font-mono text-gray-400 dark:text-mi-500">65% cap.</span>
           </div>
         </div>
 
@@ -225,15 +225,15 @@ export default function StatisticsPage() {
           <div className="absolute -right-4 -top-4 p-8 text-emerald-500/[0.03] group-hover:text-emerald-500/[0.08] transition-all duration-500">
             <Briefcase size={120} strokeWidth={1} />
           </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-600 mb-2">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-400 mb-2">
             Valoración Activa
           </p>
           <div className="flex items-baseline gap-2">
             <h3 className="text-3xl font-syne font-bold text-gray-800 dark:text-mi-100">
-              ${(totalValor / 1000000).toFixed(1)}M
+              {fmtCOP(totalValor)}
             </h3>
           </div>
-          <p className="mt-4 text-[10px] text-gray-500 dark:text-mi-600">
+          <p className="mt-4 text-[10px] text-gray-500 dark:text-mi-400">
             Basado en valor de adquisición reportado.
           </p>
         </div>
@@ -242,13 +242,13 @@ export default function StatisticsPage() {
           <div className="absolute -right-4 -top-4 p-8 text-mi-500/[0.03] group-hover:text-mi-500/[0.08] transition-all duration-500">
             <Layers size={120} strokeWidth={1} />
           </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-600 mb-2">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-400 mb-2">
             Densidad de Datos
           </p>
           <h3 className="text-3xl font-syne font-bold text-gray-800 dark:text-mi-100">
             {stats.length} <span className="text-sm font-medium opacity-40">{groupBy}s</span>
           </h3>
-          <p className="mt-4 text-[10px] text-gray-500 dark:text-mi-600">
+          <p className="mt-4 text-[10px] text-gray-500 dark:text-mi-400">
             Promedio de {(totalActivos / (stats.length || 1)).toFixed(1)} activos por nodo.
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function StatisticsPage() {
           <div className="absolute -right-4 -top-4 p-8 text-gold/10">
             <Filter size={120} strokeWidth={1} />
           </div>
-          <p className="text-[10px] font-mono uppercase tracking-[0.2em] text-gray-400 dark:text-mi-600 mb-2 text-gold">
+          <p className="text-[10px] font-mono uppercase tracking-[0.2em] mb-2 text-gold">
             Dimensión Actual
           </p>
           <h3 className="text-3xl font-syne font-bold text-gray-800 dark:text-mi-100 capitalize">
@@ -286,12 +286,12 @@ export default function StatisticsPage() {
              <div className="card p-4 flex flex-col items-center justify-center text-center gap-2 bg-emerald-500/5 border-emerald-500/10">
                 <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-500">Máximo</span>
                 <span className="text-lg font-bold text-emerald-400">{chartItems[0]?.cantidad || 0}</span>
-                <span className="text-[10px] text-gray-400 truncate w-full px-2">{chartItems[0]?.nombre}</span>
+                <span className="text-[10px] text-gray-400 dark:text-mi-400 truncate w-full px-2">{chartItems[0]?.nombre}</span>
              </div>
              <div className="card p-4 flex flex-col items-center justify-center text-center gap-2 bg-mi-500/5 border-mi-500/10">
                 <span className="text-[9px] font-mono uppercase tracking-widest text-mi-500">Mínimo</span>
                 <span className="text-lg font-bold text-mi-400">{chartItems[chartItems.length-1]?.cantidad || 0}</span>
-                <span className="text-[10px] text-gray-400 truncate w-full px-2">{chartItems[chartItems.length-1]?.nombre}</span>
+                <span className="text-[10px] text-gray-400 dark:text-mi-400 truncate w-full px-2">{chartItems[chartItems.length-1]?.nombre}</span>
              </div>
           </div>
         </div>
@@ -300,10 +300,10 @@ export default function StatisticsPage() {
         <div className="card rounded-2xl overflow-hidden flex flex-col shadow-2xl shadow-black/20">
           <div className="p-6 border-b border-gray-100 dark:border-white/[0.05] bg-gray-50/30 dark:bg-white/[0.01] flex items-center justify-between">
             <div>
-              <h3 className="text-[11px] font-mono tracking-[0.2em] uppercase text-gray-400 dark:text-mi-600 mb-1">
+              <h3 className="text-[11px] font-mono tracking-[0.2em] uppercase text-gray-400 dark:text-mi-400 mb-1">
                 Desglose Jerárquico
               </h3>
-              <p className="text-[10px] text-gray-500">Haz clic en la flecha para profundizar en la estructura.</p>
+              <p className="text-[10px] text-gray-500 dark:text-mi-400">Haz clic en la flecha para profundizar en la estructura.</p>
             </div>
             {hierarchy.length > 0 && (
               <button 
@@ -320,10 +320,10 @@ export default function StatisticsPage() {
             <table className="w-full text-left border-collapse">
               <thead className="sticky top-0 z-10 bg-white/95 dark:bg-[#0D1B4A]/95 backdrop-blur-md shadow-sm">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-700">Nodo / Dimensión</th>
-                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-700 text-right">Cantidad</th>
-                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-700 text-right">Valor Est.</th>
-                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-700 text-center">Acción</th>
+                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-400">Nodo / Dimensión</th>
+                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-400 text-right">Cantidad</th>
+                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-400 text-right">Valor Est.</th>
+                  <th className="px-6 py-4 text-[10px] font-mono uppercase tracking-widest text-gray-400 dark:text-mi-400 text-center">Acción</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100 dark:divide-white/[0.04]">
@@ -366,14 +366,14 @@ export default function StatisticsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <span className="text-[11px] font-mono text-gray-500 dark:text-mi-500">
-                          ${(parseFloat(item.valor_total || '0') / 1000000).toFixed(1)}M
+                          {fmtCOP(parseFloat(item.valor_total || '0'))}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-center">
                         {(['building', 'floor', 'area'].includes(groupBy)) && (item as any)[groupBy] !== 'Sin especificar' ? (
                           <button 
                             onClick={() => handleDrillDown(item)}
-                            className="p-2 rounded-xl text-gray-300 dark:text-mi-800 hover:text-gold dark:hover:text-gold hover:bg-gold/10 border border-transparent hover:border-gold/20 transition-all shadow-sm active:scale-95"
+                            className="p-2 rounded-xl text-gray-300 dark:text-mi-500 hover:text-gold dark:hover:text-gold hover:bg-gold/10 border border-transparent hover:border-gold/20 transition-all shadow-sm active:scale-95"
                             title="Explorar este nodo"
                           >
                             <ChevronRight size={18} />
@@ -391,7 +391,7 @@ export default function StatisticsPage() {
             </table>
           </div>
           
-          <div className="p-4 bg-gray-50/50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/[0.05] text-[10px] text-gray-400 dark:text-mi-700 font-mono text-center uppercase tracking-widest">
+          <div className="p-4 bg-gray-50/50 dark:bg-white/[0.02] border-t border-gray-100 dark:border-white/[0.05] text-[10px] text-gray-400 dark:text-mi-500 font-mono text-center uppercase tracking-widest">
             Mostrando {filteredStats.length} de {stats.length} resultados totales
           </div>
         </div>
@@ -406,7 +406,7 @@ export default function StatisticsPage() {
             <Building2 size={80} />
           </div>
           <h4 className="text-[10px] font-mono uppercase tracking-widest text-gold mb-4">Información de Nivel</h4>
-          <p className="text-[13px] text-gray-600 dark:text-mi-300 leading-relaxed">
+          <p className="text-[13px] text-gray-600 dark:text-mi-200 leading-relaxed">
             Actualmente te encuentras analizando la distribución por <span className="text-gold font-bold">{groupBy}</span>. 
             {hierarchy.length > 0 ? (
               <> Filtrado por: <span className="italic">{hierarchy.map(h => h.label).join(' > ')}</span>.</>
@@ -425,7 +425,7 @@ export default function StatisticsPage() {
              <div className="text-2xl font-bold text-gray-800 dark:text-mi-100">
                {((totalActivos / 14000) * 100).toFixed(1)}%
              </div>
-             <div className="text-[10px] text-gray-500 dark:text-mi-500 leading-tight">
+             <div className="text-[10px] text-gray-500 dark:text-mi-400 leading-tight">
                Representación del total del inventario maestro (aprox. 14k activos).
              </div>
           </div>
@@ -436,7 +436,7 @@ export default function StatisticsPage() {
             <MapPin size={80} />
           </div>
           <h4 className="text-[10px] font-mono uppercase tracking-widest text-emerald-500 mb-4">Sugerencia de Análisis</h4>
-          <p className="text-[11px] text-gray-500 dark:text-mi-400 italic">
+          <p className="text-[11px] text-gray-500 dark:text-mi-300 italic">
             "Prueba cambiar a la dimensión de 'Áreas' para ver cómo se distribuye la carga operativa entre las facultades y departamentos."
           </p>
         </div>

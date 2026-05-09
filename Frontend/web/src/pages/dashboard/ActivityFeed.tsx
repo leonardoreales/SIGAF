@@ -81,14 +81,14 @@ function EntryRow({ entry, isLast }: { entry: ActivityEntry; isLast: boolean }) 
           {entry.message}
         </p>
         {entry.detail && (
-          <p className="text-[11px] text-gray-400 dark:text-mi-600 leading-snug truncate mt-0.5">
+          <p className="text-[11px] text-gray-400 dark:text-mi-400 leading-snug truncate mt-0.5">
             {entry.detail}
           </p>
         )}
       </div>
 
       {/* Time */}
-      <span className="shrink-0 text-[10px] font-mono text-gray-300 dark:text-mi-700 self-start pt-[3px]">
+      <span className="shrink-0 text-[10px] font-mono text-gray-400 dark:text-mi-500 self-start pt-[3px]">
         {timeAgo(entry.createdAt)}
       </span>
     </div>
@@ -108,8 +108,8 @@ export default function ActivityFeed({ entries, live = false }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05] shrink-0">
         <div className="flex items-center gap-2">
-          <Activity size={13} className="text-gray-400 dark:text-mi-600" />
-          <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-600">
+          <Activity size={13} className="text-gray-400 dark:text-mi-400" />
+          <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-400">
             Actividad Reciente
           </h3>
         </div>
@@ -125,8 +125,8 @@ export default function ActivityFeed({ entries, live = false }: Props) {
       <div className="flex-1 overflow-y-auto px-5">
         {entries.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-14 gap-2">
-            <Activity size={22} className="text-gray-200 dark:text-mi-800" />
-            <p className="text-xs text-gray-300 dark:text-mi-700">Sin actividad registrada</p>
+            <Activity size={22} className="text-gray-300 dark:text-mi-500" />
+            <p className="text-xs text-gray-400 dark:text-mi-500">Sin actividad registrada</p>
           </div>
         ) : (
           entries.map((entry, i) => (

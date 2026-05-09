@@ -170,14 +170,14 @@ export default function QuantityModal({ itemName, quantity, onConfirm, onCancel,
                                         <span className="text-amber-500 dark:text-amber-400 italic">— por llenar</span>
               return (
                 <div key={i} className="flex items-center gap-2 text-xs text-gray-600 dark:text-mi-300 font-mono">
-                  <span className="text-gray-400 dark:text-mi-600 w-4 text-right">{i + 1}</span>
+                  <span className="text-gray-400 dark:text-mi-400 w-4 text-right">{i + 1}</span>
                   <span className="truncate">{itemName.slice(0, 28)}{itemName.length > 28 ? '…' : ''}</span>
                   <span className="ml-auto shrink-0">{serialLabel}</span>
                 </div>
               )
             })}
             {quantity > previewRows && (
-              <p className="text-xs text-gray-400 dark:text-mi-600 text-center pt-0.5">
+              <p className="text-xs text-gray-400 dark:text-mi-400 text-center pt-0.5">
                 … y {quantity - previewRows} más
               </p>
             )}

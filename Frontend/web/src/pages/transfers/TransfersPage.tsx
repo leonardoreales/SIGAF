@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeftRight, Clock, CheckCircle2, XCircle, Loader2, Plus,
@@ -84,6 +84,18 @@ export default function TransfersPage() {
   // ── Solicitudes state ──
   const [rFilters,    setRFilters]    = useState<RequestFilters>(DEFAULT_REQUEST_FILTERS)
   const [rSearch,     setRSearch]     = useState('')
+
+  // ── SSE: auto-recarga cuando n8n ingesta una nueva solicitud ──
+  useEffect(() => {
+    const token = localStorage.getItem('sigaf_token')
+    if (!token) return
+    const base = import.meta.env.VITE_API_URL ?? 'http://localhost:3000'
+    const es   = new EventSource(`${base}/sync/events?token=${encodeURIComponent(token)}`)
+    es.addEventListener('transfer_request:created', () => {
+      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+    })
+    return () => es.close()
+  }, [queryClient])
 
   // ── Queries: traslados ──
   const { data: tStats, isLoading: tStatsLoading } = useQuery({

@@ -66,10 +66,10 @@ export interface AssetStats {
     total:             number
     activos:           number
     bajas:             number
-    valorBajas:        string
+    valorBajas:        number
     enTraslado:        number
     revisionRequerida: number
-    valorTotal:        string
+    valorTotal:        number
     nuevos30d:         number
   }
   porEdificio: Array<{ nombre: string; cantidad: number }>
@@ -142,10 +142,11 @@ export const apiAssets = {
 }
 
 export const apiCatalogs = {
-  buildings:  () => request<Building[]>('/catalogs/buildings'),
-  assetTypes: () => request<AssetType[]>('/catalogs/asset-types'),
-  areas:      () => request<Area[]>('/catalogs/areas'),
-  people:     () => request<Person[]>('/catalogs/people'),
+  buildings:        () => request<Building[]>('/catalogs/buildings'),
+  assetTypes:       () => request<AssetType[]>('/catalogs/asset-types'),
+  areas:            () => request<Area[]>('/catalogs/areas'),
+  areasByBuilding:  (buildingId: number) => request<Area[]>(`/catalogs/areas/by-building/${buildingId}`),
+  people:           () => request<Person[]>('/catalogs/people'),
 }
 
 // ── Transfers ─────────────────────────────────────────────────────────────────

@@ -37,7 +37,7 @@ function StatCard({ label, value, sub, color }: { label: string; value: string |
     )}>
       <p className="text-xs text-gray-500 dark:text-mi-500">{label}</p>
       <p className="text-2xl font-syne font-bold text-gray-900 dark:text-mi-50">{value}</p>
-      <p className="text-[11px] text-gray-400 dark:text-mi-600">{sub}</p>
+      <p className="text-[11px] text-gray-400 dark:text-mi-400">{sub}</p>
     </div>
   )
 }
@@ -143,7 +143,7 @@ export default function RecepcionesPage() {
         ">
           <div className="flex items-center gap-2 mb-5">
             <Info size={13} className="shrink-0 text-gray-400 dark:text-mi-500" />
-            <p className="text-xs font-mono tracking-[0.15em] uppercase text-gray-400 dark:text-mi-600">
+            <p className="text-xs font-mono tracking-[0.15em] uppercase text-gray-400 dark:text-mi-400">
               Cómo funciona
             </p>
           </div>

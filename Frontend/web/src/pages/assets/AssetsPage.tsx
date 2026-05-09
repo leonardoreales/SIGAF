@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Plus, FileDown } from 'lucide-react'
+import { Plus, Download } from 'lucide-react'
 import { apiAssets, ApiError } from '../../lib/api'
 import type { SyncEvent }  from '../../lib/api'
 import { useSyncEvents }   from '../../hooks/useSyncEvents'
@@ -9,6 +9,7 @@ import SyncBanner          from '../../components/SyncBanner'
 import AssetsFilters       from './AssetsFilters'
 import AssetsTable         from './AssetsTable'
 import AssetFormModal      from './AssetFormModal'
+import AssetDrawer         from './AssetDrawer'
 import ExportModal         from './ExportModal'
 
 export interface FiltersState {
@@ -17,21 +18,22 @@ export interface FiltersState {
   type:     string
   status:   string
   year:     string
+  area:     string
   page:     number
   limit:    number
 }
 
 const DEFAULT_FILTERS: FiltersState = {
-  q: '', building: '', type: '', status: '', year: '', page: 1, limit: 50,
+  q: '', building: '', type: '', status: '', year: '', area: '', page: 1, limit: 50,
 }
 
 export default function AssetsPage() {
   const queryClient = useQueryClient()
-  const [filters,    setFilters]    = useState<FiltersState>(DEFAULT_FILTERS)
-  const [editingId,  setEditingId]  = useState<number | null>(null)
-  const [showModal,  setShowModal]  = useState(false)
-  const [showExport, setShowExport] = useState(false)
-  const [syncEvent,  setSyncEvent]  = useState<SyncEvent | null>(null)
+  const [filters,      setFilters]      = useState<FiltersState>(DEFAULT_FILTERS)
+  const [viewingId,    setViewingId]    = useState<number | null>(null)
+  const [showCreate,   setShowCreate]   = useState(false)
+  const [showExport,   setShowExport]   = useState(false)
+  const [syncEvent,    setSyncEvent]    = useState<SyncEvent | null>(null)
 
   const handleSync = useCallback((event: SyncEvent) => {
     setSyncEvent(event)
@@ -53,7 +55,8 @@ export default function AssetsPage() {
         building: filters.building || undefined,
         type:     filters.type     || undefined,
         status:   filters.status   || undefined,
-        year:     filters.year ? Number(filters.year) : undefined,
+        year:     filters.year   ? Number(filters.year) : undefined,
+        areaId:   filters.area   ? Number(filters.area) : undefined,
         page:     filters.page,
         limit:    filters.limit,
       }),
@@ -79,56 +82,77 @@ export default function AssetsPage() {
     setFilters(f => ({ ...f, ...partial, page: 1 }))
   }
 
-  function openCreate()         { setEditingId(null); setShowModal(true) }
-  function openEdit(id: number) { setEditingId(id);   setShowModal(true) }
-  function handleClose()        { setShowModal(false); setEditingId(null) }
-  function handleSaved() {
+  function handleDrawerSaved() {
     queryClient.invalidateQueries({ queryKey: ['assets'] })
-    activityBus.emit(
-      editingId !== null
-        ? { type: 'asset_updated', message: 'Activo actualizado', detail: `ID ${editingId}` }
-        : { type: 'asset_created', message: 'Activo registrado en el sistema' }
-    )
-    handleClose()
+    activityBus.emit({ type: 'asset_updated', message: 'Activo actualizado', detail: `ID ${viewingId}` })
+    setViewingId(null)
+  }
+
+  function handleCreateSaved() {
+    queryClient.invalidateQueries({ queryKey: ['assets'] })
+    activityBus.emit({ type: 'asset_created', message: 'Activo registrado en el sistema' })
+    setShowCreate(false)
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
 
-      {/* Encabezado */}
-      <div className="flex items-center justify-between gap-4">
+      {/* ── Header institucional ──────────────────────────────── */}
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 24 }}>
         <div>
-          <h1 className="text-2xl font-syne font-bold text-gray-900 dark:text-mi-50">
+          <p
+            className="text-[#9C6E22] dark:text-gold"
+            style={{
+              fontFamily: '"JetBrains Mono", monospace',
+              fontSize: 10, letterSpacing: '0.28em',
+              textTransform: 'uppercase',
+              marginBottom: 6, margin: '0 0 6px',
+            }}
+          >
+            ◇ Universidad Americana · Inventario General
+          </p>
+          <h1 className="font-syne font-bold text-[28px] tracking-tight text-gray-900 dark:text-mi-50 leading-none m-0">
             Activos Fijos
           </h1>
+          <div style={{ width: 100, height: 2, marginTop: 6, background: 'linear-gradient(90deg, #D9AB44, transparent)', borderRadius: 1 }} />
           {data && (
-            <p className="text-sm text-gray-500 dark:text-mi-400 mt-0.5">
-              {data.meta.total.toLocaleString('es-CO')} activos registrados
+            <p style={{ marginTop: 8, color: 'var(--tbl-text-sub)', fontSize: 13.5, margin: '8px 0 0' }}>
+              <strong style={{ color: 'var(--tbl-text)', fontWeight: 600 }}>
+                {data.meta.total.toLocaleString('es-CO')}
+              </strong>{' '}
+              activos en el sistema
             </p>
           )}
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+
+        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
           <button
             onClick={() => setShowExport(true)}
-            className="
-              flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors
-              bg-emerald-600 hover:bg-emerald-700 text-white
-              dark:bg-emerald-700/80 dark:hover:bg-emerald-600
-            "
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 500,
+              background: 'var(--tbl-bg)', color: 'var(--tbl-text)',
+              border: '1px solid var(--tbl-border)',
+              cursor: 'pointer', transition: 'border-color 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#D9AB44')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'var(--tbl-border)')}
           >
-            <FileDown size={16} />
-            Exportar
+            <Download size={15} /> Exportar
           </button>
           <button
-            onClick={openCreate}
-            className="
-              flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors
-              bg-gray-900 hover:bg-gray-800 text-white
-              dark:bg-gold dark:hover:bg-gold-300 dark:text-mi-950 dark:font-semibold
-            "
+            onClick={() => setShowCreate(true)}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: 7,
+              padding: '8px 14px', borderRadius: 10, fontSize: 13, fontWeight: 600,
+              background: '#0D1B4A', color: 'white',
+              border: '1px solid transparent',
+              cursor: 'pointer', transition: 'background 0.15s',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#142663')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#0D1B4A')}
           >
-            <Plus size={16} />
-            Nuevo activo
+            <Plus size={15} /> Nuevo activo
           </button>
         </div>
       </div>
@@ -149,10 +173,7 @@ export default function AssetsPage() {
           flex items-center justify-between gap-4
         ">
           <span>{errorMessage}</span>
-          <button
-            onClick={handleReload}
-            className="shrink-0 underline underline-offset-2 hover:no-underline"
-          >
+          <button onClick={handleReload} className="shrink-0 underline underline-offset-2 hover:no-underline">
             {unauthorizedError ? 'Ir al login' : 'Recargar'}
           </button>
         </div>
@@ -164,18 +185,30 @@ export default function AssetsPage() {
         meta={data?.meta ?? { total: 0, page: 1, limit: 50, pages: 0 }}
         isLoading={isLoading}
         searchQuery={filters.q || undefined}
-        onPageChange={(page) => setFilters(f => ({ ...f, page }))}
-        onEdit={openEdit}
+        viewingId={viewingId}
+        onPageChange={page => setFilters(f => ({ ...f, page }))}
+        onView={setViewingId}
       />
 
-      {showModal && (
-        <AssetFormModal
-          assetId={editingId}
-          onClose={handleClose}
-          onSaved={handleSaved}
+      {/* Drawer — ver y editar activo existente */}
+      {viewingId !== null && (
+        <AssetDrawer
+          assetId={viewingId}
+          onClose={() => setViewingId(null)}
+          onSaved={handleDrawerSaved}
         />
       )}
 
+      {/* Modal — crear nuevo activo */}
+      {showCreate && (
+        <AssetFormModal
+          assetId={null}
+          onClose={() => setShowCreate(false)}
+          onSaved={handleCreateSaved}
+        />
+      )}
+
+      {/* Modal exportar */}
       {showExport && (
         <ExportModal
           filters={filters}

@@ -64,7 +64,7 @@ export default function BatchHeader({ fields, onChange, buildings, errors }: Pro
       dark:bg-white/[0.02] dark:border-white/[0.07]
       p-4
     ">
-      <p className="text-xs font-mono tracking-[0.18em] uppercase text-gray-400 dark:text-mi-600 mb-3">
+      <p className="text-xs font-mono tracking-[0.18em] uppercase text-gray-400 dark:text-mi-400 mb-3">
         Datos del lote — se aplican a todos los ítems
       </p>
 

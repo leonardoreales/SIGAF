@@ -6,6 +6,7 @@ import {
   Landmark, Building2, Layers, ArrowLeftRight,
   Plus, FileDown, RefreshCw,
 } from 'lucide-react'
+import { fmtCOP }              from '../../lib/utils'
 import { apiAssets }           from '../../lib/api'
 import type { SyncEvent }      from '../../lib/api'
 import { useSyncEvents }       from '../../hooks/useSyncEvents'
@@ -34,13 +35,6 @@ function formatDate(): string {
   })
 }
 
-function fmtCOP(raw: string | number): string {
-  const n = Number(raw)
-  if (isNaN(n) || n === 0) return '$0'
-  if (n >= 1_000_000_000) return `$${(n / 1_000_000_000).toFixed(1).replace('.', ',')}B`
-  if (n >= 1_000_000)     return `$${(n / 1_000_000).toFixed(1).replace('.', ',')}M`
-  return new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP', maximumFractionDigits: 0 }).format(n)
-}
 
 function fmt(n: number): string {
   return n.toLocaleString('es-CO')
@@ -85,7 +79,7 @@ export default function DashboardPage() {
       {/* ── Hero header ─────────────────────────────────────────────── */}
       <div className="flex items-start justify-between gap-4 animate-card-in">
         <div>
-          <p className="text-[10.5px] font-mono tracking-[0.18em] text-gray-400 dark:text-mi-600 uppercase mb-1.5">
+          <p className="text-[10.5px] font-mono tracking-[0.18em] text-gray-400 dark:text-mi-400 uppercase mb-1.5">
             {formatDate()}
           </p>
           <h1 className="text-[1.65rem] font-syne font-bold text-gray-900 dark:text-mi-50 leading-tight tracking-tight">
@@ -212,11 +206,11 @@ export default function DashboardPage() {
             "
           >
             <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-gray-100 dark:bg-white/[0.05] shrink-0">
-              <mod.icon size={14} className="text-gray-400 dark:text-mi-600" />
+              <mod.icon size={14} className="text-gray-400 dark:text-mi-400" />
             </div>
             <div className="min-w-0">
               <p className="text-[12px] font-medium text-gray-500 dark:text-mi-500 truncate">{mod.label}</p>
-              <p className="text-[10px] font-mono text-gray-400 dark:text-mi-700 uppercase tracking-widest mt-0.5">Próximamente</p>
+              <p className="text-[10px] font-mono text-gray-400 dark:text-mi-500 uppercase tracking-widest mt-0.5">Próximamente</p>
             </div>
           </div>
         ))}

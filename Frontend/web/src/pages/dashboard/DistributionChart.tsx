@@ -45,7 +45,7 @@ function BarRow({ item, max, color }: { item: Item; max: number; color: string }
             }}
           />
         </div>
-        <span className="w-8 text-[10px] font-mono text-right tabular-nums text-gray-400 dark:text-mi-600 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+        <span className="w-8 text-[10px] font-mono text-right tabular-nums text-gray-400 dark:text-mi-400 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
           {pct}%
         </span>
       </div>
@@ -72,7 +72,7 @@ export default function DistributionChart({ title, items, color = 'bg-mi-500 dar
 
   return (
     <div className="card rounded-2xl p-5">
-      <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-600 mb-4">
+      <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-400 mb-4">
         {title}
       </h3>
 
@@ -84,7 +84,7 @@ export default function DistributionChart({ title, items, color = 'bg-mi-500 dar
             ))
         }
         {!loading && items.length === 0 && (
-          <p className="text-xs text-gray-400 dark:text-mi-700 text-center py-6">Sin datos</p>
+          <p className="text-xs text-gray-400 dark:text-mi-500 text-center py-6">Sin datos</p>
         )}
       </div>
     </div>

@@ -1,23 +1,74 @@
-import { Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Monitor, LayoutGrid, FlaskConical, ShieldCheck, Truck, Tv2, ChevronLeft, ChevronRight } from 'lucide-react'
 import type { Asset } from '../../lib/api'
-import { cn } from '../../lib/utils'
 
-// ── Badges de estado ──────────────────────────────────────────────────────────
+// ── Type icon map ─────────────────────────────────────────────────────────────
 
-const STATUS_STYLES: Record<string, string> = {
-  ACTIVO:           'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-  BAJA:             'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400',
-  EN_TRASLADO:      'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-  EN_MANTENIMIENTO: 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400',
-  DADO_DE_BAJA:     'bg-gray-100 text-gray-500 dark:bg-mi-700/50 dark:text-mi-400',
+const TYPE_ICONS: Record<string, React.ElementType> = {
+  EQUIPO_COMPUTO: Monitor,
+  MOBILIARIO:     LayoutGrid,
+  EQUIPO_LAB:     FlaskConical,
+  EQUIPO_MEDICO:  ShieldCheck,
+  VEHICULO:       Truck,
+  AUDIOVISUAL:    Tv2,
 }
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVO:           'Activo',
-  BAJA:             'Baja',
-  EN_TRASLADO:      'En traslado',
   EN_MANTENIMIENTO: 'En mantenimiento',
+  EN_TRASLADO:      'En traslado',
+  BAJA:             'Baja',
   DADO_DE_BAJA:     'Dado de baja',
+}
+
+function fmtCOP(v: string | null | undefined) {
+  if (!v) return '—'
+  const n = Number(v)
+  if (isNaN(n) || n === 0) return '—'
+  return new Intl.NumberFormat('es-CO', {
+    style: 'currency', currency: 'COP', maximumFractionDigits: 0,
+    notation: 'compact', compactDisplay: 'short',
+  }).format(n)
+}
+
+// ── Asset type icon (dark Navy bg + gold icon) ────────────────────────────────
+
+function AssetTypeIcon({ code, size = 36 }: { code: string | null; size?: number }) {
+  const Ic = (code && TYPE_ICONS[code]) ?? LayoutGrid
+  const px = Math.max(13, Math.round(size * 0.42))
+  const r  = Math.round(size * 0.28)
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: r, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'linear-gradient(135deg, #07112C 0%, #142663 100%)',
+      color: '#E9C76E',
+      border: '1px solid rgba(217,171,68,0.20)',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
+    }}>
+      <Ic size={px} strokeWidth={1.6} />
+    </div>
+  )
+}
+
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+const SKEL = [80, 260, 100, 150, 150, 80, 72]
+
+function SkeletonRows() {
+  return (
+    <>
+      {Array.from({ length: 8 }).map((_, row) => (
+        <tr key={row}>
+          {SKEL.map((w, col) => (
+            <td key={col} style={{ padding: '14px 16px' }}>
+              <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
+            </td>
+          ))}
+          <td style={{ padding: '14px 16px' }} />
+        </tr>
+      ))}
+    </>
+  )
 }
 
 // ── Props ─────────────────────────────────────────────────────────────────────
@@ -29,164 +80,193 @@ interface Props {
   meta:         Meta
   isLoading:    boolean
   searchQuery?: string
+  viewingId?:   number | null
   onPageChange: (page: number) => void
-  onEdit:       (id: number) => void
+  onView:       (id: number) => void
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
+// ── Component ─────────────────────────────────────────────────────────────────
 
-const COLS = [45, 280, 120, 140, 160, 90, 60]
+export default function AssetsTable({ data, meta, isLoading, searchQuery, viewingId, onPageChange, onView }: Props) {
+  const HEADERS = ['Placa', 'Activo', 'Tipo', 'Ubicación', 'Responsable', 'Valor', 'Estado', '']
 
-function SkeletonRows() {
   return (
-    <>
-      {Array.from({ length: 8 }).map((_, row) => (
-        <tr key={row}>
-          {COLS.map((w, col) => (
-            <td key={col} className="px-4 py-3">
-              <div
-                className="h-4 rounded animate-pulse bg-gray-200 dark:bg-mi-700/60"
-                style={{ width: w, maxWidth: '100%' }}
-              />
-            </td>
-          ))}
-        </tr>
-      ))}
-    </>
-  )
-}
+    <div style={{
+      background: 'var(--tbl-bg)',
+      border: '1px solid var(--tbl-border)',
+      borderRadius: 14,
+      overflow: 'hidden',
+      boxShadow: '0 1px 0 rgba(0,0,0,0.02), 0 4px 24px rgba(13,27,74,0.05)',
+    }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
 
-// ── Componente ────────────────────────────────────────────────────────────────
-
-export default function AssetsTable({ data, meta, isLoading, searchQuery, onPageChange, onEdit }: Props) {
-  return (
-    <div className="rounded-xl border overflow-hidden bg-white border-gray-200 dark:bg-mi-900 dark:border-white/[0.05]">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
           <thead>
-            <tr className="
-              border-b text-left
-              bg-gray-50/80 border-gray-200 text-gray-600
-              dark:bg-mi-850 dark:border-white/[0.05] dark:text-mi-400
-            ">
-              <th className="px-4 py-3 font-medium whitespace-nowrap">Plaqueta</th>
-              <th className="px-4 py-3 font-medium">Nombre</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden md:table-cell">Tipo</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden lg:table-cell">Edificio</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden lg:table-cell">Responsable</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap">Estado</th>
-              <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Editar</th>
+            <tr style={{ background: 'var(--tbl-head-bg)', borderBottom: '1px solid var(--tbl-border)' }}>
+              {HEADERS.map((h, i) => (
+                <th key={i} style={{
+                  textAlign: i === 5 ? 'right' : 'left',
+                  padding: '11px 16px',
+                  fontSize: 10, fontWeight: 600,
+                  color: 'var(--tbl-text-sub)',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  whiteSpace: 'nowrap',
+                }}>{h}</th>
+              ))}
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100 dark:divide-mi-700/30">
+          <tbody>
             {isLoading ? (
               <SkeletonRows />
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400 dark:text-mi-500">
+                <td colSpan={8} style={{
+                  padding: '64px 16px', textAlign: 'center',
+                  color: 'var(--tbl-text-sub)', fontSize: 13,
+                }}>
                   {searchQuery
-                    ? <>Sin resultados para <span className="font-mono text-gray-600 dark:text-mi-300">"{searchQuery}"</span> — intenta con placa, nombre, serial o marca.</>
+                    ? <><span style={{ color: 'var(--tbl-text)' }}>Sin resultados para </span><span style={{ fontFamily: '"JetBrains Mono", monospace' }}>"{searchQuery}"</span> — intenta con placa, nombre, serial o marca.</>
                     : 'No se encontraron activos con los filtros aplicados.'
                   }
                 </td>
               </tr>
             ) : (
-              data.map(asset => (
+              data.map(asset => {
+                const isSelected = asset.id === viewingId
+                return (
                 <tr
                   key={asset.id}
-                  className="
-                    row-fade transition-colors
-                    hover:bg-gray-50/80 dark:hover:bg-white/[0.03]
-                  "
+                  className={`row-fade${isSelected ? ' tbl-row-selected' : ''}`}
+                  onClick={() => onView(asset.id)}
+                  style={{ borderBottom: '1px solid var(--tbl-border)', cursor: 'pointer', transition: 'background 0.12s, box-shadow 0.12s' }}
+                  onMouseEnter={e => { if (!isSelected) e.currentTarget.style.background = 'var(--tbl-row-hover)' }}
+                  onMouseLeave={e => { if (!isSelected) e.currentTarget.style.background = '' }}
                 >
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-mono text-xs text-gray-500 dark:text-gold/80 tracking-wide">
-                      {asset.plate ?? '—'}
-                    </span>
+                  {/* Placa */}
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    {asset.plate
+                      ? <span className="plaqueta">{asset.plate}</span>
+                      : <span style={{ color: 'var(--tbl-text-sub)', fontFamily: '"JetBrains Mono", monospace', fontSize: 11 }}>—</span>
+                    }
                   </td>
 
-                  <td className="px-4 py-3 max-w-[280px] text-gray-900 dark:text-mi-100">
-                    <span className="line-clamp-2 leading-snug">{asset.name}</span>
+                  {/* Activo — name + brand/model + type icon */}
+                  <td style={{ padding: '12px 16px', maxWidth: 300 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <AssetTypeIcon code={asset.assetTypeCode} size={36} />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{
+                          color: 'var(--tbl-text)', fontWeight: 500, lineHeight: 1.3,
+                          overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                        }}>
+                          {asset.name}
+                        </div>
+                        {(asset.brand || asset.model) && (
+                          <div style={{ fontSize: 11.5, color: 'var(--tbl-text-sub)', marginTop: 2 }}>
+                            {[asset.brand, asset.model].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell text-gray-600 dark:text-mi-300">
+                  {/* Tipo */}
+                  <td style={{ padding: '12px 16px', color: 'var(--tbl-text-sub)', fontSize: 12.5, whiteSpace: 'nowrap' }}>
                     {asset.assetTypeName ?? '—'}
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap hidden lg:table-cell text-gray-600 dark:text-mi-300">
-                    {asset.buildingName ?? '—'}
+                  {/* Ubicación */}
+                  <td style={{ padding: '12px 16px', fontSize: 12.5 }}>
+                    <div style={{ color: 'var(--tbl-text)', lineHeight: 1.3 }}>
+                      {asset.buildingName?.split(' — ')[0] ?? '—'}
+                    </div>
+                    {(asset.floor || asset.location) && (
+                      <div style={{ fontSize: 11, color: 'var(--tbl-text-sub)', marginTop: 2 }}>
+                        {[asset.floor && `Piso ${asset.floor}`, asset.location].filter(Boolean).join(' · ')}
+                      </div>
+                    )}
                   </td>
 
-                  <td className="px-4 py-3 hidden lg:table-cell max-w-[200px] text-gray-600 dark:text-mi-300">
-                    <span className="truncate block">{asset.responsableRaw ?? '—'}</span>
+                  {/* Responsable */}
+                  <td style={{
+                    padding: '12px 16px', fontSize: 12.5,
+                    color: 'var(--tbl-text-sub)',
+                    maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    {asset.responsableRaw ?? '—'}
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className={cn(
-                      'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      STATUS_STYLES[asset.status] ?? 'bg-gray-100 text-gray-600 dark:bg-mi-700/50 dark:text-mi-400',
-                    )}>
+                  {/* Valor */}
+                  <td style={{
+                    padding: '12px 16px', textAlign: 'right',
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: 12, color: 'var(--tbl-text)', whiteSpace: 'nowrap',
+                  }}>
+                    {fmtCOP(asset.referenceValue)}
+                  </td>
+
+                  {/* Estado */}
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    <span className={`s-pill s-pill-${asset.status}`}>
                       {STATUS_LABELS[asset.status] ?? asset.status}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
-                    <button
-                      onClick={() => onEdit(asset.id)}
-                      className="
-                        inline-flex items-center gap-1 text-xs font-medium transition-colors
-                        text-blue-600 hover:text-blue-800
-                        dark:text-mi-300 dark:hover:text-gold
-                      "
-                    >
-                      <Pencil size={13} />
-                      Editar
-                    </button>
+                  {/* Arrow */}
+                  <td style={{ padding: '12px 16px', textAlign: 'right' }}>
+                    <ChevronRight size={14} style={{ color: 'var(--tbl-text-sub)', flexShrink: 0 }} />
                   </td>
                 </tr>
-              ))
+                )
+              })
             )}
           </tbody>
         </table>
       </div>
 
-      {/* Paginación */}
+      {/* Pagination */}
       {!isLoading && meta.pages > 1 && (
-        <div className="
-          flex items-center justify-between px-4 py-3 border-t
-          bg-gray-50/60 border-gray-100 text-gray-500
-          dark:bg-mi-900/40 dark:border-white/[0.04] dark:text-mi-500
-        ">
-          <span className="text-xs">
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '11px 16px',
+          borderTop: '1px solid var(--tbl-border)',
+          background: 'var(--tbl-foot-bg)',
+          fontSize: 12, color: 'var(--tbl-text-sub)',
+        }}>
+          <span>
             Página {meta.page} de {meta.pages}
             {' · '}
             {meta.total.toLocaleString('es-CO')} registros
           </span>
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => onPageChange(meta.page - 1)}
               disabled={meta.page <= 1}
-              className="
-                p-1.5 rounded-md transition-colors
-                hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed
-                dark:hover:bg-mi-700 dark:disabled:opacity-30
-              "
-              aria-label="Página anterior"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)', cursor: meta.page <= 1 ? 'not-allowed' : 'pointer',
+                opacity: meta.page <= 1 ? 0.4 : 1,
+              }}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
             <button
               onClick={() => onPageChange(meta.page + 1)}
               disabled={meta.page >= meta.pages}
-              className="
-                p-1.5 rounded-md transition-colors
-                hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed
-                dark:hover:bg-mi-700 dark:disabled:opacity-30
-              "
-              aria-label="Página siguiente"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)', cursor: meta.page >= meta.pages ? 'not-allowed' : 'pointer',
+                opacity: meta.page >= meta.pages ? 0.4 : 1,
+              }}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>

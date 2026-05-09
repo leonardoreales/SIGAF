@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "postgres": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-postgres",
+        "postgresql://postgres.baqvgyjtqdbypoudcons:IAFFYykAqGoH2R3B@aws-1-us-east-1.pooler.supabase.com:5432/postgres?sslmode=no-verify"
+      ],
+      "env": {
+        "NODE_TLS_REJECT_UNAUTHORIZED": "0"
+      }
+    },
+    "playwright": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@playwright/mcp"
+      ]
+    },
+    "n8n": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "n8n-mcp"],
+      "env": {
+        "N8N_API_URL": "https://n8n.americana.edu.co",
+        "N8N_API_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI0MmIzYzQ0Ny05MmZkLTQyOGQtOTc4OS01YzcyNzY3ZDZiNTUiLCJpc3MiOiJuOG4iLCJhdWQiOiJwdWJsaWMtYXBpIiwianRpIjoiMWQ0MWRlODgtZjYzNC00NzVlLTlhYzctNjNhOTAwNzU3NGIwIiwiaWF0IjoxNzc4MTc3Mjc4LCJleHAiOjE3Nzg3MzEyMDB9.OjVjjqR3JNyG1qFuMuZObwqWu43yUh65K8wYiGiw2aY"
+      }
+    }
+  }
+}

@@ -81,7 +81,7 @@ const cellInputCls = `
   w-full h-full rounded px-2 py-1.5 text-sm outline-none transition-colors
   bg-white border border-blue-400 ring-1 ring-blue-400/20 text-gray-900
   dark:bg-mi-750 dark:border-gold/60 dark:ring-gold/10 dark:text-mi-100
-  placeholder:text-gray-300 dark:placeholder:text-mi-600
+  placeholder:text-gray-300 dark:placeholder:text-mi-500
 `
 
 // ── Confirmation toast for 11-50 ──────────────────────────────────────────────
@@ -296,8 +296,8 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
       return (
         <td className="px-2 py-1.5">
           <div className="flex items-center gap-1.5 px-2 py-1.5 rounded bg-gray-50 dark:bg-mi-900/40">
-            <Lock size={10} className="shrink-0 text-gray-300 dark:text-mi-600" />
-            <span className="text-xs font-mono text-gray-300 dark:text-mi-600">N/A</span>
+            <Lock size={10} className="shrink-0 text-gray-300 dark:text-mi-400" />
+            <span className="text-xs font-mono text-gray-300 dark:text-mi-400">N/A</span>
           </div>
         </td>
       )
@@ -332,7 +332,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
             }
             <span className={cn(
               'text-sm font-mono truncate',
-              !row.serial         ? 'text-gray-300 dark:text-mi-600 italic' :
+              !row.serial         ? 'text-gray-300 dark:text-mi-400 italic' :
               row.serial === 'N/A' ? 'text-gray-400 dark:text-mi-500' :
                                     'text-gray-700 dark:text-mi-200',
             )}>
@@ -368,7 +368,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
             'px-2 py-1.5 rounded cursor-text text-sm truncate',
             'hover:bg-gray-50 dark:hover:bg-mi-700/30',
             !value || value === 'N/A'
-              ? 'text-gray-300 dark:text-mi-600'
+              ? 'text-gray-300 dark:text-mi-400'
               : 'text-gray-800 dark:text-mi-100',
           )}>
             {value || <span className="italic">{placeholder}</span>}
@@ -402,17 +402,17 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
           {/* Header */}
           <thead>
             <tr className="border-b border-gray-100 dark:border-white/[0.06]">
-              <th className="w-9 px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal">#</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider min-w-[220px]">Nombre Activo *</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[160px]">Tipo *</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[90px]">Marca</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[90px]">Modelo</th>
-              <th className="px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[60px]">Cant</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[140px]">Serial</th>
-              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[170px]">Área *</th>
-              <th className="px-2 py-2.5 text-right font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[110px]">Valor unit *</th>
-              <th className="px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[44px]">IVA</th>
-              <th className="px-2 py-2.5 text-right font-mono text-[10px] text-gray-400 dark:text-mi-600 font-normal uppercase tracking-wider w-[110px]">V. Ref.</th>
+              <th className="w-9 px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal">#</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider min-w-[220px]">Nombre Activo *</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[160px]">Tipo *</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[90px]">Marca</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[90px]">Modelo</th>
+              <th className="px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[60px]">Cant</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[140px]">Serial</th>
+              <th className="px-2 py-2.5 text-left font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[170px]">Área *</th>
+              <th className="px-2 py-2.5 text-right font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[110px]">Valor unit *</th>
+              <th className="px-2 py-2.5 text-center font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[44px]">IVA</th>
+              <th className="px-2 py-2.5 text-right font-mono text-[10px] text-gray-400 dark:text-mi-400 font-normal uppercase tracking-wider w-[110px]">V. Ref.</th>
               <th className="w-9" />
             </tr>
           </thead>
@@ -441,7 +441,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                       'text-xs font-mono',
                       row.isClone
                         ? 'text-blue-400 dark:text-blue-500'
-                        : 'text-gray-300 dark:text-mi-700',
+                        : 'text-gray-300 dark:text-mi-500',
                     )}>
                       {idx + 1}
                     </span>
@@ -467,7 +467,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                         'px-2 py-1.5 rounded cursor-text text-sm',
                         'hover:bg-gray-50 dark:hover:bg-mi-700/30',
                         !row.name
-                          ? 'text-gray-300 dark:text-mi-600 italic'
+                          ? 'text-gray-300 dark:text-mi-400 italic'
                           : 'text-gray-900 dark:text-mi-100 font-medium',
                         submitted && !row.name.trim() && 'ring-1 ring-red-300 dark:ring-red-700/50 bg-red-50/40 dark:bg-red-950/10',
                       )}>
@@ -497,7 +497,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                         'px-2 py-1.5 rounded cursor-pointer text-sm truncate',
                         'hover:bg-gray-50 dark:hover:bg-mi-700/30',
                         !row.assetTypeCode
-                          ? 'text-gray-300 dark:text-mi-600 italic'
+                          ? 'text-gray-300 dark:text-mi-400 italic'
                           : 'text-gray-800 dark:text-mi-200',
                         submitted && !row.assetTypeCode && 'ring-1 ring-red-300 dark:ring-red-700/50',
                       )}>
@@ -597,7 +597,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                         'px-2 py-1.5 rounded cursor-text text-sm font-mono text-right',
                         'hover:bg-gray-50 dark:hover:bg-mi-700/30',
                         !row.unitValue
-                          ? 'text-gray-300 dark:text-mi-600'
+                          ? 'text-gray-300 dark:text-mi-400'
                           : 'text-gray-800 dark:text-mi-100',
                         submitted && (!row.unitValue || parseFloat(row.unitValue) <= 0) && 'ring-1 ring-red-300 dark:ring-red-700/50',
                       )}>
@@ -627,7 +627,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                       'text-sm font-mono',
                       subtotal > 0
                         ? 'text-gray-700 dark:text-mi-200'
-                        : 'text-gray-300 dark:text-mi-700',
+                        : 'text-gray-300 dark:text-mi-500',
                     )}>
                       {fmtCOP(subtotal)}
                     </span>
@@ -638,7 +638,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
                     <button
                       type="button"
                       onClick={() => deleteRow(row.id)}
-                      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:text-mi-700 dark:hover:text-red-400 dark:hover:bg-red-950/20 transition-all"
+                      className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-gray-300 hover:text-red-500 hover:bg-red-50 dark:text-mi-500 dark:hover:text-red-400 dark:hover:bg-red-950/20 transition-all"
                     >
                       <Trash2 size={13} />
                     </button>
@@ -665,7 +665,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
           "
         >
           <Plus size={13} />
-          Agregar fila  <span className="font-mono text-[10px] text-gray-300 dark:text-mi-700 ml-0.5">↵ Enter</span>
+          Agregar fila  <span className="font-mono text-[10px] text-gray-300 dark:text-mi-500 ml-0.5">↵ Enter</span>
         </button>
 
         <div className="flex items-center gap-4 text-xs font-mono text-gray-500 dark:text-mi-400">
@@ -685,7 +685,7 @@ export default function ReceptionGrid({ rows, onChange, assetTypes, areas, submi
       </div>
 
       {/* Keyboard hint */}
-      <p className="text-[10px] text-gray-300 dark:text-mi-700 font-mono px-1">
+      <p className="text-[10px] text-gray-300 dark:text-mi-500 font-mono px-1">
         Tab — siguiente celda &nbsp;·&nbsp; Enter — nueva fila &nbsp;·&nbsp; Esc — cancelar edición
       </p>
 

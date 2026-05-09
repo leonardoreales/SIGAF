@@ -89,6 +89,7 @@ export const AssetFilterSchema = z.object({
   type:     AssetTypeCodeSchema.optional(),
   status:   AssetStatusSchema.optional(),
   year:     z.coerce.number().int().optional(),
+  areaId:   z.coerce.number().int().positive().optional(),
 })
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────

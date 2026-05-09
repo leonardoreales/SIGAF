@@ -51,7 +51,7 @@ export default function KpiCard({
 
       {/* Icon + label row */}
       <div className="flex items-center justify-between pt-0.5">
-        <span className="text-[10.5px] font-mono tracking-[0.14em] text-gray-400 dark:text-mi-600 uppercase leading-none">
+        <span className="text-[10.5px] font-mono tracking-[0.14em] text-gray-400 dark:text-mi-400 uppercase leading-none">
           {label}
         </span>
         <div className={cn('w-9 h-9 rounded-xl flex items-center justify-center shrink-0', ICON_BG[color])}>
@@ -71,7 +71,7 @@ export default function KpiCard({
             {value}
           </p>
           {sub && (
-            <p className="mt-2 text-[11px] text-gray-400 dark:text-mi-600 leading-none">
+            <p className="mt-2 text-[11px] text-gray-400 dark:text-mi-400 leading-none">
               {sub}
             </p>
           )}

@@ -1,0 +1,50 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__postgres__query",
+      "mcp__n8n__n8n_get_workflow",
+      "Read(//c/Users/Leonardo Reales/Desktop/Traslados SIGAF/**)"
+    ]
+  },
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f graphify-out/GRAPH_REPORT.md ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"graphify: Este proyecto tiene un grafo de conocimiento en graphify-out/. Lee graphify-out/GRAPH_REPORT.md PRIMERO antes de buscar archivos, responder preguntas de arquitectura o modificar código. El grafo tiene 642 nodos, 1060 aristas y 39 comunidades que mapean todo el codebase SIGAF.\"}}'  || true"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CMD=$(python3 -c \"import json,sys; d=json.load(sys.stdin); print(d.get('tool_input',d).get('command',''))\" 2>/dev/null || true); case \"$CMD\" in *grep*|*rg\\ *|*ripgrep*|*find\\ *|*fd\\ *|*ack\\ *|*ag\\ *)   [ -f graphify-out/graph.json ] &&   echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: Knowledge graph exists. Read graphify-out/GRAPH_REPORT.md for god nodes and community structure before searching raw files.\"}}'   || true ;; esac"
+          }
+        ]
+      },
+      {
+        "matcher": "Glob",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f graphify-out/graph.json ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: Antes de buscar con Glob, consulta graphify-out/GRAPH_REPORT.md — el grafo ya tiene el mapa de archivos y comunidades del proyecto.\"}}' || true"
+          }
+        ]
+      },
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -f graphify-out/graph.json ] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"graphify: Antes de buscar con Grep, consulta graphify-out/GRAPH_REPORT.md — el grafo tiene aristas de importación y uso entre símbolos que evitan scans innecesarios.\"}}' || true"
+          }
+        ]
+      }
+    ]
+  }
+}

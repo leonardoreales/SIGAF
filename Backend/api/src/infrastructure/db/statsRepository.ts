@@ -5,10 +5,10 @@ export interface AssetTotals {
   total:             number
   activos:           number
   bajas:             number
-  valorBajas:        string
+  valorBajas:        number
   enTraslado:        number
   revisionRequerida: number
-  valorTotal:        string
+  valorTotal:        number
   nuevos30d:         number
 }
 export interface AssetStatsResult {
@@ -36,37 +36,27 @@ interface DistRow {
 export async function getAssetStats(): Promise<AssetStatsResult> {
   const [totalesRes, edificiosRes, tiposRes] = await Promise.all([
     pool.query<TotalesRow>(`
-      WITH writeoff_matches AS (
-        SELECT DISTINCT a.id, a.reference_value
-        FROM assets a
-        INNER JOIN writeoff_items wi ON (
-          wi.asset_id = a.id OR 
-          (wi.plate_serial IS NOT NULL AND (a.plate = wi.plate_serial OR a.serial = wi.plate_serial))
-        )
-      )
       SELECT
-        COUNT(*)::int                                                               AS total,
-        COUNT(*) FILTER (WHERE status = 'ACTIVO')::int                             AS activos,
-        (
-          SELECT COUNT(*)::int FROM writeoff_matches
-        ) + COUNT(*) FILTER (WHERE status = 'DADO_DE_BAJA' AND id NOT IN (SELECT id FROM writeoff_matches))::int AS bajas,
-        (
-          SELECT COALESCE(SUM(reference_value), 0)::text FROM writeoff_matches
-        ) AS valor_bajas,
-        COUNT(*) FILTER (WHERE status = 'EN_TRASLADO')::int                        AS en_traslado,
+        COUNT(*)::int                                                                     AS total,
+        COUNT(*) FILTER (WHERE status = 'ACTIVO')::int                                   AS activos,
+        COUNT(*) FILTER (WHERE status IN ('BAJA', 'DADO_DE_BAJA'))::int                  AS bajas,
+        COALESCE(SUM(reference_value) FILTER (WHERE status IN ('BAJA','DADO_DE_BAJA')), 0)::text
+                                                                                         AS valor_bajas,
+        COUNT(*) FILTER (WHERE status = 'EN_TRASLADO')::int                              AS en_traslado,
         COUNT(*) FILTER (
-          WHERE plate IS NULL
-             OR plate_status NOT IN ('OK','GENERADA')
-        )::int                                                                      AS revision_requerida,
-        COALESCE(SUM(reference_value), 0)::text                                     AS valor_total,
-        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int      AS nuevos_30d
+          WHERE status NOT IN ('BAJA','DADO_DE_BAJA')
+            AND (plate IS NULL OR plate_status NOT IN ('OK','GENERADA'))
+        )::int                                                                            AS revision_requerida,
+        COALESCE(SUM(reference_value) FILTER (WHERE status NOT IN ('BAJA','DADO_DE_BAJA')), 0)::text
+                                                                                         AS valor_total,
+        COUNT(*) FILTER (WHERE created_at >= NOW() - INTERVAL '30 days')::int            AS nuevos_30d
       FROM assets
     `),
     pool.query<DistRow>(`
       SELECT COALESCE(cb.name, 'Sin edificio') AS nombre, COUNT(*)::int AS cantidad
       FROM assets a
       LEFT JOIN catalog_buildings cb ON a.building_id = cb.id
-      WHERE a.status != 'DADO_DE_BAJA'
+      WHERE a.status NOT IN ('BAJA', 'DADO_DE_BAJA')
       GROUP BY cb.name
       ORDER BY cantidad DESC
       LIMIT 6
@@ -75,7 +65,7 @@ export async function getAssetStats(): Promise<AssetStatsResult> {
       SELECT COALESCE(cat.name, 'Sin tipo') AS nombre, COUNT(*)::int AS cantidad
       FROM assets a
       LEFT JOIN catalog_asset_types cat ON a.asset_type_code = cat.code
-      WHERE a.status != 'DADO_DE_BAJA'
+      WHERE a.status NOT IN ('BAJA', 'DADO_DE_BAJA')
       GROUP BY cat.name
       ORDER BY cantidad DESC
       LIMIT 8
@@ -88,10 +78,10 @@ export async function getAssetStats(): Promise<AssetStatsResult> {
       total:             Number(t.total),
       activos:           Number(t.activos),
       bajas:             Number(t.bajas),
-      valorBajas:        t.valor_bajas,
+      valorBajas:        Number(t.valor_bajas),
       enTraslado:        Number(t.en_traslado),
       revisionRequerida: Number(t.revision_requerida),
-      valorTotal:        t.valor_total,
+      valorTotal:        Number(t.valor_total),
       nuevos30d:         Number(t.nuevos_30d),
     },
     porEdificio: edificiosRes.rows.map(r => ({ nombre: r.nombre, cantidad: Number(r.cantidad) })),
@@ -120,7 +110,7 @@ export async function getAdvancedStats(groupBy: string[], filters: any = {}): Pr
     .filter(g => g in allowedGroupBy)
     .map(g => allowedGroupBy[g as keyof typeof allowedGroupBy])
 
-  let whereClause = "WHERE a.status != 'DADO_DE_BAJA'"
+  let whereClause = "WHERE a.status NOT IN ('BAJA', 'DADO_DE_BAJA')"
   const params: any[] = []
   
   if (filters.buildingId) {

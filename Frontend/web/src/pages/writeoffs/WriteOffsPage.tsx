@@ -5,7 +5,7 @@ import {
   Layers, Monitor, Loader2, Package, ClipboardList,
   DollarSign,
 } from 'lucide-react';
-import { cn } from '../../lib/utils';
+import { cn, fmtCOP } from '../../lib/utils';
 import {
   apiWriteoffs,
   type WriteoffAct,
@@ -44,13 +44,6 @@ const CHART_COLORS = ['bg-rose-500', 'bg-blue-500', 'bg-amber-500', 'bg-violet-5
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-function formatValue(val: string | null | undefined): string {
-  if (!val) return 'N/D'
-  const n = Number(val)
-  if (isNaN(n) || n === 0) return 'N/D'
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  return `$${n.toLocaleString('es-CO')}`
-}
 
 function formatDate(val: string | null | undefined): string {
   if (!val) return '—'
@@ -176,7 +169,7 @@ export default function WriteOffsPage() {
           },
           {
             label: 'Valor Total',
-            value: stats ? formatValue(String(stats.totalValue)) : '—',
+            value: stats ? fmtCOP(stats.totalValue) : '—',
             badge: 'Suma de actas',
             icon: DollarSign, color: 'text-amber-500', bg: 'bg-amber-500/10',
           },
@@ -190,7 +183,7 @@ export default function WriteOffsPage() {
                 {s.badge}
               </span>
             </div>
-            <p className="text-[10px] font-bold text-gray-400 dark:text-mi-600 uppercase tracking-widest">{s.label}</p>
+            <p className="text-[10px] font-bold text-gray-400 dark:text-mi-400 uppercase tracking-widest">{s.label}</p>
             <p className="text-xl font-bold text-gray-900 dark:text-mi-100 mt-1">{s.value}</p>
           </div>
         ))}
@@ -202,7 +195,7 @@ export default function WriteOffsPage() {
           {/* Search & Filter */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 dark:text-mi-500 w-4 h-4" />
               <input
                 type="text"
                 placeholder="Buscar por acta, descripción..."
@@ -230,7 +223,7 @@ export default function WriteOffsPage() {
 
           <div className="bg-white dark:bg-[#1A1A22]/90 border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             {loading ? (
-              <div className="flex items-center justify-center py-16 gap-3 text-gray-400 text-sm">
+              <div className="flex items-center justify-center py-16 gap-3 text-gray-400 dark:text-mi-500 text-sm">
                 <Loader2 size={20} className="animate-spin" /> Cargando actas...
               </div>
             ) : (
@@ -238,11 +231,11 @@ export default function WriteOffsPage() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="border-b border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-white/[0.02]">
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-600">Acta / Fecha</th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-600">Sede</th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-600 text-center">Ítems</th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-600">Valor ref.</th>
-                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-600">Estado</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-400">Acta / Fecha</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-400">Sede</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-400 text-center">Ítems</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-400">Valor ref.</th>
+                      <th className="px-6 py-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 dark:text-mi-400">Estado</th>
                       <th className="px-6 py-4" />
                     </tr>
                   </thead>
@@ -272,13 +265,13 @@ export default function WriteOffsPage() {
                                 </div>
                                 <div>
                                   <p className="text-sm font-semibold text-gray-900 dark:text-mi-100">{act.actaNumber}</p>
-                                  <p className="text-[10px] text-gray-400 dark:text-mi-600">{formatDate(act.date)}</p>
+                                  <p className="text-[10px] text-gray-400 dark:text-mi-400">{formatDate(act.date)}</p>
                                 </div>
                               </div>
                             </td>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-1.5">
-                                <Building2 size={13} className="text-gray-400" />
+                                <Building2 size={13} className="text-gray-400 dark:text-mi-500" />
                                 <span className="text-sm text-gray-700 dark:text-mi-200">{act.building ?? '—'}</span>
                               </div>
                             </td>
@@ -287,10 +280,10 @@ export default function WriteOffsPage() {
                             </td>
                             <td className="px-6 py-4">
                               <span className="text-sm font-bold text-gray-900 dark:text-mi-100">
-                                {formatValue(act.referenceValue)}
+                                {fmtCOP(act.referenceValue)}
                               </span>
                               {act.referenceValue && Number(act.referenceValue) > 0 && isPartial && (
-                                <span className="block text-[9px] text-gray-400 mt-0.5">referencia parcial</span>
+                                <span className="block text-[9px] text-gray-400 dark:text-mi-500 mt-0.5">referencia parcial</span>
                               )}
                             </td>
                             <td className="px-6 py-4">
@@ -300,7 +293,7 @@ export default function WriteOffsPage() {
                               </div>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <div className="text-gray-400 group-hover:text-rose-500 transition-colors">
+                              <div className="text-gray-400 dark:text-mi-500 group-hover:text-rose-500 transition-colors">
                                 {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                               </div>
                             </td>
@@ -311,14 +304,14 @@ export default function WriteOffsPage() {
                               <td colSpan={6} className="px-6 py-0">
                                 <div className="bg-gray-50/50 dark:bg-white/[0.01] border-x border-b border-rose-500/10 rounded-b-xl p-5 mb-3 animate-in slide-in-from-top-1 duration-300">
                                   {loadingDetail && !detail ? (
-                                    <div className="flex items-center gap-2 text-gray-400 text-xs py-4">
+                                    <div className="flex items-center gap-2 text-gray-400 dark:text-mi-500 text-xs py-4">
                                       <Loader2 size={14} className="animate-spin" /> Cargando ítems...
                                     </div>
                                   ) : detail ? (
                                     <>
                                       {/* Secondary: autoriza + responsable (solo en detalle expandido) */}
                                       {(detail.authorizedBy || detail.responsible) && (
-                                        <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4 text-[10px] text-gray-400 dark:text-mi-600">
+                                        <div className="flex flex-wrap gap-x-6 gap-y-1 mb-4 text-[10px] text-gray-400 dark:text-mi-400">
                                           {detail.authorizedBy && (
                                             <span>
                                               Autoriza:{' '}
@@ -349,14 +342,14 @@ export default function WriteOffsPage() {
                                           return (
                                             <div key={item.id} className="flex items-start justify-between p-3 bg-white dark:bg-black/20 rounded-lg border border-gray-100 dark:border-white/5">
                                               <div className="flex items-start gap-3 min-w-0">
-                                                <div className="p-2 bg-gray-50 dark:bg-white/5 rounded text-gray-400 shrink-0 mt-0.5">
+                                                <div className="p-2 bg-gray-50 dark:bg-white/5 rounded text-gray-400 dark:text-mi-500 shrink-0 mt-0.5">
                                                   <Monitor size={14} />
                                                 </div>
                                                 <div className="min-w-0">
                                                   <p className="text-xs font-bold text-gray-900 dark:text-mi-100 truncate">{name}</p>
-                                                  {brand && <p className="text-[10px] text-gray-400 dark:text-mi-600 truncate">{brand}</p>}
+                                                  {brand && <p className="text-[10px] text-gray-400 dark:text-mi-400 truncate">{brand}</p>}
                                                   {item.plateSerial && (
-                                                    <p className="text-[10px] font-mono text-gray-400 tracking-tight">#{item.plateSerial}</p>
+                                                    <p className="text-[10px] font-mono text-gray-400 dark:text-mi-400 tracking-tight">#{item.plateSerial}</p>
                                                   )}
                                                 </div>
                                               </div>
@@ -366,7 +359,7 @@ export default function WriteOffsPage() {
                                                 </span>
                                                 {item.assetReferenceValue && Number(item.assetReferenceValue) > 0 && (
                                                   <span className="text-[10px] font-bold text-gray-700 dark:text-mi-300">
-                                                    {formatValue(item.assetReferenceValue)}
+                                                    {fmtCOP(item.assetReferenceValue)}
                                                   </span>
                                                 )}
                                               </div>
@@ -375,7 +368,7 @@ export default function WriteOffsPage() {
                                         })}
                                       </div>
 
-                                      <p className="text-[10px] text-gray-400 mt-3 text-right">
+                                      <p className="text-[10px] text-gray-400 dark:text-mi-400 mt-3 text-right">
                                         {detail.items.length} ítems ·{' '}
                                         {detail.items.filter(i => i.reconciledStatus === 'MATCHED').length} conciliados
                                       </p>
@@ -390,7 +383,7 @@ export default function WriteOffsPage() {
                     })}
                     {!loading && acts.length === 0 && (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-400">
+                        <td colSpan={6} className="px-6 py-12 text-center text-sm text-gray-400 dark:text-mi-500">
                           No se encontraron actas con los filtros actuales.
                         </td>
                       </tr>
@@ -427,7 +420,7 @@ export default function WriteOffsPage() {
                 ))
               }
             </div>
-            <button className="w-full mt-6 py-2 text-[11px] font-bold text-gray-400 dark:text-mi-600 hover:text-rose-500 dark:hover:text-rose-500 border border-gray-100 dark:border-white/5 rounded-lg transition-all">
+            <button className="w-full mt-6 py-2 text-[11px] font-bold text-gray-400 dark:text-mi-400 hover:text-rose-500 dark:hover:text-rose-500 border border-gray-100 dark:border-white/5 rounded-lg transition-all">
               DESCARGAR ANALÍTICAS
             </button>
           </div>
