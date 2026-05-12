@@ -11,14 +11,9 @@ import type { Asset, Building as BuildingT, Area, Person } from '../../lib/api'
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-const TYPE_ICONS: Record<string, React.ElementType> = {
-  EQUIPO_COMPUTO: Monitor,
-  MOBILIARIO:     LayoutGrid,
-  EQUIPO_LAB:     FlaskConical,
-  EQUIPO_MEDICO:  ShieldCheck,
-  VEHICULO:       Truck,
-  AUDIOVISUAL:    Tv2,
-}
+import { getSmartIcon } from './AssetsTable'
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_LABELS: Record<string, string> = {
   ACTIVO:           'Activo',
@@ -134,19 +129,16 @@ function toPayload(d: Draft) {
 type Mode = 'view' | 'edit'
 type Tab  = 'general' | 'tecnica' | 'ubicacion' | 'asignacion' | 'documentos'
 
-function TypeIconDark({ code, size = 64 }: { code: string | null; size?: number }) {
-  const Ic = (code && TYPE_ICONS[code]) ?? LayoutGrid
-  const px = Math.max(14, Math.round(size * 0.38))
-  const r  = Math.round(size * 0.25)
+function TypeIconDark({ assetName, code, size = 64 }: { assetName?: string | null; code: string | null; size?: number }) {
+  const IconComponent = getSmartIcon(assetName, code)
+  const px = Math.max(18, Math.round(size * 0.5))
   return (
     <div style={{
-      width: size, height: size, borderRadius: r, flexShrink: 0,
+      width: size, height: size, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, rgba(217,171,68,0.18), rgba(217,171,68,0.06))',
       color: '#E9C76E',
-      border: '1px solid rgba(217,171,68,0.25)',
     }}>
-      <Ic size={px} strokeWidth={1.6} />
+      <IconComponent size={px} strokeWidth={1.5} />
     </div>
   )
 }
@@ -672,7 +664,7 @@ export default function AssetDrawer({ assetId, onClose, onSaved }: Props) {
 
               {/* Hero: type icon + gold plate + name */}
               <div style={{ display: 'flex', alignItems: 'center', gap: 18 }}>
-                <TypeIconDark code={asset.assetTypeCode} size={64} />
+                <TypeIconDark assetName={asset.name} code={asset.assetTypeCode} size={64} />
                 <div style={{ minWidth: 0, flex: 1 }}>
                   <span className="plaqueta-hero" style={{ marginBottom: 8, display: 'inline-flex' }}>
                     {asset.plate ?? '—'}

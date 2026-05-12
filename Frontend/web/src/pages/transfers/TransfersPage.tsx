@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   ArrowLeftRight, Clock, CheckCircle2, XCircle, Loader2, Plus,
   Search, Inbox, ShieldCheck,
@@ -11,6 +11,8 @@ import { cn } from '../../lib/utils'
 import TransfersTable    from './TransfersTable'
 import TransferFormModal from './TransferFormModal'
 import RequestsTable     from './RequestsTable'
+import RequestDetailDrawer from './RequestDetailDrawer'
+import ConfirmDialog from '../../components/ConfirmDialog'
 
 // ── Mini KPI ──────────────────────────────────────────────────────────────────
 
@@ -82,8 +84,10 @@ export default function TransfersPage() {
   const [tSearch,     setTSearch]     = useState('')
 
   // ── Solicitudes state ──
-  const [rFilters,    setRFilters]    = useState<RequestFilters>(DEFAULT_REQUEST_FILTERS)
-  const [rSearch,     setRSearch]     = useState('')
+  const [rFilters,         setRFilters]         = useState<RequestFilters>(DEFAULT_REQUEST_FILTERS)
+  const [rSearch,          setRSearch]          = useState('')
+  const [viewingRequestId, setViewingRequestId] = useState<number | null>(null)
+  const [deletingRequestId, setDeletingRequestId] = useState<number | null>(null)
 
   // ── SSE: auto-recarga cuando n8n ingesta una nueva solicitud ──
   useEffect(() => {
@@ -144,10 +148,26 @@ export default function TransfersPage() {
   function handleClose()        { setShowModal(false); setEditingId(null) }
   function handleSaved()        { queryClient.invalidateQueries({ queryKey: ['transfers'] }); handleClose() }
 
+  const { mutateAsync: deleteRequestMutation, isPending: isDeleting } = useMutation({
+    mutationFn: apiTransferRequests.delete,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+    }
+  })
+
   // ── Handlers: solicitudes ──
   function applyRSearch() { setRFilters(f => ({ ...f, q: rSearch, page: 1 })) }
-  function handleViewRequest(_id: number) {
-    // TODO: abrir modal de detalle / firma en próxima sesión
+  function handleViewRequest(id: number) {
+    setViewingRequestId(id)
+  }
+  function handleDeleteRequest(id: number) {
+    setDeletingRequestId(id)
+  }
+  function confirmDelete() {
+    if (!deletingRequestId) return
+    deleteRequestMutation(deletingRequestId)
+      .then(() => setDeletingRequestId(null))
+      .catch(() => setDeletingRequestId(null))
   }
 
   return (
@@ -287,8 +307,9 @@ export default function TransfersPage() {
             data={rData?.data ?? []}
             meta={rData?.meta ?? { total: 0, page: 1, limit: 50, pages: 0 }}
             isLoading={rLoading}
-            onPageChange={page => setRFilters(f => ({ ...f, page }))}
+            onPageChange={(p) => setRFilters(f => ({ ...f, page: p }))}
             onView={handleViewRequest}
+            onDelete={handleDeleteRequest}
           />
         </>
       )}
@@ -389,6 +410,26 @@ export default function TransfersPage() {
           onSaved={handleSaved}
         />
       )}
+
+      {/* ── Drawer solicitudes ──────────────────────────────────────── */}
+      {viewingRequestId && (
+        <RequestDetailDrawer
+          requestId={viewingRequestId}
+          onClose={() => setViewingRequestId(null)}
+        />
+      )}
+
+      {/* ── Confirmación de eliminación ────────────────────────────── */}
+      <ConfirmDialog
+        open={deletingRequestId !== null}
+        title="Eliminar Solicitud"
+        message="Esta acción eliminará permanentemente la solicitud y todos sus activos asociados. Esta operación no se puede deshacer."
+        confirmLabel={isDeleting ? 'Eliminando…' : 'Sí, eliminar'}
+        cancelLabel="Cancelar"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeletingRequestId(null)}
+      />
 
     </div>
   )

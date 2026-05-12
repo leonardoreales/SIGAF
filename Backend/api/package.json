@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@sigaf/shared": "*",
+    "axios": "^1.16.0",
     "cors": "^2.8.6",
     "dotenv": "^16.4.5",
     "drizzle-orm": "^0.30.10",

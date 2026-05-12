@@ -3,7 +3,7 @@ import { Link, useMatch, useNavigate } from 'react-router-dom'
 import {
   Package2, ArrowLeftRight, History, BarChart3,
   Trash2, ClipboardList, FileText, LayoutDashboard,
-  ChevronLeft, ChevronRight, ChevronDown,
+  ChevronLeft, ChevronRight, ChevronDown, FileDown,
   Sun, Moon, LogOut, Lock, Settings, Wrench
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'

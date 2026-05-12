@@ -1,9 +1,14 @@
-import { Monitor, LayoutGrid, FlaskConical, ShieldCheck, Truck, Tv2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { 
+  Monitor, LayoutGrid, FlaskConical, ShieldCheck, Truck, Tv2, ChevronLeft, ChevronRight,
+  PcCase, Laptop, Keyboard, Mouse, Printer, Server, Smartphone, Tablet,
+  AudioLines, Mic, Headphones, Speaker, Lightbulb, Wifi, Router, Projector,
+  Armchair, Sofa, Table, Camera, Phone, Archive
+} from 'lucide-react'
 import type { Asset } from '../../lib/api'
 
 // ── Type icon map ─────────────────────────────────────────────────────────────
 
-const TYPE_ICONS: Record<string, React.ElementType> = {
+export const TYPE_ICONS: Record<string, React.ElementType> = {
   EQUIPO_COMPUTO: Monitor,
   MOBILIARIO:     LayoutGrid,
   EQUIPO_LAB:     FlaskConical,
@@ -32,20 +37,51 @@ function fmtCOP(v: string | null | undefined) {
 
 // ── Asset type icon (dark Navy bg + gold icon) ────────────────────────────────
 
-function AssetTypeIcon({ code, size = 36 }: { code: string | null; size?: number }) {
-  const Ic = (code && TYPE_ICONS[code]) ?? LayoutGrid
-  const px = Math.max(13, Math.round(size * 0.42))
-  const r  = Math.round(size * 0.28)
+export function getSmartIcon(name: string | null | undefined, typeCode: string | null): React.ElementType {
+  if (!name) return (typeCode && TYPE_ICONS[typeCode]) || LayoutGrid;
+  const n = name.toLowerCase();
+  
+  if (n.includes('all in one')) return Monitor;
+  if (n.includes('computador') && !n.includes('port')) return PcCase;
+  if (n.includes('portátil') || n.includes('laptop')) return Laptop;
+  if (n.includes('monitor') || n.includes('pantalla')) return Monitor;
+  if (n.includes('teclado')) return Keyboard;
+  if (n.includes('mouse') || n.includes('ratón') || n.includes('raton')) return Mouse;
+  if (n.includes('impresora')) return Printer;
+  if (n.includes('servidor')) return Server;
+  if (n.includes('celular') || n.includes('smartphone')) return Smartphone;
+  if (n.includes('tablet')) return Tablet;
+  
+  if (n.includes('interfaz de audio')) return AudioLines;
+  if (n.includes('micrófono') || n.includes('microfono')) return Mic;
+  if (n.includes('audífono') || n.includes('audifono') || n.includes('diadema')) return Headphones;
+  if (n.includes('parlante') || n.includes('altavoz') || n.includes('cabina')) return Speaker;
+  if (n.includes('iluminación') || n.includes('luz')) return Lightbulb;
+  if (n.includes('cámara') || n.includes('camara')) return Camera;
+  if (n.includes('punto de acceso') || n.includes('access point') || n.includes('wifi') || n.includes('wi-fi')) return Wifi;
+  if (n.includes('switch') || n.includes('enrutador') || n.includes('router')) return Router;
+  if (n.includes('proyector') || n.includes('video beam')) return Projector;
+  if (n.includes('tv') || n.includes('televisor') || n.includes('televisión')) return Tv2;
+  if (n.includes('teléfono') || n.includes('telefono')) return Phone;
+  
+  if (n.includes('silla') || n.includes('asiento')) return Armchair;
+  if (n.includes('sofa') || n.includes('sofá') || n.includes('poltrona')) return Sofa;
+  if (n.includes('mesa') || n.includes('escritorio')) return Table;
+  if (n.includes('mueble') || n.includes('archivador') || n.includes('estante') || n.includes('gabinete')) return Archive;
+  
+  return (typeCode && TYPE_ICONS[typeCode]) || LayoutGrid;
+}
+
+function AssetTypeIcon({ assetName, code, size = 36 }: { assetName?: string | null; code: string | null; size?: number }) {
+  const IconComponent = getSmartIcon(assetName, code)
+  const px = Math.max(16, Math.round(size * 0.55))
   return (
     <div style={{
-      width: size, height: size, borderRadius: r, flexShrink: 0,
+      width: size, height: size, flexShrink: 0,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: 'linear-gradient(135deg, #07112C 0%, #142663 100%)',
       color: '#E9C76E',
-      border: '1px solid rgba(217,171,68,0.20)',
-      boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.06)',
     }}>
-      <Ic size={px} strokeWidth={1.6} />
+      <IconComponent size={px} strokeWidth={1.7} />
     </div>
   )
 }
@@ -156,7 +192,7 @@ export default function AssetsTable({ data, meta, isLoading, searchQuery, viewin
                   {/* Activo — name + brand/model + type icon */}
                   <td style={{ padding: '12px 16px', maxWidth: 300 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <AssetTypeIcon code={asset.assetTypeCode} size={36} />
+                      <AssetTypeIcon assetName={asset.name} code={asset.assetTypeCode} size={36} />
                       <div style={{ minWidth: 0 }}>
                         <div style={{
                           color: 'var(--tbl-text)', fontWeight: 500, lineHeight: 1.3,

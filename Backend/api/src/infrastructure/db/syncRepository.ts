@@ -43,3 +43,13 @@ export async function getLastSyncEvent(): Promise<SyncEvent | null> {
   )
   return rows[0] ? toSyncEvent(rows[0]) : null
 }
+
+export async function listSyncEvents(): Promise<SyncEvent[]> {
+  const { rows } = await pool.query<SyncRow>(
+    `SELECT id, source_sheet, insertados, fallidos, placas_generadas, created_at
+     FROM sync_log
+     ORDER BY created_at DESC
+     LIMIT 100`
+  )
+  return rows.map(toSyncEvent)
+}

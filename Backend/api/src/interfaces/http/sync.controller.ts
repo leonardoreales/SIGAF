@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express'
 import jwt                                      from 'jsonwebtoken'
 import { AppError }                             from '../../shared/errors'
-import { notifySync, getLastSync }              from '../../application/sync/notifySyncUseCase'
+import { notifySync, getLastSync, listSyncs }              from '../../application/sync/notifySyncUseCase'
 import { sseManager }                           from '../../infrastructure/sse/SseManager'
 import { createTransferRequest }               from '../../application/transferRequests/createTransferRequest'
 
@@ -67,5 +67,13 @@ export async function events(req: Request, res: Response, next: NextFunction) {
     }
 
     res.write(`event: connected\ndata: ${JSON.stringify({ clients: sseManager.connectedCount })}\n\n`)
+  } catch (err) { next(err) }
+}
+
+// GET /sync — lista el historial de sincronizaciones
+export async function list(req: Request, res: Response, next: NextFunction) {
+  try {
+    const events = await listSyncs()
+    res.json(events)
   } catch (err) { next(err) }
 }

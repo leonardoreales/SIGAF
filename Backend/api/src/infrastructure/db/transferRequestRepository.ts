@@ -240,3 +240,14 @@ export async function getStats(): Promise<TransferRequestStatsResult> {
     rechazada: Number(r.rechazada),
   }
 }
+
+export async function remove(id: number) {
+  // Check existence
+  await findById(id)
+  
+  // Explicitly delete items first to avoid orphaned records since no ON DELETE CASCADE
+  await db.delete(transferRequestItems).where(eq(transferRequestItems.requestId, id))
+  
+  // Delete main request
+  await db.delete(transferRequests).where(eq(transferRequests.id, id))
+}

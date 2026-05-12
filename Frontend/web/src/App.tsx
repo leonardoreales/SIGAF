@@ -14,6 +14,7 @@ import WriteOffsPage       from './pages/writeoffs/WriteOffsPage'
 import StatisticsPage     from './pages/stats/StatisticsPage'
 import { useRole }         from './hooks/useRole'
 import { useAuth }         from './context/AuthContext'
+import { Toaster }        from 'sonner'
 
 // Componente para manejar la ruta raíz y fallback de forma inteligente según el rol
 function RootRedirect() {
@@ -71,6 +72,7 @@ export default function App() {
 
       <Route path="/" element={<RootRedirect />} />
       <Route path="*" element={<RootRedirect />} />
+      <Toaster position="top-right" richColors />
     </Routes>
   )
 }

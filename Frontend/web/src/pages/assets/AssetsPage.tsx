@@ -11,6 +11,8 @@ import AssetsTable         from './AssetsTable'
 import AssetFormModal      from './AssetFormModal'
 import AssetDrawer         from './AssetDrawer'
 import ExportModal         from './ExportModal'
+import ImportsDrawer       from './ImportsDrawer'
+import { FileDown }        from 'lucide-react'
 
 export interface FiltersState {
   q:        string
@@ -33,6 +35,7 @@ export default function AssetsPage() {
   const [viewingId,    setViewingId]    = useState<number | null>(null)
   const [showCreate,   setShowCreate]   = useState(false)
   const [showExport,   setShowExport]   = useState(false)
+  const [showImports,  setShowImports]  = useState(false)
   const [syncEvent,    setSyncEvent]    = useState<SyncEvent | null>(null)
 
   const handleSync = useCallback((event: SyncEvent) => {
@@ -116,12 +119,35 @@ export default function AssetsPage() {
           </h1>
           <div style={{ width: 100, height: 2, marginTop: 6, background: 'linear-gradient(90deg, #D9AB44, transparent)', borderRadius: 1 }} />
           {data && (
-            <p style={{ marginTop: 8, color: 'var(--tbl-text-sub)', fontSize: 13.5, margin: '8px 0 0' }}>
-              <strong style={{ color: 'var(--tbl-text)', fontWeight: 600 }}>
-                {data.meta.total.toLocaleString('es-CO')}
-              </strong>{' '}
-              activos en el sistema
-            </p>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 12 }}>
+              <p style={{ color: 'var(--tbl-text-sub)', fontSize: 13.5, margin: 0 }}>
+                <strong style={{ color: 'var(--tbl-text)', fontWeight: 600 }}>
+                  {data.meta.total.toLocaleString('es-CO')}
+                </strong>{' '}
+                activos en el sistema
+              </p>
+              
+              <span style={{ width: 4, height: 4, borderRadius: '50%', background: 'var(--tbl-border)' }} />
+              
+              <button
+                onClick={() => setShowImports(true)}
+                className="
+                  relative flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md
+                  bg-gradient-to-r from-[#FBF1D6] to-[#EADDAC] text-[#5A3E15] border border-[#D9AB44]
+                  dark:from-[rgba(217,171,68,0.15)] dark:to-[rgba(217,171,68,0.05)] dark:text-[#E9C76E] dark:border-[rgba(217,171,68,0.3)]
+                  transition-colors hover:border-gold/60
+                "
+              >
+                <FileDown size={13} className="relative z-10" />
+                <span className="relative z-10 tracking-[0.05em] uppercase font-mono text-[10px] mt-px">
+                  Registro Activos Nuevos
+                </span>
+                <span className="relative z-10 ml-1 flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#16A34A] dark:bg-gold opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-[#15803D] dark:bg-gold"></span>
+                </span>
+              </button>
+            </div>
           )}
         </div>
 
@@ -213,6 +239,14 @@ export default function AssetsPage() {
         <ExportModal
           filters={filters}
           onClose={() => setShowExport(false)}
+        />
+      )}
+
+      {/* Drawer importaciones n8n */}
+      {showImports && (
+        <ImportsDrawer 
+          onClose={() => setShowImports(false)} 
+          onApplyFilter={(q) => applyFilter({ q })}
         />
       )}
     </div>

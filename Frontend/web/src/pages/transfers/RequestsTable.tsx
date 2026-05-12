@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { es }     from 'date-fns/locale'
 import {
-  Inbox, CheckCircle2, Clock, XCircle, PenLine, Eye,
+  Inbox, CheckCircle2, Clock, XCircle, PenLine, Eye, Trash2,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { TransferRequest, TransferRequestStatus } from '../../lib/api'
@@ -53,11 +53,12 @@ interface Props {
   isLoading:    boolean
   onPageChange: (page: number) => void
   onView:       (id: number) => void
+  onDelete?:    (id: number) => void
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export default function RequestsTable({ data, meta, isLoading, onPageChange, onView }: Props) {
+export default function RequestsTable({ data, meta, isLoading, onPageChange, onView, onDelete }: Props) {
   return (
     <div className="
       rounded-xl overflow-hidden border
@@ -159,6 +160,19 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
                             "
                           >
                             <PenLine size={15} />
+                          </button>
+                        )}
+                        {onDelete && (
+                          <button
+                            onClick={() => onDelete(row.id)}
+                            title="Eliminar solicitud"
+                            className="
+                              p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50
+                              dark:text-mi-500 dark:hover:text-red-400 dark:hover:bg-red-900/30
+                              transition-colors
+                            "
+                          >
+                            <Trash2 size={15} />
                           </button>
                         )}
                       </div>

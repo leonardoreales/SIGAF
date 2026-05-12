@@ -1,4 +1,4 @@
-import { createSyncEvent, getLastSyncEvent } from '../../infrastructure/db/syncRepository'
+import { createSyncEvent, getLastSyncEvent, listSyncEvents } from '../../infrastructure/db/syncRepository'
 import { sseManager }                        from '../../infrastructure/sse/SseManager'
 import type { SyncNotifyPayload }            from '../../domain/sync/SyncEvent'
 
@@ -10,4 +10,8 @@ export async function notifySync(payload: SyncNotifyPayload) {
 
 export async function getLastSync() {
   return getLastSyncEvent()
+}
+
+export async function listSyncs() {
+  return listSyncEvents()
 }

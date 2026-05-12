@@ -141,6 +141,10 @@ export const apiAssets = {
   stats: () => request<AssetStats>('/assets/stats'),
 }
 
+export const apiSyncs = {
+  list: () => request<SyncEvent[]>('/sync'),
+}
+
 export const apiCatalogs = {
   buildings:        () => request<Building[]>('/catalogs/buildings'),
   assetTypes:       () => request<AssetType[]>('/catalogs/asset-types'),
@@ -345,6 +349,8 @@ export const apiTransferRequests = {
   get:    (id: number)                                    => request<TransferRequest>(`/transfers/requests/${id}`),
   update: (id: number, data: UpdateTransferRequestPayload) => request<TransferRequest>(`/transfers/requests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   stats:  ()                                              => request<TransferRequestStats>('/transfers/requests/stats'),
+  delete: (id: number)                                    => request<{ success: boolean }>(`/transfers/requests/${id}`, { method: 'DELETE' }),
+  sign:   (id: number, data: any)                         => request<{ ok: boolean; message: string }>(`/transfers/requests/${id}/sign`, { method: 'POST', body: JSON.stringify(data) }),
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────

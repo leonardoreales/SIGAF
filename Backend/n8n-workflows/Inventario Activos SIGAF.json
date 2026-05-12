@@ -1,0 +1,823 @@
+{
+  "name": "Inventario Activos SIGAF",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "simple": false,
+        "filters": {
+          "q": "=from:oscarcespedes@americana.edu.co subject:\"ARCHIVO DE POLIZA ACTUALIZADO\" in:inbox"
+        },
+        "options": {}
+      },
+      "id": "ab18908a-238a-48c0-a070-d205130b676a",
+      "name": "Gmail Trigger - Póliza Actualizada",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2304,
+        528
+      ],
+      "alwaysOutputData": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "H8VJFmKktgwrFju7",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "extractHtmlContent",
+        "dataPropertyName": "={{ $json.html ? 'html' : ($json.textAsHtml ? 'textAsHtml' : 'text') }}",
+        "extractionValues": {
+          "values": [
+            {
+              "key": "googleSheetsUrl",
+              "cssSelector": "a[href*=\"docs.google.com/spreadsheets\"], a[href*=\"drive.google.com\"], a[href*=\"bit.ly\"], a[href*=\"goo.gl\"]",
+              "returnValue": "attribute",
+              "attribute": "href"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "1c381904-f938-4b43-bcf1-220efad2f4bf",
+      "name": "ENLACE POLIZA",
+      "type": "n8n-nodes-base.html",
+      "typeVersion": 1.2,
+      "position": [
+        2528,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "={{ String($json.googleSheetsUrl || '').split('/d/')[1]?.split('/')[0] || '' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][new Date().getMonth()] }}",
+          "mode": "name"
+        },
+        "options": {}
+      },
+      "id": "0fda8f59-a5f1-4f44-abaf-7469e57f65e4",
+      "name": "Leer Póliza (Sheet Dinámico)",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        2752,
+        528
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nMZ1P7phwaZTYmbE",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2df550c6-0140-454d-901a-5e1f3f52e7ac",
+              "name": "PLACA",
+              "value": "={{ $json['PLACA'] ?? $json['PLACA_SIGAF'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "b9cace29-563b-463e-8724-87f12651ad15",
+              "name": "NOMBRE ACTIVO",
+              "value": "={{ $json['NOMBRE ACTIVO'] }}",
+              "type": "string"
+            },
+            {
+              "id": "1465e58f-4a41-4abf-915f-4d8bd20af01f",
+              "name": "TIPO DE ACTIVO",
+              "value": "={{ $json['TIPO DE ACTIVO'] }}",
+              "type": "string"
+            },
+            {
+              "id": "0d86006e-f836-46c5-8c24-ab8ee227f2af",
+              "name": "CUENTA CONTABLE",
+              "value": "={{ $json['CUENTA CONTABLE'] }}",
+              "type": "number"
+            },
+            {
+              "id": "400df644-e48d-4ece-8810-06f7c491b874",
+              "name": "MARCA",
+              "value": "={{ $json.MARCA }}",
+              "type": "string"
+            },
+            {
+              "id": "0440ec20-daf4-4b36-a7bf-749eac19528c",
+              "name": "MODELO",
+              "value": "={{ $json.MODELO }}",
+              "type": "string"
+            },
+            {
+              "id": "edbdc449-4756-4822-8f84-0db1ad952802",
+              "name": "SERIAL",
+              "value": "={{ $json.SERIAL }}",
+              "type": "string"
+            },
+            {
+              "id": "6be1ac7b-06fe-4c35-9c31-47e435534a48",
+              "name": "EDIFICIO",
+              "value": "={{ $json.EDIFICIO ?? $json.SEDE ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "622c650a-7277-41c3-aa44-91a43422db95",
+              "name": "UBICACIÓN",
+              "value": "={{ $json.OBSERVACIONES ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "860405ef-d28b-41c7-b5b3-a3c5b255fdc6",
+              "name": "CANTIDAD",
+              "value": "={{ $json.CANTIDAD ?? 1 }}",
+              "type": "number"
+            },
+            {
+              "id": "c89d884d-c78b-4ad8-bfac-7fafe97af29a",
+              "name": "VALOR DE REFERENCIA",
+              "value": "={{ $json['VALOR DE REFERENCIA'] }}",
+              "type": "string"
+            },
+            {
+              "id": "2f3c4418-42d4-4525-b03a-c972a2a9ed10",
+              "name": "RESPONSABLE",
+              "value": "={{ $json['ÁREA QUE SOLICITA'] ?? $json.RESPONSABLE ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "32caeec4-ac63-4afe-a936-9b0ef33d5ddf",
+              "name": "row_number",
+              "value": "={{ $json.row_number }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "3045766c-d65c-48d7-9f47-6a86cf4ecf9e",
+      "name": "TRANSFORMACIÓN DE DATOS",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2976,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Nodo - NORMALIZACIÓN PÓLIZA v2\n * Workflow: Inventario Activos -> Supabase v4\n *\n * Recibe TODAS las filas (con y sin placa) para que la herencia\n * contextual funcione correctamente. El filtro de \"solo sin placa\"\n * se aplica en el siguiente nodo.\n */\n\nconst MAX_INHERIT_DISTANCE = 5;\n\nfunction dequote(x) {\n  if (x == null) return '';\n  const s = String(x).replace(/\\r?\\n/g, ' ').trim();\n  if (s === '\"\"' || s === \"''\" || /^\"+$/.test(s) || /^'+$/.test(s)) return '';\n  return s;\n}\n\nfunction foldTxt(x) {\n  return String(x == null ? '' : x)\n    .toUpperCase()\n    .normalize('NFD')\n    .replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^A-Z0-9 ]/g, ' ')\n    .replace(/\\s+/g, ' ')\n    .trim();\n}\n\nfunction isBlankText(x) {\n  const s = foldTxt(dequote(x));\n  return (\n    !s ||\n    s === 'N A' || s === 'NA' || s === 'NULO' || s === 'NULL' ||\n    s === 'NO APLICA' || s === 'SIN INFORMACION' || s === 'SIN INFO' || s === 'NO REGISTRA'\n  );\n}\n\nfunction normSerial(s) {\n  if (!s) return null;\n  let t = String(s)\n    .toUpperCase()\n    .replace(/\\bS\\/?N[:\\s-]*/g, '')\n    .replace(/[^A-Z0-9]/g, '')\n    .replace(/^0+/, '');\n  return (\n    t &&\n    !['NA', 'N/A', 'NULL', 'NULO', 'NOAPLICA', 'SININFO', 'SININFORMACION'].includes(t) &&\n    t.length >= 5\n  ) ? t : null;\n}\n\nfunction fnv1a(str) {\n  let h = 0x811c9dc5;\n  for (let i = 0; i < str.length; i++) {\n    h ^= str.charCodeAt(i);\n    h = Math.imul(h, 0x01000193) >>> 0;\n  }\n  return h.toString(16).padStart(8, '0');\n}\n\nfunction parseMoney(v) {\n  if (v == null || v === '') return 0;\n  if (typeof v === 'number') return Number.isFinite(v) ? Math.round(v) : 0;\n  let s = String(v).trim().replace(/\\u00A0/g, ' ').replace(/[^\\d,.-]/g, '');\n  if (!s) return 0;\n  const hasDot = s.includes('.');\n  const hasComma = s.includes(',');\n  if (hasDot && hasComma) {\n    const lastDot = s.lastIndexOf('.');\n    const lastComma = s.lastIndexOf(',');\n    if (lastComma > lastDot) {\n      s = s.replace(/\\./g, '').replace(',', '.');\n    } else {\n      s = s.replace(/,/g, '');\n    }\n  } else if (hasComma && !hasDot) {\n    const parts = s.split(',');\n    if (parts.length === 2 && parts[1].length <= 2) {\n      s = s.replace(',', '.');\n    } else {\n      s = s.replace(/,/g, '');\n    }\n  } else if (hasDot && !hasComma) {\n    const parts = s.split('.');\n    if (parts.length > 2) {\n      s = s.replace(/\\./g, '');\n    } else if (parts.length === 2 && parts[1].length === 3 && parts[0].length <= 3) {\n      s = s.replace(/\\./g, '');\n    }\n  }\n  const n = Number(s);\n  return Number.isFinite(n) ? Math.round(n) : 0;\n}\n\nfunction pickMoneyRaw(raw) {\n  const candidates = [\n    raw['VALOR DE REFERENCIA'], raw['VALOR REFERENCIA'],\n    raw['VALOR'], raw['SUB TOTAL'], raw['VALOR UNITARIO'],\n  ];\n  for (const c of candidates) {\n    if (c == null) continue;\n    const clean = dequote(c);\n    if (clean === '') continue;\n    const parsed = parseMoney(clean);\n    if (parsed > 0) return { raw: c, provided: true, value: parsed };\n  }\n  return { raw: null, provided: false, value: 0 };\n}\n\nconst BUILDINGS = [/\\b20\\s*DE\\s*JULIO\\b/, /\\bPRADO\\b/, /\\bCOSMOS\\b/, /\\bROMELIO(?:\\s+MARTINEZ)?\\b/];\nconst STOP = new Set(['PC','PARA','DE','DEL','LA','EL','EN','AREA','USO','OFICINA','SALA','LAB','LABORATORIO','DEPARTAMENTO','OF','Y','CON','POR','REEMPLAZO','SEDE']);\nconst CANON = [\n  { re: /\\bDIRECCION\\s+ADMINISTRATIVA\\b/, canon: 'DIRECCION ADMINISTRATIVA' },\n  { re: /\\bSALUD\\s+INTEGRAL\\b/, canon: 'SALUD INTEGRAL' },\n  { re: /\\bREGISTRO(\\s+Y\\s+CONTROL)?\\b/, canon: 'REGISTRO' },\n  { re: /\\bTESORERIA\\b/, canon: 'TESORERIA' },\n  { re: /\\bADMISIONES?\\b/, canon: 'ADMISIONES' },\n  { re: /\\bMERCADEO\\b/, canon: 'MERCADEO' },\n  { re: /\\bSECRETARIA\\b/, canon: 'SECRETARIA' },\n  { re: /\\bCOORDINACION(\\s+ACADEMICA)?\\b/, canon: 'COORDINACION' },\n  { re: /\\bBIENESTAR\\b/, canon: 'BIENESTAR' },\n  { re: /\\bBIBLIOTECA\\b/, canon: 'BIBLIOTECA' },\n  { re: /\\bAUDITORIO\\b/, canon: 'AUDITORIO' },\n  { re: /\\bDOCENTES?\\b/, canon: 'DOCENTES' },\n  { re: /\\bRECEPCION\\b/, canon: 'RECEPCION' },\n  { re: /\\bCOMPRAS\\b/, canon: 'COMPRAS' },\n  { re: /\\bADMINISTRACION\\b/, canon: 'ADMINISTRACION' },\n  { re: /\\bSOPORTE(\\s+TECNICO)?\\b/, canon: 'SOPORTE TECNICO' },\n  { re: /\\bTI\\b|\\bTECNOLOGIA\\b|\\bSISTEMAS\\b/, canon: 'SISTEMAS' },\n  { re: /\\bPOS(T)?GRADOS?\\b/, canon: 'POSGRADOS' },\n  { re: /\\bPREGRADOS?\\b/, canon: 'PREGRADOS' },\n  { re: /\\bLAB(?:ORATORIO)?\\s+DE\\s+SISTEMAS\\b|\\bSALA\\s+DE\\s+SISTEMAS\\b/, canon: 'SALA DE SISTEMAS' },\n  { re: /\\bLABORATORIO\\b/, canon: 'LABORATORIO' },\n  { re: /\\bCIE\\b|\\bCENTRO\\s+DE\\s+INNOVACION\\s+EDUCATIVA\\b/, canon: 'CIE' },\n];\nconst GENERIC = [\n  { re: /\\bOFICINA\\s+DE\\s+([A-Z ]{3,})\\b/, prefix: '' },\n  { re: /\\bSALA\\s+DE\\s+([A-Z ]{3,})\\b/, prefix: 'SALA DE ' },\n  { re: /\\bLAB(?:ORATORIO)?\\s+DE\\s+([A-Z ]{3,})\\b/, prefix: 'LABORATORIO DE ' },\n];\n\nfunction stripBuildings(text) {\n  let s = text;\n  for (const r of BUILDINGS) s = s.replace(r, ' ');\n  return s.replace(/\\s+/g, ' ').trim();\n}\n\nfunction inferUbicacion(text) {\n  const raw = foldTxt(text);\n  if (!raw) return '';\n  const s = stripBuildings(raw);\n  for (const item of CANON) if (item.re.test(s)) return item.canon;\n  for (const item of GENERIC) {\n    const m = s.match(item.re);\n    if (m) {\n      const candidate = foldTxt(m[1]).split(' ').filter(w => w && !STOP.has(w)).join(' ').trim();\n      if (candidate && !BUILDINGS.some(r => r.test(candidate))) return `${item.prefix}${candidate}`.trim();\n    }\n  }\n  const tokens = s.split(' ').filter(w => w && !STOP.has(w));\n  for (const token of tokens) {\n    if (token === 'CIE') return 'CIE';\n    for (const item of CANON) if (item.re.test(` ${token} `)) return token;\n  }\n  return '';\n}\n\nfunction makeFP(record) {\n  const serialNorm = record['SERIAL_NORM'] || normSerial(record['SERIAL']);\n  if (serialNorm) return `S:${serialNorm}`;\n  const key = [record['TIPO DE ACTIVO'], record['MARCA'], record['MODELO'], record['NOMBRE ACTIVO'], record['DESCRIPCIÓN']].map(foldTxt).join('|');\n  return `F:${fnv1a(key)}`;\n}\n\nfunction makeMatchHint(record) {\n  return [record['TIPO DE ACTIVO'], record['MARCA'], record['MODELO'], record['NOMBRE ACTIVO'], record['DESCRIPCIÓN']].join('|');\n}\n\nfunction makeCompatKey(record) {\n  return [record['TIPO DE ACTIVO'], record['CUENTA CONTABLE'], record['MARCA'], record['EDIFICIO'], record['RESPONSABLE']].map(foldTxt).join('|||');\n}\n\nfunction canInheritFromContext(currentSeq, ctx) {\n  if (!ctx) return false;\n  const a = Number(currentSeq);\n  const b = Number(ctx.seq);\n  if (!Number.isFinite(a) || !Number.isFinite(b)) return true;\n  return a >= b && a - b <= MAX_INHERIT_DISTANCE;\n}\n\nconst inputItems = $input.all();\nconst rows = [];\nconst lastByCompatKey = new Map();\n\nfor (let index = 0; index < inputItems.length; index++) {\n  const raw = inputItems[index].json || {};\n  const rowNumber = raw.row_number ?? raw['row_number'] ?? raw.rowNumber ?? raw['ROW_NUMBER'] ?? null;\n  const seq = Number(rowNumber) || index + 1;\n  const rawObservaciones = dequote(raw['OBSERVACIONES']);\n  const rawUbicacion = dequote(raw['UBICACIÓN'] ?? raw['UBICACION'] ?? '');\n  const rawDescripcion = dequote(raw['DESCRIPCIÓN'] ?? raw['DESCRIPCION'] ?? '');\n  const obsSource = rawObservaciones || rawUbicacion || rawDescripcion || '';\n  const money = pickMoneyRaw(raw);\n\n  const out = {\n    'PLACA': dequote(raw['PLACA']),\n    'NOMBRE ACTIVO': foldTxt(dequote(raw['NOMBRE ACTIVO'])),\n    'TIPO DE ACTIVO': foldTxt(dequote(raw['TIPO DE ACTIVO'])),\n    'CUENTA CONTABLE': foldTxt(dequote(raw['CUENTA CONTABLE'])),\n    'DESCRIPCIÓN': foldTxt(rawDescripcion),\n    'MARCA': foldTxt(dequote(raw['MARCA'])),\n    'MODELO': foldTxt(dequote(raw['MODELO'])).replace(/\\s*\\/\\s*/g, ' '),\n    'SERIAL': dequote(raw['SERIAL']),\n    'EDIFICIO': foldTxt(dequote(raw['EDIFICIO'] ?? raw['SEDE'] ?? '')),\n    'PISO': foldTxt(dequote(raw['PISO'])),\n    'BLOQUE': foldTxt(dequote(raw['BLOQUE'])),\n    'UBICACIÓN': foldTxt(rawUbicacion),\n    'CANTIDAD': Number.parseInt(raw['CANTIDAD'] ?? 1, 10) || 1,\n    'VALOR DE REFERENCIA': money.value,\n    'RESPONSABLE': foldTxt(dequote(raw['RESPONSABLE'])),\n    'row_number': rowNumber,\n  };\n\n  const inferredLocation = inferUbicacion(obsSource);\n  if (inferredLocation && !BUILDINGS.some(r => r.test(inferredLocation))) out['UBICACIÓN'] = inferredLocation;\n\n  const compatKey = makeCompatKey(out);\n  const ctx = lastByCompatKey.get(compatKey);\n  const inheritedFields = [];\n\n  if (canInheritFromContext(seq, ctx)) {\n    if (isBlankText(out['NOMBRE ACTIVO']) && !isBlankText(ctx.nombreActivo)) { out['NOMBRE ACTIVO'] = ctx.nombreActivo; inheritedFields.push('NOMBRE ACTIVO'); }\n    if (isBlankText(out['UBICACIÓN']) && !isBlankText(ctx.ubicacion)) { out['UBICACIÓN'] = ctx.ubicacion; inheritedFields.push('UBICACIÓN'); }\n    if (isBlankText(out['DESCRIPCIÓN']) && !isBlankText(ctx.descripcion)) { out['DESCRIPCIÓN'] = ctx.descripcion; inheritedFields.push('DESCRIPCIÓN'); }\n    if ((!money.provided || out['VALOR DE REFERENCIA'] === 0) && Number(ctx.valorReferencia) > 0) { out['VALOR DE REFERENCIA'] = Number(ctx.valorReferencia); inheritedFields.push('VALOR DE REFERENCIA'); }\n  }\n\n  out['SERIAL_NORM'] = normSerial(out['SERIAL']);\n  const fpBase = makeFP(out);\n  out['FP_BASE'] = fpBase;\n  out['FP'] = fpBase;\n  out['MATCH_HINT'] = makeMatchHint(out);\n  out['WAS_INHERITED'] = inheritedFields.length > 0;\n  out['INHERITED_FROM_ROW'] = inheritedFields.length > 0 ? ctx?.row_number ?? null : null;\n  out['INHERITED_FIELDS'] = inheritedFields;\n\n  rows.push(out);\n\n  if (!isBlankText(out['NOMBRE ACTIVO'])) {\n    lastByCompatKey.set(compatKey, {\n      seq,\n      row_number: out['row_number'],\n      nombreActivo: out['NOMBRE ACTIVO'],\n      ubicacion: out['UBICACIÓN'],\n      descripcion: out['DESCRIPCIÓN'],\n      valorReferencia: Number(out['VALOR DE REFERENCIA']) || 0,\n    });\n  }\n}\n\nreturn rows.map(row => ({ json: row }));"
+      },
+      "id": "5fe1cbf1-1ad0-45aa-8fd1-9ad3e478e2f4",
+      "name": "NORMALIZACIÓN PÓLIZA",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3200,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Nodo - TRANSFORMACIÓN POR CANTIDAD v3\n * Workflow: Inventario Activos -> Supabase v4\n */\n\nfunction foldTxt(value) {\n  return String(value == null ? '' : value)\n    .toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^A-Z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim();\n}\n\nfunction normSerial(value) {\n  if (!value) return null;\n  const serial = String(value).toUpperCase()\n    .replace(/\\bS\\/?N[:\\s-]*/g, '').replace(/[^A-Z0-9]/g, '').replace(/^0+/, '');\n  const invalidSerials = new Set(['NA','N/A','NULL','NULO','NOAPLICA','SININFO','SININFORMACION','NOREGISTRA']);\n  if (!serial || serial.length < 5 || invalidSerials.has(serial)) return null;\n  return serial;\n}\n\nfunction fnv1a(value) {\n  const str = String(value ?? '');\n  let hash = 0x811c9dc5;\n  for (let i = 0; i < str.length; i++) {\n    hash ^= str.charCodeAt(i);\n    hash = Math.imul(hash, 0x01000193) >>> 0;\n  }\n  return hash.toString(16).padStart(8, '0');\n}\n\nfunction toPositiveInt(value, fallback = 1) {\n  const n = Number.parseInt(value, 10);\n  if (!Number.isFinite(n) || n < 1) return fallback;\n  return n;\n}\n\nfunction getRowNumber(record, sourceIndex) {\n  return record.row_number ?? record['row_number'] ?? record.ROW_NUMBER ?? record.rowNumber ?? sourceIndex + 1;\n}\n\nfunction makeMatchHint(record) {\n  return [record['TIPO DE ACTIVO'], record['MARCA'], record['MODELO'], record['NOMBRE ACTIVO'], record['DESCRIPCIÓN']]\n    .map(value => String(value ?? '')).join('|');\n}\n\nfunction makeFallbackBaseFP(record) {\n  const serialNorm = record.SERIAL_NORM || normSerial(record.SERIAL);\n  if (serialNorm) return `S:${serialNorm}`;\n  const key = [record['TIPO DE ACTIVO'], record['MARCA'], record['MODELO'], record['NOMBRE ACTIVO'], record['DESCRIPCIÓN']].map(foldTxt).join('|');\n  return `F:${fnv1a(key)}`;\n}\n\nfunction hasRealSerial(record) {\n  const serialNorm = record.SERIAL_NORM || normSerial(record.SERIAL);\n  const fp = String(record.FP || record.FP_BASE || '');\n  return Boolean(serialNorm) || fp.startsWith('S:');\n}\n\nfunction makeUnitFP(record, unitIndex, sourceIndex) {\n  const fpBase = record.FP_BASE || record.FP || makeFallbackBaseFP(record);\n  if (hasRealSerial(record)) return fpBase;\n  const rowNumber = getRowNumber(record, sourceIndex);\n  const stableUnitKey = [fpBase, `ROW:${rowNumber}`, `UNIT:${unitIndex}`].join('|');\n  return `F:${fnv1a(stableUnitKey)}`;\n}\n\nconst inputItems = $input.all();\nconst output = [];\n\nfor (let sourceIndex = 0; sourceIndex < inputItems.length; sourceIndex++) {\n  const raw = inputItems[sourceIndex].json || {};\n  const rowNumber = getRowNumber(raw, sourceIndex);\n  const originalQuantity = toPositiveInt(raw.CANTIDAD, 1);\n  const serialNorm = raw.SERIAL_NORM || normSerial(raw.SERIAL);\n  const fpBase = raw.FP_BASE || raw.FP || makeFallbackBaseFP({ ...raw, SERIAL_NORM: serialNorm });\n  const matchHint = raw.MATCH_HINT || makeMatchHint(raw);\n  const serialBased = hasRealSerial({ ...raw, FP_BASE: fpBase, SERIAL_NORM: serialNorm });\n\n  for (let unitIndex = 1; unitIndex <= originalQuantity; unitIndex++) {\n    const unitFP = makeUnitFP({ ...raw, row_number: rowNumber, FP_BASE: fpBase, SERIAL_NORM: serialNorm }, unitIndex, sourceIndex);\n    output.push({\n      json: {\n        ...raw,\n        row_number: rowNumber,\n        SERIAL_NORM: serialNorm,\n        FP_BASE: fpBase,\n        MATCH_HINT: matchHint,\n        FP: unitFP,\n        CANTIDAD: 1,\n        CANTIDAD_ORIGINAL: originalQuantity,\n        UNIT_INDEX: unitIndex,\n        UNIT_TOTAL: originalQuantity,\n        WAS_EXPANDED_BY_QUANTITY: originalQuantity > 1,\n        HAS_REAL_SERIAL: serialBased,\n        SERIAL_WITH_QUANTITY_WARNING: serialBased && originalQuantity > 1,\n      }\n    });\n  }\n}\n\nreturn output;"
+      },
+      "id": "ecf3fbd2-4af8-4cbf-beed-c7cc4ca11da7",
+      "name": "TRANSFORMACIÓN POR CANTIDAD",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3648,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/* ==================== MAPEOS DE CATÁLOGOS ==================== */\nconst BUILDING_MAP = {\n  'COSMOS':               { id: 1, code: '01' },\n  'CONSULTORIO JURIDICO': { id: 2, code: '02' },\n  '20 DE JULIO':          { id: 3, code: '03' },\n  'PRADO':                { id: 4, code: '04' },\n  'ROMELIO':              { id: 5, code: '05' },\n  'ROMELIO MARTINEZ':     { id: 5, code: '05' },\n  'CALLE 79':             { id: 6, code: '06' },\n  'CALLE79':              { id: 6, code: '06' },\n};\nconst ASSET_TYPE_MAP = {\n  'PLANTAS DUCTOS Y TUNELES':               '45',\n  'PLANTAS DUCTOS TUNELES':                 '45',\n  'MAQUINARIA Y EQUIPO':                    '55',\n  'MAQUINARIA EQUIPO':                      '55',\n  'EQUIPO MEDICO Y CIENTIFICO':             '60',\n  'EQUIPO MEDICO CIENTIFICO':               '60',\n  'MUEBLES ENSERES Y EQUIPO DE OFICINA':    '65',\n  'MUEBLES ENSERES EQUIPO OFICINA':         '65',\n  'MUEBLES Y ENSERES':                      '65',\n  'EQUIPOS DE COMUNICACION Y COMPUTACION':  '70',\n  'EQUIPOS COMUNICACION COMPUTACION':       '70',\n  'EQUIPO DE COMPUTO':                      '70',\n  'EQUIPOS DE TRANSPORTE TRACCION Y ELEVACION': '75',\n  'EQUIPOS TRANSPORTE TRACCION ELEVACION':  '75',\n};\nconst VALID_CODES = ['45', '55', '60', '65', '70', '75'];\nconst MONTHS = ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'];\n\nfunction foldTxt(x) {\n  return String(x == null ? '' : x)\n    .toUpperCase().normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n    .replace(/[^A-Z0-9 ]/g, ' ').replace(/\\s+/g, ' ').trim();\n}\nfunction resolveAssetTypeCode(tipoActivo, cuentaContable) {\n  const cc = String(cuentaContable || '').replace(/\\D/g, '').slice(0, 2);\n  if (VALID_CODES.includes(cc)) return cc;\n  return ASSET_TYPE_MAP[foldTxt(tipoActivo)] || null;\n}\nfunction resolveBuilding(edificio) {\n  return BUILDING_MAP[foldTxt(edificio)] || null;\n}\n\n/* ==================== PROCESAMIENTO ==================== */\nconst items = $input.all();\nconst valid = [];\nconst invalid = [];\nconst now = new Date();\nconst sourceSheet = `n8n_poliza_${MONTHS[now.getMonth()]}_${now.getFullYear()}`;\n\nfor (let i = 0; i < items.length; i++) {\n  const raw = items[i].json;\n  const errors = [];\n\n  const building = resolveBuilding(raw['EDIFICIO']);\n  if (!building) errors.push(`Edificio desconocido: '${raw['EDIFICIO']}'`);\n\n  const assetTypeCode = resolveAssetTypeCode(raw['TIPO DE ACTIVO'], raw['CUENTA CONTABLE']);\n  if (!assetTypeCode) errors.push(`Tipo no mapeado: '${raw['TIPO DE ACTIVO']}' / CC: '${raw['CUENTA CONTABLE']}'`);\n\n  if (!raw['NOMBRE ACTIVO'] || String(raw['NOMBRE ACTIVO']).trim() === '') errors.push('NOMBRE ACTIVO vacío');\n\n  if (errors.length > 0) {\n    invalid.push({ name: raw['NOMBRE ACTIVO'], errors });\n  } else {\n    valid.push({\n      json: {\n        row_number:        raw.row_number ?? null,\n        city_code:         '1',\n        building_id:       building.id,\n        building_code:     building.code,\n        asset_type_code:   assetTypeCode,\n        name:              raw['NOMBRE ACTIVO'],\n        description:       raw['DESCRIPCIÓN'] || null,\n        puc_account:       assetTypeCode,\n        brand:             raw['MARCA'] || null,\n        model:             raw['MODELO'] || null,\n        serial:            raw['SERIAL'] || null,\n        quantity:          1,\n        reference_value:   raw['VALOR DE REFERENCIA'] || 0,\n        location:          raw['UBICACIÓN'] || null,\n        floor:             raw['PISO'] || null,\n        block:             raw['BLOQUE'] || null,\n        responsable_raw:   raw['RESPONSABLE'] || null,\n        status:            'ACTIVO',\n        source_sheet:      sourceSheet,\n        content_hash:      raw['FP'],\n        incorporation_year: now.getFullYear(),\n      }\n    });\n  }\n}\n\nconst stats = {\n  valid_count:   valid.length,\n  invalid_count: invalid.length,\n  invalid_items: invalid,\n};\n\nreturn valid.map((item, idx) => {\n  const json = { ...item.json };\n  if (idx === 0) json._stats = stats;\n  return { json };\n});"
+      },
+      "id": "4008b9ce-19c9-4d0a-8b52-383bf62bb5a9",
+      "name": "Mapeo a Schema PostgreSQL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3872,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "WITH plate_gen AS (\n  SELECT generate_plate($1::CHAR(1), $2::CHAR(2), $3::CHAR(2)) AS plate\n)\nINSERT INTO assets (\n  plate, plate_status, name, description,\n  asset_type_code, puc_account, brand, model,\n  serial, quantity, reference_value,\n  city_code, building_id, location, floor, block,\n  responsable_raw, status, source_sheet, content_hash,\n  incorporation_year\n)\nSELECT\n  p.plate, 'GENERADA',\n  $4, NULLIF($5, ''),\n  $3, $3,\n  NULLIF($6, ''), NULLIF($7, ''), NULLIF($8, ''),\n  $9::INTEGER, $10::NUMERIC(15,2),\n  $1, $11::INTEGER,\n  NULLIF($12, ''), NULLIF($13, ''), NULLIF($14, ''),\n  NULLIF($15, ''),\n  'ACTIVO', $16, $17,\n  $18::INTEGER\nFROM plate_gen p\nRETURNING id, plate",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.city_code,\n  $json.building_code,\n  $json.asset_type_code,\n  $json.name,\n  $json.description ?? '',\n  $json.brand ?? '',\n  $json.model ?? '',\n  $json.serial ?? '',\n  $json.quantity,\n  $json.reference_value,\n  $json.building_id,\n  $json.location ?? '',\n  $json.floor ?? '',\n  $json.block ?? '',\n  $json.responsable_raw ?? '',\n  $json.source_sheet,\n  $json.content_hash,\n  $json.incorporation_year\n] }}"
+        }
+      },
+      "id": "d86a90d4-3f60-4d3a-ae0f-de4b1a653a6b",
+      "name": "PostgreSQL - INSERT con Placa",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.5,
+      "position": [
+        4096,
+        528
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "Gogxnxk2VExKLE2p",
+          "name": "Supabase_SIGAF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Nodo: Agregación de Resultados\n// Propósito: consolidar el cierre del flujo y preparar un payload limpio para sync_log.\n\nconst insertResults = $('PostgreSQL - INSERT con Placa').all();\nconst mappingOutput = $('Mapeo a Schema PostgreSQL').all();\nconst sheetUpdateResults = $input.all();\n\nfunction hasValue(value) {\n  return value !== null && value !== undefined && String(value).trim() !== '';\n}\n\nfunction isImportedMark(value) {\n  return String(value ?? '').trim().toUpperCase() === 'IMPORTADO';\n}\n\nconst firstMappingItem = mappingOutput.find((item) => {\n  return item.json && hasValue(item.json.source_sheet);\n});\n\nconst sourceSheet = firstMappingItem?.json?.source_sheet ?? null;\n\nconst rawStats = mappingOutput[0]?.json?._stats;\n\nconst stats = rawStats ?? {\n  valid_count: insertResults.length,\n  invalid_count: 0,\n  invalid_items: [],\n};\n\nconst insertados = insertResults.filter((item) => {\n  const row = item.json ?? {};\n  return row.id != null;\n}).length;\n\nconst fallidos = Math.max(0, insertResults.length - insertados);\n\nconst validCount = Number(stats.valid_count ?? insertResults.length);\nconst invalidCount = Number(stats.invalid_count ?? 0);\n\nconst totalPoliza = validCount + invalidCount;\n\nconst erroresValidacion = Array.isArray(stats.invalid_items)\n  ? stats.invalid_items\n  : [];\n\nconst filasActualizadas = sheetUpdateResults.filter((item) => {\n  const row = item.json ?? {};\n\n  return (\n    row.row_number != null &&\n    isImportedMark(row.PLACA_SIGAF)\n  );\n});\n\nconst warnings = [];\n\nif (!sourceSheet) {\n  warnings.push('No se encontró source_sheet en el nodo \"Mapeo a Schema PostgreSQL\".');\n}\n\nif (validCount !== insertResults.length) {\n  warnings.push(\n    `Diferencia entre válidos mapeados (${validCount}) e intentos de inserción (${insertResults.length}).`\n  );\n}\n\nif (filasActualizadas.length !== insertados) {\n  warnings.push(\n    `Diferencia entre registros insertados (${insertados}) y filas marcadas como IMPORTADO en Google Sheets (${filasActualizadas.length}).`\n  );\n}\n\nconst estadoSync =\n  fallidos > 0 || invalidCount > 0 || warnings.length > 0\n    ? 'COMPLETADO_CON_OBSERVACIONES'\n    : 'COMPLETADO';\n\nreturn [\n  {\n    json: {\n      source_sheet: sourceSheet,\n\n      total_poliza: totalPoliza,\n      procesados_validos: validCount,\n      insertados,\n      fallidos,\n      rechazados_validacion: invalidCount,\n\n      filas_actualizadas_sheet: filasActualizadas.length,\n      errores_validacion: erroresValidacion,\n\n      estado_sync: estadoSync,\n      warnings,\n\n      listo_para_sync_log: Boolean(sourceSheet),\n      created_at_runtime: new Date().toISOString(),\n    },\n  },\n];"
+      },
+      "id": "96355b0c-68e2-4cb3-bd62-0cba515457cd",
+      "name": "Agregación de Resultados",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4992,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Gmail Trigger - Póliza Actualizada').first().json.id }}",
+        "message": "={{\n(() => {\n  /* ─────────────────────────────────────────────\n     SHIELD LOGO — inline base64 SVG\n     (Globe con Américas dorado, escudo azul dorado)\n  ───────────────────────────────────────────── */\n  const SHIELD_SRC =\n    'data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIHZpZXdCb3g9JzAgMCAxMDAgMTIwJz4KICA8ZGVmcz4KICAgIDxsaW5lYXJHcmFkaWVudCBpZD0nc2hnJyB4MT0nMCUnIHkxPScwJScgeDI9JzEwMCUnIHkyPScxMDAlJz4KICAgICAgPHN0b3Agb2Zmc2V0PScwJScgc3RvcC1jb2xvcj0nIzE4NTZiOCcvPgogICAgICA8c3RvcCBvZmZzZXQ9JzEwMCUnIHN0b3AtY29sb3I9JyMwNzFmNGEnLz4KICAgIDwvbGluZWFyR3JhZGllbnQ+CiAgICA8bGluZWFyR3JhZGllbnQgaWQ9J2dsYicgeDE9JzAlJyB5MT0nMCUnIHgyPScxMDAlJyB5Mj0nMTAwJSc+CiAgICAgIDxzdG9wIG9mZnNldD0nMCUnIHN0b3AtY29sb3I9JyMxMDQwYTAnLz4KICAgICAgPHN0b3Agb2Zmc2V0PScxMDAlJyBzdG9wLWNvbG9yPScjMDYxNDMwJy8+CiAgICA8L2xpbmVhckdyYWRpZW50PgogICAgPGNsaXBQYXRoIGlkPSdzYyc+CiAgICAgIDxwYXRoIGQ9J001MCA1IEw5NSAyMCBMOTUgNjUgUTk1IDk1IDUwIDExNSBRNSA5NSA1IDY1IEw1IDIwIFonLz4KICAgIDwvY2xpcFBhdGg+CiAgPC9kZWZzPgogIDxwYXRoIGQ9J001MCA1IEw5NSAyMCBMOTUgNjUgUTk1IDk1IDUwIDExNSBRNSA5NSA1IDY1IEw1IDIwIFonIGZpbGw9J3VybCgjc2hndCknIHN0cm9rZT0nI2Y1YjAwMCcgc3Ryb2tlLXdpZHRoPSczLjUnIHN0cm9rZS1saW5lam9pbj0ncm91bmQnIGZpbGw9J3VybCgjc2hnKScvPgogIDxjaXJjbGUgY3g9JzUwJyBjeT0nNjInIHI9JzMxJyBmaWxsPSd1cmwoI2dsYiknIHN0cm9rZT0nI2Y1YjAwMCcgc3Ryb2tlLXdpZHRoPScxLjInIGNsaXAtcGF0aD0ndXJsKCNzYyknLz4KICA8ZWxsaXBzZSBjeD0nNTAnIGN5PSc2Micgcng9JzMxJyByeT0nMTAnIGZpbGw9J25vbmUnIHN0cm9rZT0nI2Y1YjAwMCcgc3Ryb2tlLXdpZHRoPScwLjcnIG9wYWNpdHk9JzAuNScgY2xpcC1wYXRoPSd1cmwoI3NjKScvPgogIDxsaW5lIHgxPScxOScgeTE9JzYyJyB4Mj0nODEnIHkyPSc2Micgc3Ryb2tlPScjZjViMDAwJyBzdHJva2Utd2lkdGg9JzAuNycgb3BhY2l0eT0nMC41JyBjbGlwLXBhdGg9J3VybCgjc2MpJy8+CiAgPGxpbmUgeDE9JzIwJyB5MT0nNTInIHgyPSc4MCcgeTI9JzUyJyBzdHJva2U9JyNmNWIwMDAnIHN0cm9rZS13aWR0aD0nMC41JyBvcGFjaXR5PScwLjM1JyBjbGlwLXBhdGg9J3VybCgjc2MpJy8+CiAgPHBhdGggZD0nTTI2IDQyIEwzMCAzOCBMMzggMzcgTDQ0IDQwIEw0NiA0NiBMNDQgNTIgTDQ4IDU3IEw0NiA2MyBMNDAgNjEgTDM1IDU2IEwyOCA1NSBMMjQgNTAgWicgZmlsbD0nI2Y1YjAwMCcgb3BhY2l0eT0nMC45MicgY2xpcC1wYXRoPSd1cmwoI3NjKScvPgogIDxwYXRoIGQ9J000NiA2MyBMNDkgNjcgTDQ3IDcxJyBmaWxsPSdub25lJyBzdHJva2U9JyNmNWIwMDAnIHN0cm9rZS13aWR0aD0nMi4yJyBzdHJva2UtbGluZWNhcD0ncm91bmQnIGNsaXAtcGF0aD0ndXJsKCNzYyknLz4KICA8cGF0aCBkPSdNNDAgNzEgTDUxIDcwIEw1NiA3OCBMNTQgODkgTDQ4IDk1IEw0MSA5MSBMMzcgODIgTDM2IDczIFonIGZpbGw9JyNmNWIwMDAnIG9wYWNpdHk9JzAuOTInIGNsaXAtcGF0aD0ndXJsKCNzYyknLz4KICA8cGF0aCBkPSdNNTAgNSBMOTUgMjAnIHN0cm9rZT0nI2ZmZTA2Nicgc3Ryb2tlLXdpZHRoPScxLjUnIG9wYWNpdHk9JzAuNScgZmlsbD0nbm9uZScvPgogIDxwYXRoIGQ9J001MCA1IEw1IDIwJyBzdHJva2U9JyNmZmUwNjYnIHN0cm9rZS13aWR0aD0nMS41JyBvcGFjaXR5PScwLjUnIGZpbGw9J25vbmUnLz4KPC9zdmc+';\n\n  /* ─────────────────────────────────────────────\n     DATOS DEL SYNC\n  ───────────────────────────────────────────── */\n  const sync       = $json ?? {};\n  const insertados = Number(sync.insertados ?? 0);\n  const fallidos   = Number(sync.fallidos   ?? 0);\n\n  /* ─────────────────────────────────────────────\n     MAPEO DESDE NODO ANTERIOR\n     FIX: mappingItems puede llegar vacío si la\n     ejecución viene por ruta merge/aggregate.\n     Se maneja con fallback explícito.\n  ───────────────────────────────────────────── */\n  const mappingItems = $('Mapeo a Schema PostgreSQL').all().map((i) => i.json ?? {});\n  const rows         = mappingItems.slice(0, insertados);\n  const detailAvailable = rows.length > 0;\n\n  /* ─────────────────────────────────────────────\n     CATÁLOGOS\n  ───────────────────────────────────────────── */\n  const TYPE_NAMES = {\n    '45': 'Plantas, Ductos y Túneles',\n    '55': 'Maquinaria y Equipo',\n    '60': 'Equipo Médico y Científico',\n    '65': 'Muebles, Enseres y Eq. de Oficina',\n    '70': 'Equipos de Comunicación y Cómputo',\n    '75': 'Equipos de Transporte y Tracción',\n  };\n\n  const TYPE_ICONS = {\n    '45': '🏭', '55': '⚙️', '60': '🔬',\n    '65': '🪑', '70': '💻', '75': '🚛',\n  };\n\n  /* ─────────────────────────────────────────────\n     FORMATTERS\n  ───────────────────────────────────────────── */\n  const currency = new Intl.NumberFormat('es-CO', {\n    style: 'currency', currency: 'COP', maximumFractionDigits: 0,\n  });\n\n  const dateFormatter = new Intl.DateTimeFormat('es-CO', {\n    timeZone: 'America/Bogota',\n    weekday: 'long', year: 'numeric', month: 'long',\n    day: '2-digit', hour: '2-digit', minute: '2-digit',\n  });\n\n  const createdAt   = sync.created_at ? new Date(sync.created_at) : new Date();\n  const fechaProceso = dateFormatter.format(createdAt);\n  const fechaFormateada = fechaProceso.charAt(0).toUpperCase() + fechaProceso.slice(1);\n\n  /* ─────────────────────────────────────────────\n     TOTALES Y DISTRIBUCIÓN\n  ───────────────────────────────────────────── */\n  const totalValue = rows.reduce((sum, row) => {\n    const v = Number(row.reference_value ?? 0);\n    return sum + (Number.isFinite(v) ? v : 0);\n  }, 0);\n\n  const byType = new Map();\n  for (const row of rows) {\n    const code  = String(row.asset_type_code ?? '').trim();\n    const label = TYPE_NAMES[code] || `Tipo ${code || 'No clasificado'}`;\n    const icon  = TYPE_ICONS[code] || '📦';\n    const value = Number(row.reference_value ?? 0);\n\n    if (!byType.has(code)) byType.set(code, { label, icon, count: 0, value: 0 });\n    const entry = byType.get(code);\n    entry.count += 1;\n    entry.value += Number.isFinite(value) ? value : 0;\n  }\n\n  const distributionRows = Array.from(byType.values());\n  const maxCount         = distributionRows.reduce((m, e) => Math.max(m, e.count), 1);\n\n  /* ─────────────────────────────────────────────\n     STATUS COPY\n  ───────────────────────────────────────────── */\n  const hasErrors    = fallidos > 0;\n  const statusBadge  = hasErrors\n    ? '⚠️ Actualizado con Observaciones'\n    : '✔ Inventario Actualizado';\n  const statusDesc   = hasErrors\n    ? `La sincronización finalizó. Se registraron <strong>${fallidos} registro${fallidos !== 1 ? 's' : ''} con error</strong> que requieren revisión manual en SIGAF.`\n    : 'La póliza fue procesada e integrada automáticamente al inventario maestro de activos fijos de la institución.';\n\n  /* ─────────────────────────────────────────────\n     TABLA DE DISTRIBUCIÓN\n  ───────────────────────────────────────────── */\n  let distributionHtml;\n\n  if (!detailAvailable && insertados > 0) {\n    // FIX: mappingItems vacío aunque insertados > 0 — bug de contexto n8n\n    distributionHtml = `\n      <tr>\n        <td colspan=\"3\" style=\"padding:24px 20px; text-align:center;\">\n          <div style=\"display:inline-block; background:#fff8e6; border:1px solid #f5c842; border-radius:10px; padding:14px 22px;\">\n            <div style=\"font-size:18px; margin-bottom:6px;\">⚠️</div>\n            <div style=\"font-size:12px; color:#7a5a00; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;\">\n              Detalle de distribución no disponible\n            </div>\n            <div style=\"font-size:11px; color:#9a7a20; margin-top:4px;\">\n              Los ${insertados} activo${insertados !== 1 ? 's' : ''} fueron insertados correctamente.<br/>\n              Consulte el desglose en el panel de SIGAF.\n            </div>\n          </div>\n        </td>\n      </tr>`;\n  } else if (distributionRows.length === 0) {\n    distributionHtml = `\n      <tr>\n        <td colspan=\"3\" style=\"padding:24px; text-align:center; color:#8da0be; font-size:12px; font-style:italic;\">\n          No se registraron activos nuevos en esta sincronización.\n        </td>\n      </tr>`;\n  } else {\n    distributionHtml = distributionRows.map((entry, idx) => {\n      const pct     = insertados > 0 ? Math.round((entry.count / insertados) * 100) : 0;\n      const barPct  = maxCount > 0    ? Math.round((entry.count / maxCount) * 100) : 0;\n      const rowBg   = idx % 2 === 0 ? '#f8fbff' : '#ffffff';\n      return `\n        <tr>\n          <td style=\"padding:14px 18px; border-bottom:1px solid #e4edf8; background:${rowBg}; vertical-align:middle;\">\n            <div style=\"font-size:12px; font-weight:700; color:#0b2447; margin-bottom:7px;\">\n              ${entry.icon}&nbsp;&nbsp;${entry.label}\n            </div>\n            <div style=\"height:5px; background:#dce8f6; border-radius:99px; overflow:hidden;\">\n              <div style=\"height:5px; width:${barPct}%; background:linear-gradient(90deg,#0d64d8,#0a9ef0); border-radius:99px;\"></div>\n            </div>\n            <div style=\"font-size:10px; color:#93a8c4; margin-top:5px; letter-spacing:0.3px;\">\n              ${pct}% del total registrado\n            </div>\n          </td>\n          <td style=\"padding:14px 16px; border-bottom:1px solid #e4edf8; background:${rowBg}; text-align:center; vertical-align:middle;\">\n            <span style=\"display:inline-block; min-width:32px; padding:5px 10px; border-radius:999px;\n              background:linear-gradient(135deg,#0d64d8,#0846a0); color:#ffffff; font-weight:800; font-size:13px;\">\n              ${entry.count}\n            </span>\n          </td>\n          <td style=\"padding:14px 18px; border-bottom:1px solid #e4edf8; background:${rowBg}; text-align:right; vertical-align:middle; color:#087a3d; font-weight:700; font-size:12px;\">\n            ${currency.format(entry.value)}\n          </td>\n        </tr>`;\n    }).join('');\n  }\n\n  /* ─────────────────────────────────────────────\n     ALERTA DE FALLOS\n  ───────────────────────────────────────────── */\n  const errorBanner = hasErrors ? `\n    <tr>\n      <td style=\"padding:0 36px 28px;\">\n        <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n          style=\"background:#fff8ed; border:1px solid #f5c842; border-left:5px solid #f59b00; border-radius:10px;\">\n          <tr>\n            <td style=\"padding:16px 20px;\">\n              <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n                <tr>\n                  <td width=\"36\" style=\"vertical-align:top; padding-right:12px;\">\n                    <div style=\"width:36px; height:36px; background:#fff3cd; border-radius:8px;\n                      text-align:center; line-height:36px; font-size:18px;\">⚠️</div>\n                  </td>\n                  <td style=\"vertical-align:top;\">\n                    <div style=\"font-size:13px; font-weight:800; color:#7a4800; margin-bottom:3px;\">\n                      Se detectaron ${fallidos} error${fallidos !== 1 ? 'es' : ''} durante la sincronización\n                    </div>\n                    <div style=\"font-size:12px; color:#9a6820; line-height:1.5;\">\n                      Algunos registros no pudieron insertarse. Revise la ejecución en el panel de n8n / SIGAF\n                      para identificar y corregir las filas afectadas antes del cierre contable.\n                    </div>\n                  </td>\n                </tr>\n              </table>\n            </td>\n          </tr>\n        </table>\n      </td>\n    </tr>` : '';\n\n  /* ─────────────────────────────────────────────\n     HTML FINAL\n  ───────────────────────────────────────────── */\n  return `<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head>\n<body style=\"margin:0;padding:0;background:#edf2f9;font-family:Georgia,'Times New Roman',serif;color:#0b2447;\">\n\n<table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n  style=\"background:#edf2f9;padding:32px 0 48px;\">\n  <tr>\n    <td align=\"center\">\n\n      <!-- ══ CONTENEDOR PRINCIPAL ══ -->\n      <table role=\"presentation\" width=\"640\" cellspacing=\"0\" cellpadding=\"0\"\n        style=\"width:640px;max-width:640px;border-collapse:separate;border-spacing:0;\n          border-radius:18px;overflow:hidden;\n          box-shadow:0 8px 40px rgba(6,26,61,0.18), 0 2px 8px rgba(6,26,61,0.10);\">\n\n        <!-- ░░ FRANJA DORADA TOP ░░ -->\n        <tr>\n          <td style=\"height:6px;background:linear-gradient(90deg,#c98a00,#f5b000,#ffe066,#f5b000,#c98a00);\"></td>\n        </tr>\n\n        <!-- ░░ HEADER HERO ░░ -->\n        <tr>\n          <td style=\"background:linear-gradient(155deg,#04142e 0%,#0a2558 45%,#0d438f 100%);\n            padding:44px 40px 38px;text-align:center;position:relative;\">\n\n            <!-- Escudo -->\n            <div style=\"margin-bottom:20px;\">\n              <img src=\"${SHIELD_SRC}\" width=\"78\" height=\"94\" alt=\"Escudo SIGAF\"\n                style=\"display:block;margin:0 auto;filter:drop-shadow(0 4px 12px rgba(245,176,0,0.35));\" />\n            </div>\n\n            <!-- Institución -->\n            <div style=\"font-size:10px;letter-spacing:4px;color:#f5b000;font-weight:700;\n              text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;margin-bottom:4px;\">\n              Corporación Universitaria Americana\n            </div>\n            <div style=\"font-size:12px;color:#7da4d4;font-family:Arial,Helvetica,sans-serif;margin-bottom:32px;\">\n              Dirección Administrativa · Gestión de Activos Fijos\n            </div>\n\n            <!-- Divisor dorado ornamental -->\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"margin-bottom:28px;\">\n              <tr>\n                <td style=\"border-top:1px solid rgba(245,176,0,0.25);\"></td>\n                <td width=\"12\" style=\"padding:0 10px;\">\n                  <div style=\"width:6px;height:6px;background:#f5b000;border-radius:50%;margin:0 auto;\n                    box-shadow:0 0 8px rgba(245,176,0,0.6);\"></div>\n                </td>\n                <td style=\"border-top:1px solid rgba(245,176,0,0.25);\"></td>\n              </tr>\n            </table>\n\n            <!-- Badge de estado -->\n            <div style=\"display:inline-block;margin-bottom:18px;\">\n              <span style=\"display:inline-block;padding:6px 18px;border-radius:999px;\n                background:${hasErrors ? 'rgba(245,160,0,0.2)' : 'rgba(8,122,61,0.22)'};\n                border:1px solid ${hasErrors ? 'rgba(245,176,0,0.5)' : 'rgba(0,220,100,0.4)'};\n                color:${hasErrors ? '#ffd97a' : '#5af0a4'};\n                font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;\n                font-family:Arial,Helvetica,sans-serif;\">\n                ${hasErrors ? '⚠ Procesado con observaciones' : '✔ Sincronización exitosa'}\n              </span>\n            </div>\n\n            <!-- Título principal -->\n            <h1 style=\"margin:0 0 14px;color:#ffffff;font-size:34px;line-height:1.15;\n              font-weight:400;letter-spacing:-0.5px;\">\n              Inventario<br/>\n              <span style=\"font-weight:700;color:#f5b000;\">Actualizado</span>\n            </h1>\n\n            <!-- Descripción -->\n            <p style=\"margin:0 auto 24px;max-width:460px;color:#9bbfe0;font-size:13px;\n              line-height:1.7;font-family:Arial,Helvetica,sans-serif;\">\n              ${statusDesc}\n            </p>\n\n            <!-- Fecha chip -->\n            <div style=\"display:inline-block;padding:10px 24px;border-radius:999px;\n              background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);\n              color:#c8dff5;font-size:12px;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.2px;\">\n              🕐&nbsp; ${fechaFormateada}\n            </div>\n\n          </td>\n        </tr>\n\n        <!-- ░░ CUERPO BLANCO ░░ -->\n        <tr>\n          <td style=\"background:#ffffff;padding:36px 36px 8px;\">\n\n            <!-- SECCIÓN: KPI CARDS -->\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n              <tr>\n\n                <!-- Card: Activos nuevos -->\n                <td width=\"50%\" style=\"padding-right:10px;vertical-align:top;\">\n                  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n                    style=\"background:linear-gradient(160deg,#f4f9ff 0%,#e8f2ff 100%);\n                      border:1px solid #cce0ff;border-top:4px solid #0d64d8;border-radius:14px;\n                      box-shadow:0 2px 12px rgba(13,100,216,0.10);\">\n                    <tr>\n                      <td style=\"padding:26px 22px 22px;text-align:center;\">\n                        <div style=\"font-size:10px;letter-spacing:1.5px;color:#6b8ab8;font-weight:700;\n                          text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;\">\n                          Activos Registrados\n                        </div>\n                        <div style=\"font-size:52px;line-height:1;color:#00458f;font-weight:700;\n                          margin:10px 0 4px;letter-spacing:-2px;\">\n                          ${insertados}\n                        </div>\n                        <div style=\"font-size:11px;color:#8daace;font-family:Arial,Helvetica,sans-serif;\">\n                          unidades nuevas en inventario\n                        </div>\n                        ${fallidos > 0 ? `\n                        <div style=\"margin-top:12px;padding:6px 10px;background:#fff8e6;border-radius:8px;\n                          font-size:10px;color:#9a6820;font-family:Arial,Helvetica,sans-serif;font-weight:700;\">\n                          + ${fallidos} con error\n                        </div>` : ''}\n                      </td>\n                    </tr>\n                  </table>\n                </td>\n\n                <!-- Card: Valor total -->\n                <td width=\"50%\" style=\"padding-left:10px;vertical-align:top;\">\n                  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n                    style=\"background:linear-gradient(160deg,#fffdf4 0%,#fff8e0 100%);\n                      border:1px solid #fde68a;border-top:4px solid #f5a400;border-radius:14px;\n                      box-shadow:0 2px 12px rgba(245,164,0,0.12);\">\n                    <tr>\n                      <td style=\"padding:26px 22px 22px;text-align:center;\">\n                        <div style=\"font-size:10px;letter-spacing:1.5px;color:#a07820;font-weight:700;\n                          text-transform:uppercase;font-family:Arial,Helvetica,sans-serif;\">\n                          Valor de Referencia\n                        </div>\n                        <div style=\"font-size:${totalValue > 999999999 ? '18' : '22'}px;line-height:1.2;\n                          color:#7a3c00;font-weight:700;margin:12px 0 4px;letter-spacing:-0.5px;\">\n                          ${currency.format(totalValue)}\n                        </div>\n                        <div style=\"font-size:11px;color:#b09040;font-family:Arial,Helvetica,sans-serif;\">\n                          valor total COP de la póliza\n                        </div>\n                        <div style=\"margin-top:12px;padding:6px 10px;background:rgba(245,176,0,0.1);\n                          border-radius:8px;font-size:10px;color:#8a6010;\n                          font-family:Arial,Helvetica,sans-serif;letter-spacing:0.2px;\">\n                          Sistema SIGAF · Contabilidad\n                        </div>\n                      </td>\n                    </tr>\n                  </table>\n                </td>\n\n              </tr>\n            </table>\n\n          </td>\n        </tr>\n\n        <!-- ░░ TABLA DE DISTRIBUCIÓN ░░ -->\n        <tr>\n          <td style=\"background:#ffffff;padding:28px 36px 8px;\">\n\n            <!-- Título sección -->\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n              style=\"margin-bottom:16px;\">\n              <tr>\n                <td>\n                  <div style=\"font-size:18px;font-weight:700;color:#0b2447;letter-spacing:-0.3px;\">\n                    Distribución por Categoría\n                  </div>\n                  <div style=\"font-size:12px;color:#7a98be;font-family:Arial,Helvetica,sans-serif;\n                    margin-top:3px;\">\n                    Desglose de activos integrados en esta actualización\n                  </div>\n                </td>\n                <td align=\"right\" style=\"vertical-align:bottom;\">\n                  <span style=\"display:inline-block;padding:4px 14px;background:#edf4ff;border-radius:999px;\n                    font-size:11px;font-weight:700;color:#0846a0;\n                    font-family:Arial,Helvetica,sans-serif;letter-spacing:0.3px;\">\n                    ${insertados} total${insertados !== 1 ? 'es' : ''}\n                  </span>\n                </td>\n              </tr>\n            </table>\n\n            <!-- Tabla -->\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n              style=\"border-radius:12px;overflow:hidden;border:1px solid #dbe8f8;\">\n\n              <!-- Header tabla -->\n              <tr>\n                <th align=\"left\" style=\"background:linear-gradient(135deg,#061a3d,#0a3070);\n                  padding:14px 18px;color:#8db6e0;font-size:10px;font-weight:700;\n                  letter-spacing:1.5px;text-transform:uppercase;\n                  font-family:Arial,Helvetica,sans-serif;width:60%;\">\n                  Tipo de Activo\n                </th>\n                <th align=\"center\" style=\"background:linear-gradient(135deg,#061a3d,#0a3070);\n                  padding:14px 16px;color:#8db6e0;font-size:10px;font-weight:700;\n                  letter-spacing:1.5px;text-transform:uppercase;\n                  font-family:Arial,Helvetica,sans-serif;width:15%;\">\n                  Uds.\n                </th>\n                <th align=\"right\" style=\"background:linear-gradient(135deg,#061a3d,#0a3070);\n                  padding:14px 18px;color:#8db6e0;font-size:10px;font-weight:700;\n                  letter-spacing:1.5px;text-transform:uppercase;\n                  font-family:Arial,Helvetica,sans-serif;width:25%;\">\n                  Valor COP\n                </th>\n              </tr>\n\n              ${distributionHtml}\n\n              <!-- Fila totales -->\n              <tr>\n                <td style=\"background:linear-gradient(135deg,#0a2558,#0d438f);\n                  padding:16px 18px;vertical-align:middle;\">\n                  <span style=\"font-size:12px;font-weight:700;color:#e8f2ff;\n                    text-transform:uppercase;letter-spacing:1px;\n                    font-family:Arial,Helvetica,sans-serif;\">\n                    ▸ Total General\n                  </span>\n                </td>\n                <td style=\"background:linear-gradient(135deg,#0a2558,#0d438f);\n                  padding:16px;text-align:center;vertical-align:middle;\">\n                  <span style=\"display:inline-block;min-width:34px;padding:6px 12px;border-radius:999px;\n                    background:#f5b000;color:#04142e;font-weight:800;font-size:14px;\">\n                    ${insertados}\n                  </span>\n                </td>\n                <td style=\"background:linear-gradient(135deg,#0a2558,#0d438f);\n                  padding:16px 18px;text-align:right;vertical-align:middle;\n                  color:#5af0a4;font-weight:700;font-size:13px;\">\n                  ${currency.format(totalValue)}\n                </td>\n              </tr>\n\n            </table>\n          </td>\n        </tr>\n\n        <!-- ░░ BANNER DE ERRORES (condicional) ░░ -->\n        ${errorBanner}\n\n        <!-- ░░ NOTA INFERIOR ░░ -->\n        <tr>\n          <td style=\"background:#ffffff;padding:24px 36px 36px;\">\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\"\n              style=\"background:#f6f9fd;border:1px solid #dce8f5;border-radius:10px;\">\n              <tr>\n                <td style=\"padding:16px 20px;\">\n                  <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n                    <tr>\n                      <td width=\"24\" style=\"vertical-align:top;padding-right:10px;color:#0d64d8;font-size:16px;\">ℹ</td>\n                      <td style=\"vertical-align:top;\">\n                        <div style=\"font-size:12px;color:#4a6a9a;font-family:Arial,Helvetica,sans-serif;line-height:1.6;\">\n                          Las filas procesadas fueron marcadas como\n                          <strong style=\"color:#0a2558;background:#dce8f5;padding:1px 6px;border-radius:4px;font-size:11px;\">\n                            IMPORTADO\n                          </strong>\n                          en la póliza de origen.\n                          Este reporte fue generado automáticamente por el flujo\n                          <em>Inventario Activos → Supabase</em> vía n8n · SIGAF.\n                        </div>\n                      </td>\n                    </tr>\n                  </table>\n                </td>\n              </tr>\n            </table>\n          </td>\n        </tr>\n\n        <!-- ░░ FOOTER ░░ -->\n        <tr>\n          <td style=\"background:linear-gradient(135deg,#04142e,#071f4a);padding:22px 36px 26px;\">\n            <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\">\n              <tr>\n                <td>\n                  <div style=\"font-size:11px;color:#3a6090;font-family:Arial,Helvetica,sans-serif;line-height:1.6;\">\n                    <strong style=\"color:#6090b8;\">SIGAF</strong> · Sistema de Gestión de Activos Fijos<br/>\n                    Corporación Universitaria Americana · Dirección Administrativa\n                  </div>\n                </td>\n                <td align=\"right\" style=\"vertical-align:middle;\">\n                  <div style=\"font-size:10px;color:#2a4060;font-family:Arial,Helvetica,sans-serif;text-align:right;\">\n                    Generado automáticamente<br/>No requiere respuesta\n                  </div>\n                </td>\n              </tr>\n            </table>\n          </td>\n        </tr>\n\n        <!-- ░░ FRANJA DORADA BOTTOM ░░ -->\n        <tr>\n          <td style=\"height:4px;background:linear-gradient(90deg,#c98a00,#f5b000,#ffe066,#f5b000,#c98a00);\"></td>\n        </tr>\n\n      </table>\n      <!-- /CONTENEDOR PRINCIPAL -->\n\n    </td>\n  </tr>\n</table>\n\n</body>\n</html>`;\n})()\n}}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "id": "a1e36f1f-0d6a-4266-b53c-f4f16fa325ac",
+      "name": "Email - Reporte de Resultados",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        5440,
+        528
+      ],
+      "webhookId": "4fc2247a-fb47-459a-9b4e-88e7af8cab3a",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "H8VJFmKktgwrFju7",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-placa-empty-trimmed",
+              "leftValue": "={{ String($json.PLACA ?? '').trim() }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "598322a6-3fec-4ef6-a6ac-5439f318f9e8",
+      "name": "Filtro: Solo Sin Placa1",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        3424,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "/**\n * Nodo - Agrupar Filas Importadas por Fila de Póliza\n *\n * Marca como IMPORTADO cada fila original de la póliza que tuvo al menos\n * un activo insertado correctamente en Supabase.\n *\n * No devuelve placas ni trazabilidad técnica hacia Google Sheets.\n * La columna PLACA_SIGAF funciona únicamente como bandera operativa:\n *\n * - Vacío: pendiente de importar.\n * - IMPORTADO: ya cargado en Supabase/SIGAF.\n *\n * Requiere que \"Mapeo a Schema PostgreSQL\" incluya row_number en su output.\n */\n\nconst insertResults = $input.all();\nconst mapeoResults = $('Mapeo a Schema PostgreSQL').all();\n\nif (insertResults.length !== mapeoResults.length) {\n  console.warn(\n    `[Agrupar Filas Importadas] Conteo asimétrico: INSERT=${insertResults.length}, Mapeo=${mapeoResults.length}`\n  );\n}\n\nconst importedRows = new Set();\n\nfor (let i = 0; i < insertResults.length; i++) {\n  const insertedId = insertResults[i]?.json?.id;\n  const generatedPlate = insertResults[i]?.json?.plate;\n\n  if (insertedId == null || !generatedPlate) continue;\n\n  const rowNumber = mapeoResults[i]?.json?.row_number ?? null;\n  if (rowNumber == null) continue;\n\n  importedRows.add(String(rowNumber));\n}\n\nconst results = Array.from(importedRows).map((rowNumber) => ({\n  json: {\n    row_number: Number(rowNumber),\n    PLACA_SIGAF: 'IMPORTADO',\n  },\n}));\n\nif (results.length === 0) {\n  return [\n    {\n      json: {\n        row_number: null,\n        PLACA_SIGAF: '',\n        _no_updates: true,\n      },\n    },\n  ];\n}\n\nreturn results;"
+      },
+      "id": "4d377ca6-7603-4e5b-83c7-4c6b4b683052",
+      "name": "Agrupar Placas por Fila1",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4320,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "cond-row-number-exists",
+              "leftValue": "={{ String($json.PLACA_SIGAF ?? '').trim().toUpperCase() }}",
+              "rightValue": "IMPORTADO",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "4b99d157-52c8-413b-8c83-b3e024dcdc13",
+      "name": "Filtro: Solo Con Placa Generada1",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        4544,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "={{ String($('ENLACE POLIZA').first().json.googleSheetsUrl || '').split('/d/')[1]?.split('/')[0] || '' }}",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ ['ENERO','FEBRERO','MARZO','ABRIL','MAYO','JUNIO','JULIO','AGOSTO','SEPTIEMBRE','OCTUBRE','NOVIEMBRE','DICIEMBRE'][new Date().getMonth()] }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "row_number": "={{ $json.row_number }}",
+            "PLACA_SIGAF": "={{ $json.PLACA_SIGAF }}"
+          },
+          "matchingColumns": [
+            "row_number"
+          ],
+          "schema": [
+            {
+              "id": "NOMBRE ACTIVO",
+              "displayName": "NOMBRE ACTIVO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "TIPO DE ACTIVO",
+              "displayName": "TIPO DE ACTIVO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CUENTA CONTABLE",
+              "displayName": "CUENTA CONTABLE",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "MARCA",
+              "displayName": "MARCA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "MODELO",
+              "displayName": "MODELO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SERIAL",
+              "displayName": "SERIAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "EDIFICIO",
+              "displayName": "EDIFICIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ÁREA QUE SOLICITA",
+              "displayName": "ÁREA QUE SOLICITA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "CANTIDAD",
+              "displayName": "CANTIDAD",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "VALOR UNITARIO",
+              "displayName": "VALOR UNITARIO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "SUB TOTAL",
+              "displayName": "SUB TOTAL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "IVA",
+              "displayName": "IVA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "VALOR DE REFERENCIA",
+              "displayName": "VALOR DE REFERENCIA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ORDEN DE COMPRA N° / FACTURA DE VENTA",
+              "displayName": "ORDEN DE COMPRA N° / FACTURA DE VENTA",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "OBSERVACIONES",
+              "displayName": "OBSERVACIONES",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "FECHA INGRESO",
+              "displayName": "FECHA INGRESO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "PLACA_SIGAF",
+              "displayName": "PLACA_SIGAF",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "plates",
+              "displayName": "plates",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "plates_str",
+              "displayName": "plates_str",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "plates_count",
+              "displayName": "plates_count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "id": "98f377c5-9618-48cc-9fd0-4512e66822ee",
+      "name": "Google Sheets - Actualizar Placa1",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.6,
+      "position": [
+        4768,
+        528
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "nMZ1P7phwaZTYmbE",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO sync_log (\n  source_sheet,\n  insertados,\n  fallidos,\n  placas_generadas\n)\nVALUES (\n  $1,\n  $2::INTEGER,\n  $3::INTEGER,\n  $4::jsonb\n)\nRETURNING\n  id,\n  source_sheet,\n  insertados,\n  fallidos,\n  placas_generadas,\n  created_at;",
+        "options": {
+          "queryReplacement": "={{ [\n  $json.source_sheet,\n  $json.insertados,\n  $json.fallidos,\n  JSON.stringify($json.placas_generadas ?? [])\n] }}"
+        }
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        5216,
+        528
+      ],
+      "id": "47c24e5f-86c5-49a7-8b6e-652e3ae9796d",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "postgres": {
+          "id": "Gogxnxk2VExKLE2p",
+          "name": "Supabase_SIGAF"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Gmail Trigger - Póliza Actualizada": {
+      "main": [
+        [
+          {
+            "node": "ENLACE POLIZA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ENLACE POLIZA": {
+      "main": [
+        [
+          {
+            "node": "Leer Póliza (Sheet Dinámico)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Leer Póliza (Sheet Dinámico)": {
+      "main": [
+        [
+          {
+            "node": "TRANSFORMACIÓN DE DATOS",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TRANSFORMACIÓN DE DATOS": {
+      "main": [
+        [
+          {
+            "node": "NORMALIZACIÓN PÓLIZA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "NORMALIZACIÓN PÓLIZA": {
+      "main": [
+        [
+          {
+            "node": "Filtro: Solo Sin Placa1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TRANSFORMACIÓN POR CANTIDAD": {
+      "main": [
+        [
+          {
+            "node": "Mapeo a Schema PostgreSQL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mapeo a Schema PostgreSQL": {
+      "main": [
+        [
+          {
+            "node": "PostgreSQL - INSERT con Placa",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "PostgreSQL - INSERT con Placa": {
+      "main": [
+        [
+          {
+            "node": "Agrupar Placas por Fila1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agregación de Resultados": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro: Solo Sin Placa1": {
+      "main": [
+        [
+          {
+            "node": "TRANSFORMACIÓN POR CANTIDAD",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Agrupar Placas por Fila1": {
+      "main": [
+        [
+          {
+            "node": "Filtro: Solo Con Placa Generada1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtro: Solo Con Placa Generada1": {
+      "main": [
+        [
+          {
+            "node": "Google Sheets - Actualizar Placa1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Sheets - Actualizar Placa1": {
+      "main": [
+        [
+          {
+            "node": "Agregación de Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "Email - Reporte de Resultados",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "8f6713da-1625-4074-acbc-7fa4391ad8f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d4844a6841c5935e19741038ad7abde3fc1c2772b55fc7ee28b26c1bcab33d8b"
+  },
+  "id": "9aSxnKJ0F6m90ar0",
+  "tags": [
+    {
+      "updatedAt": "2026-04-24T18:24:27.693Z",
+      "createdAt": "2026-04-24T18:24:27.693Z",
+      "id": "akvZWskmLZ9QGgPn",
+      "name": "SIGAF"
+    },
+    {
+      "updatedAt": "2026-04-24T18:24:27.696Z",
+      "createdAt": "2026-04-24T18:24:27.696Z",
+      "id": "CpwkGH71doLnqFiH",
+      "name": "PostgreSQL"
+    }
+  ]
+}

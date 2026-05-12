@@ -309,13 +309,13 @@ html.dark .glass {
 }
 
 html.dark {
-  --tbl-bg:         rgba(17,17,19,0.96);
-  --tbl-head-bg:    rgba(255,255,255,0.025);
-  --tbl-border:     rgba(255,255,255,0.05);
-  --tbl-row-hover:  rgba(255,255,255,0.025);
-  --tbl-row-active: rgba(217,171,68,0.09);
-  --tbl-foot-bg:    rgba(255,255,255,0.015);
-  --tbl-text:       #F4F4F5;
+  --tbl-bg:         rgba(13, 17, 38, 0.4);
+  --tbl-head-bg:    rgba(255,255,255,0.03);
+  --tbl-border:     rgba(255,255,255,0.06);
+  --tbl-row-hover:  rgba(255,255,255,0.02);
+  --tbl-row-active: rgba(217,171,68,0.08);
+  --tbl-foot-bg:    rgba(255,255,255,0.01);
+  --tbl-text:       #FAFAFA;
   --tbl-text-sub:   #A1A1AA;
 
   --flt-bg:     rgba(24,24,27,0.92);
@@ -372,20 +372,26 @@ html.dark {
 .plaqueta {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   font-family: 'JetBrains Mono', monospace;
   font-size: 10.5px;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: linear-gradient(180deg, #FBF1D6 0%, #F5E0A0 100%);
-  border: 1px solid #D9AB44;
-  color: #75501A;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.6), 0 1px 0 rgba(0,0,0,0.04);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: linear-gradient(180deg, #FBF1D6 0%, #EADDAC 100%);
+  border: 1px solid rgba(191,139,48,0.4);
+  color: #5A3E15;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 2px 4px rgba(0,0,0,0.06);
   white-space: nowrap;
   line-height: 1;
   user-select: none;
+}
+html.dark .plaqueta {
+  background: linear-gradient(180deg, rgba(217,171,68,0.15) 0%, rgba(217,171,68,0.04) 100%);
+  border: 1px solid rgba(217,171,68,0.35);
+  color: #E9C76E;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 2px 8px rgba(0,0,0,0.3);
 }
 .plaqueta::before {
   content: '';
@@ -394,6 +400,10 @@ html.dark {
   flex-shrink: 0;
   background: radial-gradient(circle at 30% 30%, #fff 0%, #BF8B30 60%);
   box-shadow: 0 0 0 1px rgba(117,80,26,0.3);
+}
+html.dark .plaqueta::before {
+  background: radial-gradient(circle at 30% 30%, #fff 0%, #E9C76E 60%);
+  box-shadow: 0 0 0 1px rgba(233,199,110,0.2);
 }
 
 .plaqueta-hero {
