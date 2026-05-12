@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, FileText, CheckCircle2, Inbox, Mail, Calendar, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine } from 'lucide-react'
-import { apiTransferRequests } from '../../lib/api'
+import { X, FileText, CheckCircle2, Inbox, Mail, Calendar, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine, ArrowRight } from 'lucide-react'
+import { apiTransferRequests, type TransferRequestStatus } from '../../lib/api'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -44,10 +45,25 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
     }
   })
 
+  const updateMutation = useMutation({
+    mutationFn: (data: { status: TransferRequestStatus }) => apiTransferRequests.update(requestId, data),
+    onSuccess: () => {
+      toast.success('Solicitud enviada a gestión')
+      queryClient.invalidateQueries({ queryKey: ['transferRequest', requestId] })
+      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+    },
+    onError: (error: any) => {
+      toast.error(`Error al actualizar estado: ${error.message}`)
+    }
+  })
+
   // Safe parsing of formData
   const formData = request?.formData as any || {}
   const movement = formData.movement || {}
   const items = request?.items || []
+  const canSign = request
+    ? ['PENDIENTE_GESTION_ACTIVOS_FIJOS', 'REVISION', 'APROBADA'].includes(request.status)
+    : false
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px' }}>
@@ -85,7 +101,8 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
                   {request && (
                     <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
                       request.status === 'RECIBIDA' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                      request.status === 'APROBADA' || request.status === 'FIRMADA' ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
+                      ['APROBADA', 'FIRMADA', 'PDF_GENERADO', 'RESPUESTA_ENVIADA'].includes(request.status) ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
+                      ['ERROR_FIRMA', 'ERROR_ENVIO_RESPUESTA', 'RECHAZADA'].includes(request.status) ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800' :
                       'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800'
                     }`}>
                       {request.status === 'RECIBIDA' && <Inbox size={10} />}
@@ -97,7 +114,25 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {request && (request.status === 'REVISION' || request.status === 'APROBADA') && (
+              {request && request.status === 'RECIBIDA' && (
+                <button
+                  onClick={() => updateMutation.mutate({ status: 'PENDIENTE_GESTION_ACTIVOS_FIJOS' })}
+                  disabled={updateMutation.isPending}
+                  className="
+                    flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold tracking-tight
+                    bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20
+                    disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95
+                  "
+                >
+                  {updateMutation.isPending ? (
+                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  ) : (
+                    <ArrowRight size={16} />
+                  )}
+                  Gestionar solicitud
+                </button>
+              )}
+              {request && canSign && (
                 <button
                   onClick={() => signMutation.mutate()}
                   disabled={signMutation.isPending}

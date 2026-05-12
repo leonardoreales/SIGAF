@@ -33,46 +33,48 @@ function RootRedirect() {
 
 export default function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<LoginPage />} />
+    <>
+      <Routes>
+        <Route path="/login" element={<LoginPage />} />
 
-      {/* Rutas compartidas por todos (dentro de Layout) */}
-      <Route element={<ProtectedRoute />}>
-        <Route element={<Layout />}>
-          <Route path="/settings" element={<SettingsPage />} />
+        {/* Rutas compartidas por todos (dentro de Layout) */}
+        <Route element={<ProtectedRoute />}>
+          <Route element={<Layout />}>
+            <Route path="/settings" element={<SettingsPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Rutas exclusivas de Activos Fijos y Admin */}
-      <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'ACTIVOS_FIJOS', 'VIEWER']} />}>
-        <Route element={<Layout />}>
-          <Route path="/dashboard"   element={<DashboardPage />} />
-          <Route path="/assets"      element={<AssetsPage />} />
-          {/* Operaciones */}
-          <Route path="/transfers"   element={<TransfersPage />} />
-          <Route path="/maintenance" element={<MaintenancePage />} />
-          <Route path="/history"     element={<ComingSoonPage title="Historial" />} />
-          <Route path="/writeoffs"   element={<WriteOffsPage />} />
-          {/* Gestión */}
-          <Route path="/assignments" element={<ComingSoonPage title="Asignaciones" />} />
-          <Route path="/actas"       element={<ComingSoonPage title="Actas" />} />
-          {/* Análisis */}
-          <Route path="/statistics"  element={<StatisticsPage />} />
-          <Route path="/reports"     element={<ComingSoonPage title="Reportes" />} />
+        {/* Rutas exclusivas de Activos Fijos y Admin */}
+        <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'ACTIVOS_FIJOS', 'VIEWER']} />}>
+          <Route element={<Layout />}>
+            <Route path="/dashboard"   element={<DashboardPage />} />
+            <Route path="/assets"      element={<AssetsPage />} />
+            {/* Operaciones */}
+            <Route path="/transfers"   element={<TransfersPage />} />
+            <Route path="/maintenance" element={<MaintenancePage />} />
+            <Route path="/history"     element={<ComingSoonPage title="Historial" />} />
+            <Route path="/writeoffs"   element={<WriteOffsPage />} />
+            {/* Gestión */}
+            <Route path="/assignments" element={<ComingSoonPage title="Asignaciones" />} />
+            <Route path="/actas"       element={<ComingSoonPage title="Actas" />} />
+            {/* Análisis */}
+            <Route path="/statistics"  element={<StatisticsPage />} />
+            <Route path="/reports"     element={<ComingSoonPage title="Reportes" />} />
+          </Route>
         </Route>
-      </Route>
 
-      {/* Rutas exclusivas de Compras */}
-      <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'COMPRAS']} />}>
-        <Route element={<Layout />}>
-          <Route path="/recepciones"        element={<RecepcionesPage />} />
-          <Route path="/recepciones/nueva"  element={<NuevaRecepcionPage />} />
+        {/* Rutas exclusivas de Compras */}
+        <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'COMPRAS']} />}>
+          <Route element={<Layout />}>
+            <Route path="/recepciones"        element={<RecepcionesPage />} />
+            <Route path="/recepciones/nueva"  element={<NuevaRecepcionPage />} />
+          </Route>
         </Route>
-      </Route>
 
-      <Route path="/" element={<RootRedirect />} />
-      <Route path="*" element={<RootRedirect />} />
+        <Route path="/" element={<RootRedirect />} />
+        <Route path="*" element={<RootRedirect />} />
+      </Routes>
       <Toaster position="top-right" richColors />
-    </Routes>
+    </>
   )
 }

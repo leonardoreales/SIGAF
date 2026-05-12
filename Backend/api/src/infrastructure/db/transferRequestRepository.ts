@@ -6,6 +6,7 @@ import type {
   CreateTransferRequest,
   UpdateTransferRequest,
   TransferRequestFilter,
+  TransferRequestStatus,
 } from '@sigaf/shared'
 
 // ── Raw-SQL select ─────────────────────────────────────────────────────────────
@@ -83,6 +84,37 @@ function buildWhere(filter: TransferRequestFilter): string {
   return parts.length ? `WHERE ${parts.join(' AND ')}` : ''
 }
 
+function getInitialStatus(data: CreateTransferRequest): TransferRequestStatus {
+  const candidate = data.status ?? (
+    typeof data.formData?.status === 'string'
+      ? data.formData.status
+      : typeof data.formData?.businessStatus === 'string'
+        ? data.formData.businessStatus
+        : undefined
+  )
+
+  const allowed: TransferRequestStatus[] = [
+    'RECIBIDA',
+    'PENDIENTE_GESTION_ACTIVOS_FIJOS',
+    'REVISION',
+    'APROBADA',
+    'FIRMA_SOLICITADA',
+    'FIRMA_EN_PROCESO',
+    'FIRMADA',
+    'PDF_GENERADO',
+    'RESPUESTA_ENVIANDO',
+    'RESPUESTA_ENVIADA',
+    'RECHAZADA',
+    'ERROR_FIRMA',
+    'ERROR_ENVIO_RESPUESTA',
+    'REQUIERE_REVISION_MANUAL',
+  ]
+
+  return allowed.includes(candidate as TransferRequestStatus)
+    ? candidate as TransferRequestStatus
+    : 'RECIBIDA'
+}
+
 // ── Public API ─────────────────────────────────────────────────────────────────
 
 export async function findMany(filter: TransferRequestFilter) {
@@ -118,6 +150,18 @@ export async function findById(id: number) {
   return { ...reqRows[0], items }
 }
 
+export async function findByRequestNumber(requestNumber: string) {
+  const { rows: reqRows } = await pool.query(
+    `${SELECT_REQUEST} WHERE r.request_number = $1 GROUP BY r.id`,
+    [requestNumber],
+  )
+  if (!reqRows[0]) throw new NotFoundError('Solicitud de traslado', requestNumber)
+
+  const { rows: items } = await pool.query(SELECT_ITEMS, [reqRows[0].id])
+
+  return { ...reqRows[0], items }
+}
+
 export async function create(data: CreateTransferRequest) {
   const requestNumber = await generateRequestNumber()
 
@@ -130,7 +174,7 @@ export async function create(data: CreateTransferRequest) {
     data.signatures?.autoriza
   )
   const autoSign = hasItems && hasRequiredFields && hasAllSignatures
-  const status   = autoSign ? 'FIRMADA' : 'RECIBIDA'
+  const status   = autoSign ? 'FIRMADA' : getInitialStatus(data)
 
   const [inserted] = await db
     .insert(transferRequests)
@@ -197,6 +241,7 @@ export async function update(id: number, data: UpdateTransferRequest) {
   if (data.signatureRecibe   !== undefined) values.signatureRecibe  = data.signatureRecibe
   if (data.signatureAutoriza !== undefined) values.signatureAutoriza = data.signatureAutoriza
   if (data.signedBy          !== undefined) values.signedBy         = data.signedBy
+  values.updatedAt = now
 
   // Al firmar, registrar la fecha si no estaba ya
   if (data.status === 'FIRMADA' && data.signatureEntrega && data.signatureRecibe && data.signatureAutoriza) {
@@ -207,37 +252,76 @@ export async function update(id: number, data: UpdateTransferRequest) {
   return findById(id)
 }
 
+export async function updateFormData(id: number, formData: Record<string, unknown>) {
+  await findById(id)
+  await db
+    .update(transferRequests)
+    .set({ formData, updatedAt: new Date() })
+    .where(eq(transferRequests.id, id))
+
+  return findById(id)
+}
+
 export interface TransferRequestStatsResult {
-  total:     number
-  recibida:  number
-  revision:  number
-  aprobada:  number
-  firmada:   number
-  rechazada: number
+  total:                         number
+  recibida:                      number
+  pendienteGestionActivosFijos:  number
+  revision:                      number
+  aprobada:                      number
+  firmaSolicitada:               number
+  firmaEnProceso:                number
+  firmada:                       number
+  pdfGenerado:                   number
+  respuestaEnviando:             number
+  respuestaEnviada:              number
+  rechazada:                     number
+  errorFirma:                    number
+  errorEnvioRespuesta:           number
+  requiereRevisionManual:        number
 }
 
 export async function getStats(): Promise<TransferRequestStatsResult> {
   const { rows } = await pool.query<{
-    total: string; recibida: string; revision: string;
-    aprobada: string; firmada: string; rechazada: string
+    total: string; recibida: string; pendienteGestionActivosFijos: string; revision: string;
+    aprobada: string; firmaSolicitada: string; firmaEnProceso: string; firmada: string;
+    pdfGenerado: string; respuestaEnviando: string; respuestaEnviada: string; rechazada: string;
+    errorFirma: string; errorEnvioRespuesta: string; requiereRevisionManual: string
   }>(`
     SELECT
-      COUNT(*)::int                                                AS total,
-      COUNT(*) FILTER (WHERE status = 'RECIBIDA')::int            AS recibida,
-      COUNT(*) FILTER (WHERE status = 'REVISION')::int            AS revision,
-      COUNT(*) FILTER (WHERE status = 'APROBADA')::int            AS aprobada,
-      COUNT(*) FILTER (WHERE status = 'FIRMADA')::int             AS firmada,
-      COUNT(*) FILTER (WHERE status = 'RECHAZADA')::int           AS rechazada
+      COUNT(*)::int                                                              AS total,
+      COUNT(*) FILTER (WHERE status = 'RECIBIDA')::int                          AS "recibida",
+      COUNT(*) FILTER (WHERE status = 'PENDIENTE_GESTION_ACTIVOS_FIJOS')::int   AS "pendienteGestionActivosFijos",
+      COUNT(*) FILTER (WHERE status = 'REVISION')::int                          AS "revision",
+      COUNT(*) FILTER (WHERE status = 'APROBADA')::int                          AS "aprobada",
+      COUNT(*) FILTER (WHERE status = 'FIRMA_SOLICITADA')::int                  AS "firmaSolicitada",
+      COUNT(*) FILTER (WHERE status = 'FIRMA_EN_PROCESO')::int                  AS "firmaEnProceso",
+      COUNT(*) FILTER (WHERE status = 'FIRMADA')::int                           AS "firmada",
+      COUNT(*) FILTER (WHERE status = 'PDF_GENERADO')::int                      AS "pdfGenerado",
+      COUNT(*) FILTER (WHERE status = 'RESPUESTA_ENVIANDO')::int                AS "respuestaEnviando",
+      COUNT(*) FILTER (WHERE status = 'RESPUESTA_ENVIADA')::int                 AS "respuestaEnviada",
+      COUNT(*) FILTER (WHERE status = 'RECHAZADA')::int                         AS "rechazada",
+      COUNT(*) FILTER (WHERE status = 'ERROR_FIRMA')::int                       AS "errorFirma",
+      COUNT(*) FILTER (WHERE status = 'ERROR_ENVIO_RESPUESTA')::int             AS "errorEnvioRespuesta",
+      COUNT(*) FILTER (WHERE status = 'REQUIERE_REVISION_MANUAL')::int          AS "requiereRevisionManual"
     FROM transfer_requests
   `)
   const r = rows[0]
   return {
-    total:     Number(r.total),
-    recibida:  Number(r.recibida),
-    revision:  Number(r.revision),
-    aprobada:  Number(r.aprobada),
-    firmada:   Number(r.firmada),
-    rechazada: Number(r.rechazada),
+    total:                        Number(r.total),
+    recibida:                     Number(r.recibida),
+    pendienteGestionActivosFijos: Number(r.pendienteGestionActivosFijos),
+    revision:                     Number(r.revision),
+    aprobada:                     Number(r.aprobada),
+    firmaSolicitada:              Number(r.firmaSolicitada),
+    firmaEnProceso:               Number(r.firmaEnProceso),
+    firmada:                      Number(r.firmada),
+    pdfGenerado:                  Number(r.pdfGenerado),
+    respuestaEnviando:            Number(r.respuestaEnviando),
+    respuestaEnviada:             Number(r.respuestaEnviada),
+    rechazada:                    Number(r.rechazada),
+    errorFirma:                   Number(r.errorFirma),
+    errorEnvioRespuesta:          Number(r.errorEnvioRespuesta),
+    requiereRevisionManual:       Number(r.requiereRevisionManual),
   }
 }
 

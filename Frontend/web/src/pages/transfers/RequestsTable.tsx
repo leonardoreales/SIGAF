@@ -1,7 +1,7 @@
 import { format } from 'date-fns'
 import { es }     from 'date-fns/locale'
 import {
-  Inbox, CheckCircle2, Clock, XCircle, PenLine, Eye, Trash2,
+  Inbox, CheckCircle2, Clock, XCircle, PenLine, Eye, Trash2, AlertTriangle, ArrowRight,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { TransferRequest, TransferRequestStatus } from '../../lib/api'
@@ -10,11 +10,20 @@ import { cn } from '../../lib/utils'
 // ── Badge de estado ────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<TransferRequestStatus, { label: string; icon: LucideIcon; className: string }> = {
-  RECIBIDA:  { label: 'Recibida',  icon: Inbox,         className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50' },
-  REVISION:  { label: 'Revisión',  icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-  APROBADA:  { label: 'Aprobada',  icon: CheckCircle2,  className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50' },
-  FIRMADA:   { label: 'Firmada',   icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  RECHAZADA: { label: 'Rechazada', icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  RECIBIDA:                      { label: 'Recibida',                icon: Inbox,        className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50' },
+  PENDIENTE_GESTION_ACTIVOS_FIJOS:{ label: 'Pendiente gestión',      icon: Clock,        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
+  REVISION:                      { label: 'Revisión',                icon: Clock,        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
+  APROBADA:                      { label: 'Aprobada',                icon: CheckCircle2, className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50' },
+  FIRMA_SOLICITADA:              { label: 'Firma solicitada',        icon: PenLine,      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
+  FIRMA_EN_PROCESO:              { label: 'Firma en proceso',        icon: PenLine,      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
+  FIRMADA:                       { label: 'Firmada',                 icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  PDF_GENERADO:                  { label: 'PDF generado',            icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  RESPUESTA_ENVIANDO:            { label: 'Enviando respuesta',      icon: Clock,        className: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800/50' },
+  RESPUESTA_ENVIADA:             { label: 'Respuesta enviada',       icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  RECHAZADA:                     { label: 'Rechazada',               icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  ERROR_FIRMA:                   { label: 'Error firma',             icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  ERROR_ENVIO_RESPUESTA:         { label: 'Error respuesta',         icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  REQUIERE_REVISION_MANUAL:      { label: 'Revisión manual',         icon: AlertTriangle,className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
 }
 
 function StatusBadge({ status }: { status: TransferRequestStatus }) {
@@ -138,6 +147,19 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
 
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
+                        {row.status === 'RECIBIDA' && (
+                          <button
+                            onClick={() => onView(row.id)}
+                            title="Gestionar solicitud"
+                            className="
+                              p-1.5 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50
+                              dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/40
+                              transition-colors
+                            "
+                          >
+                            <ArrowRight size={15} />
+                          </button>
+                        )}
                         <button
                           onClick={() => onView(row.id)}
                           title="Ver detalle"
@@ -149,7 +171,7 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
                         >
                           <Eye size={15} />
                         </button>
-                        {(row.status === 'REVISION' || row.status === 'APROBADA') && (
+                        {(['PENDIENTE_GESTION_ACTIVOS_FIJOS', 'REVISION', 'APROBADA'] as TransferRequestStatus[]).includes(row.status) && (
                           <button
                             onClick={() => onView(row.id)}
                             title="Firmar acta"

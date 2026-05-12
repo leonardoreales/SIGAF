@@ -67,6 +67,10 @@
     "mtime": 1778533759.2470937,
     "hash": "b4759e6614e869d986d2af3cf6bf2b5f"
   },
+  "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\application\\transferRequests\\completeTransferRequestSignature.ts": {
+    "mtime": 1778603811.5528958,
+    "hash": "04700cab9bcea2b91c8aeba1b403f8f5"
+  },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\application\\transferRequests\\createTransferRequest.ts": {
     "mtime": 1778274305.104767,
     "hash": "2426f85316951f5f7e026f13298170c7"
@@ -88,8 +92,8 @@
     "hash": "c27f616b2e3bb03206f41a50fbc188b1"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\application\\transferRequests\\signTransferRequest.ts": {
-    "mtime": 1778598517.6645455,
-    "hash": "5d346c1245d48b711edcd54733f4d102"
+    "mtime": 1778603746.6560512,
+    "hash": "a72358749eed8989191e9cd1ac7aa013"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\application\\transferRequests\\updateTransferRequest.ts": {
     "mtime": 1777902822.7613757,
@@ -184,8 +188,8 @@
     "hash": "28973f37e016b4c50d4da380c28bb1d8"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\infrastructure\\db\\transferRequestRepository.ts": {
-    "mtime": 1778547347.3126895,
-    "hash": "b2ebec38d7bd01262c1c520bc80dd5a1"
+    "mtime": 1778603779.0634727,
+    "hash": "41a57e6918493b799a94c207ef86ef4c"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\infrastructure\\db\\userRepository.ts": {
     "mtime": 1777599701.878826,
@@ -236,16 +240,16 @@
     "hash": "5b937961523e5011e315033433e2dc79"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\interfaces\\http\\sync.controller.ts": {
-    "mtime": 1778533774.8778987,
-    "hash": "5126d30edb2849dd0aea6b9c65d7ebb1"
+    "mtime": 1778603966.7500722,
+    "hash": "acc6bfaa20aa35de4806dcb9935ff069"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\interfaces\\http\\sync.router.ts": {
-    "mtime": 1778533818.465247,
-    "hash": "84219dd9ded59d549f11468741a0a9ac"
+    "mtime": 1778603971.830368,
+    "hash": "2d66a83a2936e5d2153a203986dc652a"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\interfaces\\http\\transferRequests.controller.ts": {
-    "mtime": 1778598504.3797715,
-    "hash": "5573ebe39c65c9487281f0ff35fae0e9"
+    "mtime": 1778603758.877962,
+    "hash": "30a0ce0a12cf07a4c6dcab7ba611e9a1"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Backend\\api\\src\\interfaces\\http\\transferRequests.router.ts": {
     "mtime": 1778598492.093878,
@@ -404,8 +408,8 @@
     "hash": "34487de7d152d75a046be352a0d482cc"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\App.tsx": {
-    "mtime": 1778600468.2230575,
-    "hash": "3832be92bc47e3d128f7168a697206cb"
+    "mtime": 1778602822.1921537,
+    "hash": "62cb08f9060bd52fba779b4b7a2d0555"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\main.tsx": {
     "mtime": 1777580311.928902,
@@ -456,8 +460,8 @@
     "hash": "78d11959645e51d5b202b226a87cc3b5"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\lib\\api.ts": {
-    "mtime": 1778598529.243132,
-    "hash": "bb61fcde8226db25a5b5ff7a15aa9cf3"
+    "mtime": 1778603843.2421465,
+    "hash": "8a9bdb24e76f03886aedec2f2e8af973"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\lib\\queryClient.ts": {
     "mtime": 1777580311.9268558,
@@ -584,20 +588,20 @@
     "hash": "99494a44d7025d5c0be1005c1ee10df7"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\pages\\transfers\\RequestDetailDrawer.tsx": {
-    "mtime": 1778598546.7905273,
-    "hash": "a7f3430bf36761c20b126166c256b190"
+    "mtime": 1778603906.4189694,
+    "hash": "3f29c1926615bfa01ffed649a87211da"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\pages\\transfers\\RequestsTable.tsx": {
-    "mtime": 1778547436.6872387,
-    "hash": "83e11e67ee7120fae0b9616e67b25cf4"
+    "mtime": 1778603890.0269322,
+    "hash": "c615f59fa86a4e54fa8de6fd5a89e9a3"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\pages\\transfers\\TransferFormModal.tsx": {
     "mtime": 1777735295.6598647,
     "hash": "6c794217b6c7d8da11a57511be9ea5c6"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\pages\\transfers\\TransfersPage.tsx": {
-    "mtime": 1778547807.3242257,
-    "hash": "44feba940aa17cd63fc15b0cc124ccde"
+    "mtime": 1778603940.8777573,
+    "hash": "92472a5e860787844a8a3e2fd89175f1"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\Frontend\\web\\src\\pages\\transfers\\TransfersTable.tsx": {
     "mtime": 1778267777.1423073,
@@ -608,12 +612,8 @@
     "hash": "353c8fac6ba56aa84f4fe868d1c0645b"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\shared\\src\\index.ts": {
-    "mtime": 1778193350.1290717,
-    "hash": "2240597f03eb6ec5de4f0c0519087ddf"
-  },
-  "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\AGENTS.md": {
-    "mtime": 1778600558.5194042,
-    "hash": "d477ac269d86e2252fb6e286b8ac41e0"
+    "mtime": 1778603636.3163655,
+    "hash": "a563e586ea3528c5c8a69d9843fa5435"
   },
   "C:\\Users\\Leonardo Reales\\Desktop\\SIGAF\\CLAUDE.md": {
     "mtime": 1778188989.85374,

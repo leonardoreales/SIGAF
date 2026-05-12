@@ -1,16 +1,16 @@
 # Graph Report - SIGAF  (2026-05-12)
 
 ## Corpus Check
-- 155 files · ~982,065 words
+- 155 files · ~982,319 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 719 nodes · 1183 edges · 40 communities (37 shown, 3 thin omitted)
+- 733 nodes · 1212 edges · 37 communities (35 shown, 2 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ce30e521`
+- Built from commit: `b475cec5`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -41,12 +41,9 @@
 - [[_COMMUNITY_Community 23|Community 23]]
 - [[_COMMUNITY_Community 24|Community 24]]
 - [[_COMMUNITY_Community 25|Community 25]]
-- [[_COMMUNITY_Community 26|Community 26]]
 - [[_COMMUNITY_Community 27|Community 27]]
+- [[_COMMUNITY_Community 28|Community 28]]
 - [[_COMMUNITY_Community 29|Community 29]]
-- [[_COMMUNITY_Community 30|Community 30]]
-- [[_COMMUNITY_Community 31|Community 31]]
-- [[_COMMUNITY_Community 32|Community 32]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `cn()` - 33 edges
@@ -56,159 +53,151 @@
 5. `Architecture` - 10 edges
 6. `Architecture` - 10 edges
 7. `pool` - 9 edges
-8. `useTheme()` - 9 edges
-9. `db` - 8 edges
-10. `SseManager` - 8 edges
+8. `SseManager` - 9 edges
+9. `useTheme()` - 9 edges
+10. `db` - 8 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `KpiCard()` --calls--> `cn()`  [EXTRACTED]
-  Frontend/web/src/pages/dashboard/KpiCard.tsx → Frontend/web/src/lib/utils.ts
-- `BatchHeader()` --calls--> `cn()`  [EXTRACTED]
-  Frontend/web/src/pages/recepciones/components/BatchHeader.tsx → Frontend/web/src/lib/utils.ts
 - `StatusBadge()` --calls--> `cn()`  [EXTRACTED]
   Frontend/web/src/pages/transfers/RequestsTable.tsx → Frontend/web/src/lib/utils.ts
 - `TransferFormModal()` --calls--> `cn()`  [EXTRACTED]
   Frontend/web/src/pages/transfers/TransferFormModal.tsx → Frontend/web/src/lib/utils.ts
 - `MiniKpi()` --calls--> `cn()`  [EXTRACTED]
   Frontend/web/src/pages/transfers/TransfersPage.tsx → Frontend/web/src/lib/utils.ts
+- `sign()` --calls--> `signTransferRequest()`  [EXTRACTED]
+  Backend/api/src/interfaces/http/transferRequests.controller.ts → Backend/api/src/application/transferRequests/signTransferRequest.ts
+- `Layout()` --calls--> `useAuth()`  [EXTRACTED]
+  Frontend/web/src/components/Layout.tsx → Frontend/web/src/context/AuthContext.tsx
 
-## Communities (40 total, 3 thin omitted)
+## Communities (37 total, 2 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
-Nodes (49): listAreas(), listAreasByBuilding(), listAssetTypes(), listBuildings(), listPeople(), BASE_FIELDS, baseQuery(), buildConditions() (+41 more)
+Nodes (36): db, pool, assets, catalogCities, maintenanceExecutions, maintenanceSchedules, maintenanceSupports, systemUsers (+28 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
-Nodes (32): createSyncEvent(), getLastSyncEvent(), listSyncEvents(), SyncRow, toSyncEvent(), router, router, router (+24 more)
+Nodes (44): BatchFields, BatchHeader(), Props, ExpansionMode, Props, CellId, COL_ORDER, ColKey (+36 more)
 
 ### Community 2 - "Community 2"
+Cohesion: 0.06
+Nodes (34): createSyncEvent(), getLastSyncEvent(), listSyncEvents(), SyncRow, toSyncEvent(), router, router, router (+26 more)
+
+### Community 3 - "Community 3"
+Cohesion: 0.06
+Nodes (41): ActiveChip(), AssetsFilters(), FilterFields, FilterSelect(), Props, SelectProps, STATUS_OPTIONS, YEAR_OPTIONS (+33 more)
+
+### Community 4 - "Community 4"
 Cohesion: 0.04
 Nodes (55): ASSET_TYPE_SERIAL_RULES, AssetFilter, AssetFilterSchema, AssetStatus, AssetStatusSchema, AssetTypeCode, AssetTypeCodeSchema, CreateAsset (+47 more)
 
-### Community 3 - "Community 3"
+### Community 5 - "Community 5"
 Cohesion: 0.08
 Nodes (30): AssetsPage(), DEFAULT_FILTERS, FiltersState, Props, YEAR_OPTIONS, Props, ActivityMeta, EntryRow() (+22 more)
 
-### Community 4 - "Community 4"
-Cohesion: 0.06
-Nodes (23): CRITICALITY_OPTIONS, Draft, fmtCOP(), MAINTENANCE_OPTIONS, Mode, Props, STATUS_LABELS, STATUS_OPTIONS (+15 more)
-
-### Community 5 - "Community 5"
-Cohesion: 0.09
-Nodes (21): CRITICALITY_BADGE, CRITICALITY_OPTIONS, INP, MAINTENANCE_AREA_OPTIONS, Props, STATUS_OPTIONS, INP, Props (+13 more)
-
 ### Community 6 - "Community 6"
-Cohesion: 0.1
-Nodes (17): createAsset(), deleteAsset(), getAdvancedStats(), getAsset(), getStats(), listAssets(), updateAsset(), AssetStatsResult (+9 more)
+Cohesion: 0.08
+Nodes (26): createAsset(), deleteAsset(), getAdvancedStats(), getAsset(), getStats(), listAssets(), updateAsset(), BASE_FIELDS (+18 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.11
-Nodes (21): transferRequestItems, transferRequests, buildWhere(), create(), findById(), findMany(), generateRequestNumber(), remove() (+13 more)
+Cohesion: 0.08
+Nodes (29): transferRequestItems, transferRequests, buildWhere(), create(), findById(), findMany(), generateRequestNumber(), getInitialStatus() (+21 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.11
-Nodes (16): Props, SearchableSelect(), SelectOption, NavItemRow(), BarRow(), Item, Props, cn() (+8 more)
+Cohesion: 0.15
+Nodes (19): listAreas(), listAreasByBuilding(), listAssetTypes(), listBuildings(), listPeople(), findAreas(), findAreasByBuilding(), findAssetTypes() (+11 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.1
-Nodes (19): BatchFields, BatchHeader(), Props, ExpansionMode, Props, CellId, COL_ORDER, ColKey (+11 more)
-
-### Community 10 - "Community 10"
-Cohesion: 0.13
-Nodes (14): client, GooglePayload, verifyGoogleToken(), loginWithGoogle(), systemUsers, findAll(), SystemUserRow, updateUser() (+6 more)
-
-### Community 11 - "Community 11"
 Cohesion: 0.15
 Nodes (14): writeoffActs, create(), findById(), update(), create(), getOne(), list(), stats() (+6 more)
 
+### Community 10 - "Community 10"
+Cohesion: 0.1
+Nodes (12): CRITICALITY_OPTIONS, Draft, fmtCOP(), MAINTENANCE_OPTIONS, Mode, Props, STATUS_LABELS, STATUS_OPTIONS (+4 more)
+
+### Community 11 - "Community 11"
+Cohesion: 0.1
+Nodes (17): ImportsDrawerProps, apiSyncs, AssetListResponse, AssetStats, CreateTransferPayload, TransferListResponse, TransferRequestItem, TransferRequestItemStatus (+9 more)
+
 ### Community 12 - "Community 12"
-Cohesion: 0.17
-Nodes (14): Layout(), ROUTE_LABELS, ROUTE_SECTIONS, ProtectedRoute(), ProtectedRouteProps, useAuth(), Role, useRole() (+6 more)
+Cohesion: 0.1
+Nodes (19): Architecture, Authentication flow, Backend: Clean Architecture layers, code:bash (# From monorepo root), code:bash (# Run SQL migrations manually via psql or Supabase dashboard), code:bash (npm install          # Root installs all workspaces (shared,), code:block4 (shared/                  → Zod schemas shared between backen), Commands (+11 more)
 
 ### Community 13 - "Community 13"
 Cohesion: 0.1
 Nodes (19): Architecture, Authentication flow, Backend: Clean Architecture layers, code:bash (# From monorepo root), code:bash (# Run SQL migrations manually via psql or Supabase dashboard), code:bash (npm install          # Root installs all workspaces (shared,), code:block4 (shared/                  → Zod schemas shared between backen), Commands (+11 more)
 
 ### Community 14 - "Community 14"
-Cohesion: 0.1
-Nodes (19): Architecture, Authentication flow, Backend: Clean Architecture layers, code:bash (# From monorepo root), code:bash (# Run SQL migrations manually via psql or Supabase dashboard), code:bash (npm install          # Root installs all workspaces (shared,), code:block4 (shared/                  → Zod schemas shared between backen), Commands (+11 more)
+Cohesion: 0.15
+Nodes (10): INP, Props, INP, Props, AssetFormValues, ChangeField, EMPTY, Options (+2 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.13
-Nodes (15): ActiveChip(), AssetsFilters(), FilterFields, FilterSelect(), Props, SelectProps, STATUS_OPTIONS, YEAR_OPTIONS (+7 more)
-
-### Community 16 - "Community 16"
-Cohesion: 0.11
-Nodes (17): apiAuth, AssetListResponse, AssetStats, AuthUser, CreateTransferPayload, TransferListResponse, TransferRequestItem, TransferRequestItemStatus (+9 more)
-
-### Community 17 - "Community 17"
-Cohesion: 0.16
-Nodes (9): getOne(), list(), stats(), router, createTransfer(), getTransfer(), getTransferStats(), listTransfers() (+1 more)
-
-### Community 18 - "Community 18"
 Cohesion: 0.23
 Nodes (15): clean_account(), clean_plate(), clean_plate_status(), clean_responsable(), clean_serial(), clean_str(), clean_value(), get_area_id() (+7 more)
 
-### Community 19 - "Community 19"
+### Community 16 - "Community 16"
 Cohesion: 0.13
 Nodes (10): ConfirmDialogProps, apiTransferRequests, RequestDetailDrawerProps, DEFAULT_REQUEST_FILTERS, DEFAULT_TRANSFER_FILTERS, KpiProps, MiniKpi(), RequestFilters (+2 more)
 
-### Community 20 - "Community 20"
+### Community 17 - "Community 17"
+Cohesion: 0.14
+Nodes (11): TypeIconDark(), AssetTypeIcon(), COLS, getSmartIcon(), Meta, Props, SKEL, STATUS_LABELS (+3 more)
+
+### Community 18 - "Community 18"
 Cohesion: 0.21
 Nodes (8): apiUsers, SystemUser, inputCls, Props, ROLES, UserEditModal(), ROLE_META, UserManagementTable()
 
-### Community 21 - "Community 21"
+### Community 19 - "Community 19"
+Cohesion: 0.25
+Nodes (7): client, GooglePayload, verifyGoogleToken(), loginWithGoogle(), upsertLogin(), router, ValidationError
+
+### Community 20 - "Community 20"
 Cohesion: 0.18
 Nodes (8): apiWriteoffs, WriteoffAct, WriteoffActDetail, WriteoffStats, CHART_COLORS, REASON_LABELS, RECON_CONFIG, STATUS_CONFIG
 
-### Community 22 - "Community 22"
-Cohesion: 0.22
-Nodes (7): BASE_NAV_SECTIONS, COMPRAS_NAV_SECTIONS, getInitials(), ItemStatus, NavItem, NavSection, Sidebar()
-
-### Community 23 - "Community 23"
+### Community 21 - "Community 21"
 Cohesion: 0.2
 Nodes (7): Transfer, COL_WIDTHS, Meta, Props, REASON_LABELS, STATUS_LABELS, STATUS_STYLES
 
+### Community 23 - "Community 23"
+Cohesion: 0.22
+Nodes (7): CRITICALITY_BADGE, CRITICALITY_OPTIONS, INP, MAINTENANCE_AREA_OPTIONS, Props, STATUS_OPTIONS, Person
+
 ### Community 24 - "Community 24"
-Cohesion: 0.31
-Nodes (5): AuthContext, AuthContextValue, AuthProvider(), ApiError, queryClient
+Cohesion: 0.25
+Nodes (5): TransferRequest, TransferRequestStatus, Props, STATUS_CONFIG, StatusBadge()
 
 ### Community 25 - "Community 25"
 Cohesion: 0.25
 Nodes (6): apiTransfers, TransferReason, Props, REASONS, STATUSES, TransferFormModal()
 
-### Community 26 - "Community 26"
-Cohesion: 0.25
-Nodes (5): TransferRequest, TransferRequestStatus, Props, STATUS_CONFIG, StatusBadge()
-
 ### Community 27 - "Community 27"
-Cohesion: 0.29
-Nodes (6): ACCENT_STYLE, CardColor, ICON_BG, KpiCard(), Props, VALUE_COLOR
+Cohesion: 0.5
+Nodes (4): AssetFormModal(), Props, useAssetForm(), apiCatalogs
 
-### Community 29 - "Community 29"
+### Community 28 - "Community 28"
 Cohesion: 0.83
 Nodes (3): main(), normalize_serial(), strip_accents()
 
 ## Knowledge Gaps
-- **241 isolated node(s):** `app`, `PORT`, `client`, `GooglePayload`, `BASE_FIELDS` (+236 more)
+- **244 isolated node(s):** `app`, `PORT`, `SignRequester`, `SIGNABLE_STATUSES`, `IN_PROGRESS_STATUSES` (+239 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **3 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **2 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `cn()` connect `Community 8` to `Community 3`, `Community 4`, `Community 9`, `Community 19`, `Community 21`, `Community 22`, `Community 23`, `Community 25`, `Community 26`, `Community 27`?**
-  _High betweenness centrality (0.026) - this node is a cross-community bridge._
-- **Why does `pool` connect `Community 0` to `Community 1`, `Community 11`, `Community 6`, `Community 7`?**
+- **Why does `cn()` connect `Community 1` to `Community 3`, `Community 5`, `Community 16`, `Community 17`, `Community 20`, `Community 21`, `Community 24`, `Community 25`?**
+  _High betweenness centrality (0.025) - this node is a cross-community bridge._
+- **Why does `pool` connect `Community 0` to `Community 9`, `Community 2`, `Community 6`, `Community 7`?**
   _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `db` connect `Community 0` to `Community 10`, `Community 11`, `Community 7`?**
-  _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **What connects `app`, `PORT`, `client` to the rest of the system?**
-  _241 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `db` connect `Community 0` to `Community 8`, `Community 9`, `Community 6`, `Community 7`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **What connects `app`, `PORT`, `SignRequester` to the rest of the system?**
+  _244 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.05 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.04 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06 - nodes in this community are weakly interconnected._

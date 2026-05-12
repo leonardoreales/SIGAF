@@ -270,7 +270,21 @@ export const apiTransfers = {
 
 // ── Transfer Requests ─────────────────────────────────────────────────────────
 
-export type TransferRequestStatus     = 'RECIBIDA' | 'REVISION' | 'APROBADA' | 'FIRMADA' | 'RECHAZADA'
+export type TransferRequestStatus =
+  | 'RECIBIDA'
+  | 'PENDIENTE_GESTION_ACTIVOS_FIJOS'
+  | 'REVISION'
+  | 'APROBADA'
+  | 'FIRMA_SOLICITADA'
+  | 'FIRMA_EN_PROCESO'
+  | 'FIRMADA'
+  | 'PDF_GENERADO'
+  | 'RESPUESTA_ENVIANDO'
+  | 'RESPUESTA_ENVIADA'
+  | 'RECHAZADA'
+  | 'ERROR_FIRMA'
+  | 'ERROR_ENVIO_RESPUESTA'
+  | 'REQUIERE_REVISION_MANUAL'
 export type TransferRequestItemStatus = 'PENDIENTE' | 'EMPAREJADO' | 'TRASLADADO' | 'ERROR'
 
 export interface TransferRequestItem {
@@ -321,12 +335,21 @@ export interface TransferRequestListResponse {
 }
 
 export interface TransferRequestStats {
-  total:     number
-  recibida:  number
-  revision:  number
-  aprobada:  number
-  firmada:   number
-  rechazada: number
+  total:                        number
+  recibida:                     number
+  pendienteGestionActivosFijos: number
+  revision:                     number
+  aprobada:                     number
+  firmaSolicitada:              number
+  firmaEnProceso:               number
+  firmada:                      number
+  pdfGenerado:                  number
+  respuestaEnviando:            number
+  respuestaEnviada:             number
+  rechazada:                    number
+  errorFirma:                   number
+  errorEnvioRespuesta:          number
+  requiereRevisionManual:       number
 }
 
 export interface UpdateTransferRequestPayload {

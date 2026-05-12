@@ -232,9 +232,9 @@ export default function TransfersPage() {
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
             <MiniKpi icon={Inbox}        label="Total"     value={rStats?.total     ?? 0} color="bg-mi-50 text-mi-600 dark:bg-mi-900/60 dark:text-mi-300"                           loading={rStatsLoading} />
             <MiniKpi icon={Inbox}        label="Recibidas" value={rStats?.recibida   ?? 0} color="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"                   loading={rStatsLoading} />
-            <MiniKpi icon={Clock}        label="Revisión"  value={rStats?.revision   ?? 0} color="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"               loading={rStatsLoading} />
+            <MiniKpi icon={Clock}        label="Gestión"   value={(rStats?.pendienteGestionActivosFijos ?? 0) + (rStats?.revision ?? 0)} color="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400" loading={rStatsLoading} />
             <MiniKpi icon={ShieldCheck}  label="Aprobadas" value={rStats?.aprobada   ?? 0} color="bg-green-50 text-green-600 dark:bg-green-950/40 dark:text-green-400"               loading={rStatsLoading} />
-            <MiniKpi icon={CheckCircle2} label="Firmadas"  value={rStats?.firmada    ?? 0} color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"       loading={rStatsLoading} />
+            <MiniKpi icon={CheckCircle2} label="Cerradas"  value={(rStats?.firmada ?? 0) + (rStats?.respuestaEnviada ?? 0)} color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400" loading={rStatsLoading} />
           </div>
 
           {/* Filtros */}
@@ -269,10 +269,19 @@ export default function TransfersPage() {
             >
               <option value="">Todos los estados</option>
               <option value="RECIBIDA">Recibida</option>
+              <option value="PENDIENTE_GESTION_ACTIVOS_FIJOS">Pendiente gestión</option>
               <option value="REVISION">Revisión</option>
               <option value="APROBADA">Aprobada</option>
+              <option value="FIRMA_SOLICITADA">Firma solicitada</option>
+              <option value="FIRMA_EN_PROCESO">Firma en proceso</option>
               <option value="FIRMADA">Firmada</option>
+              <option value="PDF_GENERADO">PDF generado</option>
+              <option value="RESPUESTA_ENVIANDO">Enviando respuesta</option>
+              <option value="RESPUESTA_ENVIADA">Respuesta enviada</option>
               <option value="RECHAZADA">Rechazada</option>
+              <option value="ERROR_FIRMA">Error firma</option>
+              <option value="ERROR_ENVIO_RESPUESTA">Error respuesta</option>
+              <option value="REQUIERE_REVISION_MANUAL">Revisión manual</option>
             </select>
 
             <button

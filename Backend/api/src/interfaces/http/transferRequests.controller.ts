@@ -38,6 +38,6 @@ export async function remove(req: Request, res: Response, next: NextFunction) {
 
 export async function sign(req: Request, res: Response, next: NextFunction) {
   try {
-    res.json(await signTransferRequest(Number(req.params.id), req.body))
+    res.json(await signTransferRequest(Number(req.params.id), req.body, res.locals.user))
   } catch (err) { next(err) }
 }

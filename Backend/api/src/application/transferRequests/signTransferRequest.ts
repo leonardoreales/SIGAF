@@ -1,92 +1,166 @@
 import axios from 'axios'
+import crypto from 'crypto'
 import * as repo from '../../infrastructure/db/transferRequestRepository'
 import { AppError } from '../../shared/errors'
 import { sseManager } from '../../infrastructure/sse/SseManager'
 
-export async function signTransferRequest(id: number, signData: any) {
-  // 1. Obtener la solicitud
+interface SignRequester {
+  name?: string
+  email?: string
+}
+
+const SIGNABLE_STATUSES = [
+  'PENDIENTE_GESTION_ACTIVOS_FIJOS',
+  'REVISION',
+  'APROBADA',
+]
+
+const IN_PROGRESS_STATUSES = [
+  'FIRMA_SOLICITADA',
+  'FIRMA_EN_PROCESO',
+  'PDF_GENERADO',
+  'RESPUESTA_ENVIANDO',
+]
+
+function firstNonEmpty(...values: unknown[]) {
+  return values.find((value) => typeof value === 'string' && value.trim()) as string | undefined
+}
+
+function buildHmac(body: string) {
+  const secret = process.env.N8N_SIGN_HMAC_SECRET
+  if (!secret) return undefined
+  return `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`
+}
+
+function requireField(value: string | undefined, label: string) {
+  if (!value) throw new AppError(400, `${label} requerido para solicitar firma`, 'VALIDATION_ERROR')
+  return value
+}
+
+export async function signTransferRequest(id: number, signData: any, requester?: SignRequester) {
   const request = await repo.findById(id)
-  if (!request) {
-    throw new AppError(404, 'Solicitud no encontrada', 'NOT_FOUND')
+
+  if (request.status === 'FIRMADA' || request.status === 'RESPUESTA_ENVIADA') {
+    return { ok: true, message: 'La solicitud ya fue firmada', requestId: id, status: request.status }
   }
 
-  // 2. Validar estado
-  if (!['REVISION', 'APROBADA'].includes(request.status)) {
+  if (IN_PROGRESS_STATUSES.includes(request.status)) {
+    return { ok: true, message: 'La firma ya está en proceso', requestId: id, status: request.status }
+  }
+
+  if (!SIGNABLE_STATUSES.includes(request.status)) {
     throw new AppError(400, `La solicitud no puede ser firmada en estado ${request.status}`, 'INVALID_STATE')
   }
 
-  // 3. Preparar payload para n8n
   const formData = request.formData || {}
+  const emailContext = formData.emailContext || {}
+  const document = formData.document || {}
   const items = request.items || []
 
+  const requestedByName = firstNonEmpty(
+    signData?.requestedByName,
+    requester?.name,
+    'Leonardo Reales',
+  )
+  const requestedByEmail = firstNonEmpty(
+    signData?.requestedByEmail,
+    requester?.email,
+    'leonardoreales@americana.edu.co',
+  )
+
   const payload = {
-    eventType: "TRANSFER_REQUEST_SIGN_REQUESTED",
-    eventId: `evt_TR-${request.requestNumber}_${new Date().getTime()}`,
+    eventType: 'TRANSFER_REQUEST_SIGN_REQUESTED',
+    eventId: `evt_${request.requestNumber}_SIGN_REQUESTED`,
     sigafRequestId: request.requestNumber,
-    correlationId: request.formData?.correlationId || request.requestNumber,
-    idSolicitud: request.formData?.idSolicitud || request.requestNumber,
+
+    correlationId: firstNonEmpty(formData.correlationId, request.requestNumber),
+    idSolicitud: firstNonEmpty(formData.idSolicitud, request.requestNumber),
 
     documentToSign: {
-      googleDocId: request.formData?.document?.googleDocId || request.formData?.googleDocId,
-      googleDocUrl: request.formData?.document?.googleDocUrl || request.formData?.googleDocUrl,
-      originalDriveFileId: request.formData?.document?.originalDriveFileId || request.formData?.originalDriveFileId || request.docxDriveUrl,
+      googleDocId: requireField(
+        firstNonEmpty(document.googleDocId, formData.googleDocId),
+        'googleDocId',
+      ),
+      googleDocUrl: firstNonEmpty(document.googleDocUrl, formData.googleDocUrl),
+      originalDriveFileId: firstNonEmpty(
+        document.originalDriveFileId,
+        formData.originalDriveFileId,
+        request.docxDriveUrl,
+      ),
     },
 
     emailContext: {
-      messageId: request.formData?.emailContext?.messageId || request.formData?.messageId,
-      threadId: request.formData?.emailContext?.threadId || request.formData?.threadId,
-      senderEmail: request.senderEmail,
-      senderName: request.formData?.emailContext?.senderName || request.formData?.senderName,
-      subject: request.subject,
+      messageId: requireField(
+        firstNonEmpty(emailContext.messageId, formData.messageId),
+        'messageId',
+      ),
+      threadId: requireField(
+        firstNonEmpty(emailContext.threadId, formData.threadId),
+        'threadId',
+      ),
+      senderEmail: requireField(
+        firstNonEmpty(request.senderEmail, emailContext.senderEmail, formData.senderEmail),
+        'senderEmail',
+      ),
+      senderName: firstNonEmpty(emailContext.senderName, formData.senderName),
+      subject: firstNonEmpty(request.subject, emailContext.subject, 'Solicitud F-AF-039 firmada'),
     },
 
     signature: {
-      requestedByName: signData.requestedByName || "Leonardo Reales",
-      requestedByEmail: signData.requestedByEmail || "leonardoreales@americana.edu.co",
-      signatureRole: "RESPONSABLE_ACTIVOS_FIJOS",
-      signatureAnchor: "FIRMA DEL RESPONSABLE ACTIVOS FIJOS"
+      requestedByName,
+      requestedByEmail,
+      signatureRole: 'RESPONSABLE_ACTIVOS_FIJOS',
+      signatureImageFileId: requireField(
+        firstNonEmpty(signData?.signatureImageFileId, process.env.SIGAF_SIGNATURE_IMAGE_FILE_ID),
+        'signatureImageFileId',
+      ),
+      signatureAnchor: firstNonEmpty(
+        signData?.signatureAnchor,
+        'FIRMA DEL RESPONSABLE ACTIVOS FIJOS',
+      ),
     },
 
     summary: {
-      solicitante: request.formData?.formData?.solicitante || request.formData?.solicitante,
-      dependencia: request.formData?.formData?.dependencia || request.formData?.dependencia,
+      solicitante: firstNonEmpty(formData.solicitante, formData.authorizedPerson?.fullName),
+      dependencia: firstNonEmpty(formData.dependencia, formData.assetResponsible?.area),
       itemsCount: items.length,
-      movementType: request.formData?.formData?.movement?.movementType || request.formData?.movement?.movementType,
-      movementDate: request.formData?.formData?.movement?.movementDateRaw || request.formData?.movement?.movementDateRaw,
-    }
+      movementType: firstNonEmpty(formData.movement?.movementType),
+      movementDate: firstNonEmpty(formData.movement?.movementDateRaw, formData.fecha),
+    },
   }
 
-  // 4. Llamar a n8n
-  const webhookUrl = process.env.N8N_SIGN_WEBHOOK || 'https://n8n.americana.edu.co/webhook/traslados-firma-acta'
-  
+  const webhookUrl = process.env.N8N_SIGN_WEBHOOK
+  if (!webhookUrl) {
+    throw new AppError(500, 'N8N_SIGN_WEBHOOK no configurado', 'CONFIG_ERROR')
+  }
+
+  const body = JSON.stringify(payload)
+
   try {
     await axios.post(webhookUrl, payload, {
       headers: {
-        'x-sigaf-sync-secret': process.env.SYNC_SECRET
-      }
+        'Content-Type': 'application/json',
+        'x-sigaf-sign-request-secret': process.env.N8N_SIGN_REQUEST_SECRET || process.env.SYNC_SECRET || '',
+        ...(buildHmac(body) ? { 'x-sigaf-signature': buildHmac(body) } : {}),
+      },
+      timeout: 30000,
     })
   } catch (error: any) {
     console.error('[SIGAF] Error llamando a n8n para firma:', error.message)
-    throw new AppError(500, 'Error al conectar con el motor de firmas (n8n)', 'EXTERNAL_ERROR')
+    throw new AppError(502, 'Error al conectar con el motor de firmas (n8n)', 'EXTERNAL_ERROR')
   }
 
-  // 5. Actualizar estado a REVISION (o uno intermedio si existe)
-  // Según el PDF, el estado recomendado es FIRMA_SOLICITADA o FIRMA_EN_PROCESO
-  // Pero el enum actual es ['RECIBIDA', 'REVISION', 'APROBADA', 'FIRMADA', 'RECHAZADA']
-  // Usaremos REVISION por ahora si no está ya, o lo dejamos igual pero notificamos
-  
-  const updated = await repo.update(id, { 
-    status: 'REVISION',
-    notes: (request.notes || '') + `\n[${new Date().toISOString()}] Firma solicitada por ${payload.signature.requestedByName}.`
+  const updated = await repo.update(id, {
+    status: 'FIRMA_SOLICITADA',
+    notes: `${request.notes || ''}\n[${new Date().toISOString()}] Firma solicitada por ${requestedByName}. EventId: ${payload.eventId}.`.trim(),
   })
 
-  // 6. Notificar por SSE
   sseManager.broadcast('transfer_request:updated', {
     id: request.id,
     requestNumber: request.requestNumber,
     status: updated.status,
-    message: 'Proceso de firma iniciado'
+    message: 'Proceso de firma iniciado',
   })
 
-  return { ok: true, message: 'Firma solicitada correctamente', requestId: id }
+  return { ok: true, message: 'Firma solicitada correctamente', requestId: id, eventId: payload.eventId }
 }

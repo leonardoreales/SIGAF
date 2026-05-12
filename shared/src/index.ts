@@ -191,10 +191,19 @@ export type UpdateUser = z.infer<typeof UpdateUserSchema>
 
 export const TransferRequestStatusSchema = z.enum([
   'RECIBIDA',
+  'PENDIENTE_GESTION_ACTIVOS_FIJOS',
   'REVISION',
   'APROBADA',
+  'FIRMA_SOLICITADA',
+  'FIRMA_EN_PROCESO',
   'FIRMADA',
+  'PDF_GENERADO',
+  'RESPUESTA_ENVIANDO',
+  'RESPUESTA_ENVIADA',
   'RECHAZADA',
+  'ERROR_FIRMA',
+  'ERROR_ENVIO_RESPUESTA',
+  'REQUIERE_REVISION_MANUAL',
 ])
 
 export const TransferRequestItemStatusSchema = z.enum([
@@ -218,6 +227,7 @@ export const CreateTransferRequestSchema = z.object({
   rawText:      z.string().optional(),
   docxDriveUrl: z.string().optional(),
   formData:     z.record(z.unknown()).optional(),
+  status:       TransferRequestStatusSchema.optional(),
   items:        z.array(TransferRequestItemSchema).default([]),
   signatures:   z.object({
     entrega:  z.string().nullable().optional(),
