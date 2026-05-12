@@ -20,6 +20,10 @@ vite.config.js
 
 # Local tool settings
 .claude/settings.local.json
+.codex/
+
+# Local n8n exports with environment-specific secrets
+Backend/n8n-workflows/SIGAF – Ingesta de Solicitudes F-AF-039 (3).json
 
 # Backups / scratch
 *.bak
