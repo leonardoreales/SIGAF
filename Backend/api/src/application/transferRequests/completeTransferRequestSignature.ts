@@ -1,19 +1,21 @@
-import { TransferRequestStatusSchema } from '@sigaf/shared'
+import { CompleteTransferRequestSignatureSchema, type CompleteTransferRequestSignature } from '@sigaf/shared'
 import * as repo from '../../infrastructure/db/transferRequestRepository'
 import { AppError } from '../../shared/errors'
 import { sseManager } from '../../infrastructure/sse/SseManager'
 
-function firstNonEmpty(...values: unknown[]) {
-  return values.find((value) => typeof value === 'string' && value.trim()) as string | undefined
+function firstNonEmpty(...values: (string | undefined | null)[]) {
+  return values.find((v) => typeof v === 'string' && v.trim()) as string | undefined
 }
 
-export async function completeTransferRequestSignature(rawData: any) {
-  const eventId = firstNonEmpty(rawData?.eventId)
-  const sigafRequestId = firstNonEmpty(rawData?.sigafRequestId)
-  const status = TransferRequestStatusSchema.parse(rawData?.status || 'RESPUESTA_ENVIADA')
+export async function completeTransferRequestSignature(rawData: unknown) {
+  let data: CompleteTransferRequestSignature
+  try {
+    data = CompleteTransferRequestSignatureSchema.parse(rawData)
+  } catch {
+    throw new AppError(400, 'Payload de firma inválido', 'VALIDATION_ERROR')
+  }
 
-  if (!eventId) throw new AppError(400, 'eventId requerido', 'VALIDATION_ERROR')
-  if (!sigafRequestId) throw new AppError(400, 'sigafRequestId requerido', 'VALIDATION_ERROR')
+  const { eventId, sigafRequestId, status } = data
 
   const request = await repo.findByRequestNumber(sigafRequestId)
   const currentFormData = request.formData || {}
@@ -24,17 +26,17 @@ export async function completeTransferRequestSignature(rawData: any) {
   }
 
   const signedPdf = {
-    signedGoogleDocId: firstNonEmpty(rawData?.signedGoogleDocId, rawData?.document?.signedGoogleDocId),
-    signedGoogleDocUrl: firstNonEmpty(rawData?.signedGoogleDocUrl, rawData?.document?.signedGoogleDocUrl),
-    signedPdfDriveFileId: firstNonEmpty(rawData?.signedPdfDriveFileId, rawData?.document?.signedPdfDriveFileId),
-    signedPdfDriveUrl: firstNonEmpty(rawData?.signedPdfDriveUrl, rawData?.document?.signedPdfDriveUrl),
-    emailSentAt: firstNonEmpty(rawData?.emailSentAt),
+    signedGoogleDocId:    firstNonEmpty(data.signedGoogleDocId,    data.document?.signedGoogleDocId),
+    signedGoogleDocUrl:   firstNonEmpty(data.signedGoogleDocUrl,   data.document?.signedGoogleDocUrl),
+    signedPdfDriveFileId: firstNonEmpty(data.signedPdfDriveFileId, data.document?.signedPdfDriveFileId),
+    signedPdfDriveUrl:    firstNonEmpty(data.signedPdfDriveUrl,    data.document?.signedPdfDriveUrl),
+    emailSentAt:          firstNonEmpty(data.emailSentAt),
   }
 
   await repo.update(request.id, {
     status,
-    signatureAutoriza: firstNonEmpty(rawData?.signatureAutoriza, rawData?.signedBy, rawData?.requestedByName),
-    signedBy: firstNonEmpty(rawData?.signedBy, rawData?.requestedByEmail, 'n8n-signature-workflow'),
+    signatureAutoriza: firstNonEmpty(data.signatureAutoriza, data.signedBy, data.requestedByName),
+    signedBy:          firstNonEmpty(data.signedBy, data.requestedByEmail, 'n8n-signature-workflow'),
     notes: `${request.notes || ''}\n[${new Date().toISOString()}] Resultado firma n8n: ${status}. EventId: ${eventId}.`.trim(),
   })
 
@@ -43,20 +45,20 @@ export async function completeTransferRequestSignature(rawData: any) {
     signatureWorkflowResult: {
       eventId,
       status,
-      correlationId: rawData?.correlationId,
-      idSolicitud: rawData?.idSolicitud,
+      correlationId: data.correlationId,
+      idSolicitud:   data.idSolicitud,
       signedPdf,
-      error: rawData?.error || null,
-      updatedAt: new Date().toISOString(),
+      error:         data.error ?? null,
+      updatedAt:     new Date().toISOString(),
     },
     signedPdf,
   })
 
   sseManager.broadcast('transfer_request:updated', {
-    id: updated.id,
+    id:            updated.id,
     requestNumber: updated.requestNumber,
-    status: updated.status,
-    message: 'Resultado de firma recibido desde n8n',
+    status:        updated.status,
+    message:       'Resultado de firma recibido desde n8n',
   })
 
   return { ok: true, duplicate: false, request: updated }

@@ -6,6 +6,7 @@ import { sseManager }                           from '../../infrastructure/sse/S
 import { createTransferRequest }               from '../../application/transferRequests/createTransferRequest'
 import { completeTransferRequestSignature }     from '../../application/transferRequests/completeTransferRequestSignature'
 import * as transferRequestRepo                 from '../../infrastructure/db/transferRequestRepository'
+import { insertSignatureInDoc }                 from '../../infrastructure/google/docsSignatureService'
 
 // POST /sync/notify — llamado por n8n tras insertar activos (autenticado por secreto compartido)
 export async function notify(req: Request, res: Response, next: NextFunction) {
@@ -99,6 +100,34 @@ export async function events(req: Request, res: Response, next: NextFunction) {
     }
 
     res.write(`event: connected\ndata: ${JSON.stringify({ clients: sseManager.connectedCount })}\n\n`)
+  } catch (err) { next(err) }
+}
+
+// POST /sync/sign-document — n8n llama aquí para insertar firma institucional en Google Doc (reemplaza Apps Script)
+export async function signDocument(req: Request, res: Response, next: NextFunction) {
+  try {
+    const secret = process.env.SIGN_DOCUMENT_SECRET
+    if (!secret) return next(new AppError(500, 'SIGN_DOCUMENT_SECRET no configurado', 'CONFIG_ERROR'))
+
+    const received = (req.headers['x-sigaf-sign-result-secret'] as string | undefined) ?? req.body?.secret
+    if (received !== secret) {
+      return next(new AppError(401, 'Secreto de firma de documento inválido', 'UNAUTHORIZED'))
+    }
+
+    const { googleDocId, signatureImageFileId, anchorText, eventId, sigafRequestId } = req.body
+
+    if (!googleDocId) return next(new AppError(400, 'googleDocId requerido', 'VALIDATION_ERROR'))
+    if (!signatureImageFileId) return next(new AppError(400, 'signatureImageFileId requerido', 'VALIDATION_ERROR'))
+
+    const result = await insertSignatureInDoc({
+      googleDocId,
+      signatureImageFileId,
+      anchorText: anchorText || 'FIRMA DEL RESPONSABLE ACTIVOS FIJOS',
+      eventId: eventId || '',
+      sigafRequestId: sigafRequestId || '',
+    })
+
+    res.json({ ...result, status: 'SIGNED' })
   } catch (err) { next(err) }
 }
 

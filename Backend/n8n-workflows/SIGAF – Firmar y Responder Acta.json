@@ -1,90 +1,29 @@
 {
-  "name": "SIGAF – Firmar y Responder Acta",
+  "name": "SIGAF - Firmar y devolver Acta",
   "active": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "sigaf-firmar-acta",
-        "responseMode": "lastNode",
+        "responseMode": "onReceived",
         "options": {}
       },
       "id": "webhook-sign-request",
       "name": "Webhook SIGAF solicitar firma",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-900, 0]
+      "position": [-700, 0]
     },
     {
       "parameters": {
-        "jsCode": "const crypto = require('crypto');\nconst input = $input.first().json;\nconst headers = input.headers || {};\nconst body = input.body || {};\nconst expectedSecret = process.env.SIGAF_SIGN_REQUEST_SECRET || 'CHANGE_ME';\nconst receivedSecret = headers['x-sigaf-sign-request-secret'] || headers['X-Sigaf-Sign-Request-Secret'] || '';\nif (receivedSecret !== expectedSecret) {\n  throw new Error(`[SIGAF] Unauthorized sign request. eventId=${body.eventId || 'unknown'}`);\n}\nconst hmacSecret = process.env.SIGAF_SIGN_HMAC_SECRET || '';\nconst receivedSignature = headers['x-sigaf-signature'] || headers['X-Sigaf-Signature'] || '';\nif (hmacSecret && receivedSignature) {\n  const expectedSignature = 'sha256=' + crypto.createHmac('sha256', hmacSecret).update(JSON.stringify(body)).digest('hex');\n  if (receivedSignature !== expectedSignature) {\n    throw new Error(`[SIGAF] Invalid HMAC signature. eventId=${body.eventId || 'unknown'}`);\n  }\n}\nreturn [{ json: body }];"
-      },
-      "id": "validate-secret",
-      "name": "Validar secreto SIGAF",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [-680, 0]
-    },
-    {
-      "parameters": {
-        "jsCode": "function required(value, label) {\n  if (!value) throw new Error(`${label} requerido`);\n  return value;\n}\nconst body = $input.first().json;\nconst normalized = {\n  eventType: required(body.eventType, 'eventType'),\n  eventId: required(body.eventId, 'eventId'),\n  sigafRequestId: required(body.sigafRequestId, 'sigafRequestId'),\n  correlationId: body.correlationId || body.sigafRequestId,\n  idSolicitud: body.idSolicitud || body.correlationId || body.sigafRequestId,\n  documentToSign: {\n    googleDocId: required(body.documentToSign?.googleDocId, 'documentToSign.googleDocId'),\n    googleDocUrl: body.documentToSign?.googleDocUrl || '',\n    originalDriveFileId: body.documentToSign?.originalDriveFileId || ''\n  },\n  emailContext: {\n    messageId: required(body.emailContext?.messageId, 'emailContext.messageId'),\n    threadId: required(body.emailContext?.threadId, 'emailContext.threadId'),\n    senderEmail: required(body.emailContext?.senderEmail, 'emailContext.senderEmail'),\n    senderName: body.emailContext?.senderName || '',\n    subject: body.emailContext?.subject || 'Solicitud F-AF-039 firmada'\n  },\n  signature: {\n    requestedByName: required(body.signature?.requestedByName, 'signature.requestedByName'),\n    requestedByEmail: required(body.signature?.requestedByEmail, 'signature.requestedByEmail'),\n    signatureRole: body.signature?.signatureRole || 'RESPONSABLE_ACTIVOS_FIJOS',\n    signatureImageFileId: required(body.signature?.signatureImageFileId, 'signature.signatureImageFileId'),\n    signatureAnchor: body.signature?.signatureAnchor || 'FIRMA DEL RESPONSABLE ACTIVOS FIJOS'\n  },\n  summary: body.summary || {}\n};\nreturn [{ json: normalized }];"
+        "jsCode": "function required(value, label) {\n  if (!value) throw new Error(`${label} requerido`);\n  return value;\n}\n\nconst input = $input.first().json || {};\nconst headers = Object.fromEntries(\n  Object.entries(input.headers || {}).map(([key, value]) => [key.toLowerCase(), String(value || '')]),\n);\nconst body = input.body || {};\n\nconst expectedSecret = process.env.N8N_SIGN_REQUEST_SECRET || process.env.SYNC_SECRET || '';\nif (!expectedSecret) throw new Error('N8N_SIGN_REQUEST_SECRET/SYNC_SECRET no configurado en n8n');\n\nif (headers['x-sigaf-sign-request-secret'] !== expectedSecret) {\n  throw new Error(`[SIGAF] Secreto invalido. eventId=${body.eventId || 'unknown'}`);\n}\n\nreturn [{\n  json: {\n    eventId: required(body.eventId, 'eventId'),\n    sigafRequestId: required(body.sigafRequestId, 'sigafRequestId'),\n    correlationId: body.correlationId || body.sigafRequestId,\n    idSolicitud: body.idSolicitud || body.correlationId || body.sigafRequestId,\n    googleDocId: required(body.documentToSign?.googleDocId, 'documentToSign.googleDocId'),\n    googleDocUrl: body.documentToSign?.googleDocUrl || '',\n    signatureImageFileId: required(body.signature?.signatureImageFileId, 'signature.signatureImageFileId'),\n    signatureAnchor: body.signature?.signatureAnchor || 'FIRMA DEL RESPONSABLE ACTIVOS FIJOS',\n    requestedByName: body.signature?.requestedByName || '',\n    requestedByEmail: body.signature?.requestedByEmail || '',\n    senderEmail: required(body.emailContext?.senderEmail, 'emailContext.senderEmail'),\n    senderName: body.emailContext?.senderName || '',\n    subject: body.emailContext?.subject || 'Solicitud F-AF-039',\n    messageId: body.emailContext?.messageId || '',\n    threadId: body.emailContext?.threadId || ''\n  }\n}];"
       },
       "id": "normalize-sign-request",
-      "name": "Normalizar solicitud de firma",
+      "name": "Validar y normalizar solicitud",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [-460, 0]
-    },
-    {
-      "parameters": {
-        "url": "={{ $env.SIGAF_API_URL }}/sync/transfer-request/{{ $json.sigafRequestId }}",
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "x-sigaf-sign-request-secret", "value": "={{ $env.SIGAF_SIGN_RESULT_SECRET || $env.SIGAF_SIGN_REQUEST_SECRET }}" }
-          ]
-        },
-        "options": { "response": { "response": { "responseFormat": "json" } }, "timeout": 30000 }
-      },
-      "id": "get-sigaf-request",
-      "name": "Consultar solicitud en SIGAF",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [-240, 0]
-    },
-    {
-      "parameters": {
-        "jsCode": "const signRequest = $('Normalizar solicitud de firma').first().json;\nconst sigafRequest = $input.first().json;\nconst blockedStatuses = ['FIRMADA', 'RESPUESTA_ENVIADA', 'ERROR_FIRMA', 'ERROR_ENVIO_RESPUESTA', 'REQUIERE_REVISION_MANUAL'];\nif (blockedStatuses.includes(sigafRequest.status)) {\n  throw new Error(`Solicitud ${signRequest.sigafRequestId} no firmable en estado ${sigafRequest.status}`);\n}\nconst savedGoogleDocId = sigafRequest.formData?.document?.googleDocId || sigafRequest.formData?.googleDocId;\nif (savedGoogleDocId && savedGoogleDocId !== signRequest.documentToSign.googleDocId) {\n  throw new Error(`googleDocId no coincide con SIGAF. payload=${signRequest.documentToSign.googleDocId}, sigaf=${savedGoogleDocId}`);\n}\nreturn [{ json: { ...signRequest, sigafRequest } }];"
-      },
-      "id": "assert-signable",
-      "name": "Validar solicitud firmable",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [-20, 0]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.documentToSign.googleDocId }}/copy",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleDriveOAuth2Api",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "supportsAllDrives", "value": "true" },
-            { "name": "fields", "value": "id,name,mimeType,webViewLink" }
-          ]
-        },
-        "sendBody": true,
-        "specifyBody": "json",
-        "jsonBody": "={{ { name: `${$json.sigafRequestId} - F-AF-039 firmado` } }}",
-        "options": { "response": { "response": { "responseFormat": "json" } }, "timeout": 30000 }
-      },
-      "id": "copy-google-doc",
-      "name": "Copiar Google Doc para firma",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [200, 0]
     },
     {
       "parameters": {
@@ -99,82 +38,32 @@
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { eventId: $('Validar solicitud firmable').first().json.eventId, googleDocId: $json.id, signatureImageFileId: $('Validar solicitud firmable').first().json.signature.signatureImageFileId, anchorText: $('Validar solicitud firmable').first().json.signature.signatureAnchor, requestedByName: $('Validar solicitud firmable').first().json.signature.requestedByName, requestedByEmail: $('Validar solicitud firmable').first().json.signature.requestedByEmail } }}",
-        "options": { "response": { "response": { "responseFormat": "json" } }, "timeout": 30000 }
+        "jsonBody": "={{ { eventId: $json.eventId, googleDocId: $json.googleDocId, signatureImageFileId: $json.signatureImageFileId, anchorText: $json.signatureAnchor, requestedByName: $json.requestedByName, requestedByEmail: $json.requestedByEmail } }}",
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "timeout": 30000
+        }
       },
       "id": "insert-signature",
       "name": "Insertar firma institucional",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [420, 0]
-    },
-    {
-      "parameters": {
-        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.signedGoogleDocId || $json.googleDocId }}/export",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleDriveOAuth2Api",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "mimeType", "value": "application/pdf" }
-          ]
-        },
-        "options": {
-          "response": { "response": { "responseFormat": "file", "outputPropertyName": "signedPdf" } },
-          "timeout": 30000
-        }
-      },
-      "id": "export-signed-pdf",
-      "name": "Exportar acta firmada como PDF",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [640, 0]
-    },
-    {
-      "parameters": {
-        "method": "POST",
-        "url": "https://www.googleapis.com/upload/drive/v3/files",
-        "authentication": "predefinedCredentialType",
-        "nodeCredentialType": "googleDriveOAuth2Api",
-        "sendQuery": true,
-        "queryParameters": {
-          "parameters": [
-            { "name": "uploadType", "value": "media" },
-            { "name": "fields", "value": "id,webViewLink,webContentLink" },
-            { "name": "supportsAllDrives", "value": "true" }
-          ]
-        },
-        "sendHeaders": true,
-        "headerParameters": {
-          "parameters": [
-            { "name": "Content-Type", "value": "application/pdf" }
-          ]
-        },
-        "sendBody": true,
-        "contentType": "binaryData",
-        "inputDataFieldName": "signedPdf",
-        "options": { "response": { "response": { "responseFormat": "json" } }, "timeout": 30000 }
-      },
-      "id": "save-signed-pdf",
-      "name": "Guardar PDF firmado en Drive",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.4,
-      "position": [860, 0]
+      "position": [-220, 0]
     },
     {
       "parameters": {
         "resource": "message",
         "operation": "send",
-        "to": "={{ $('Validar solicitud firmable').first().json.emailContext.senderEmail }}",
-        "subject": "=Re: {{ $('Validar solicitud firmable').first().json.emailContext.subject }}",
-        "message": "=Cordial saludo,\\n\\nAdjuntamos el acta F-AF-039 firmada para la solicitud {{ $('Validar solicitud firmable').first().json.sigafRequestId }}.\\n\\nAtentamente,\\nActivos Fijos",
+        "to": "={{ $('Validar y normalizar solicitud').first().json.senderEmail }}",
+        "subject": "=Re: {{ $('Validar y normalizar solicitud').first().json.subject }}",
+        "message": "=Cordial saludo,\\n\\nSe devuelve el acta F-AF-039 firmada para la solicitud {{ $('Validar y normalizar solicitud').first().json.sigafRequestId }}.\\n\\nActa firmada: {{ $('Insertar firma institucional').first().json.signedGoogleDocUrl || $('Validar y normalizar solicitud').first().json.googleDocUrl }}\\n\\nAtentamente,\\nActivos Fijos",
         "options": {}
       },
       "id": "reply-original-email",
-      "name": "Responder correo original con PDF",
+      "name": "Responder Gmail al solicitante",
       "type": "n8n-nodes-base.gmail",
       "typeVersion": 2.1,
-      "position": [1080, 0]
+      "position": [20, 0]
     },
     {
       "parameters": {
@@ -184,32 +73,37 @@
         "headerParameters": {
           "parameters": [
             { "name": "Content-Type", "value": "application/json" },
-            { "name": "x-sigaf-sign-result-secret", "value": "={{ $env.SIGAF_SIGN_RESULT_SECRET }}" }
+            { "name": "x-sigaf-sign-result-secret", "value": "={{ $env.N8N_SIGN_RESULT_SECRET || $env.SYNC_SECRET }}" }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { eventId: $('Validar solicitud firmable').first().json.eventId, sigafRequestId: $('Validar solicitud firmable').first().json.sigafRequestId, correlationId: $('Validar solicitud firmable').first().json.correlationId, idSolicitud: $('Validar solicitud firmable').first().json.idSolicitud, status: 'RESPUESTA_ENVIADA', signedGoogleDocId: $('Insertar firma institucional').first().json.signedGoogleDocId || $('Insertar firma institucional').first().json.googleDocId, signedGoogleDocUrl: $('Insertar firma institucional').first().json.signedGoogleDocUrl || '', signedPdfDriveFileId: $('Guardar PDF firmado en Drive').first().json.id, signedPdfDriveUrl: $('Guardar PDF firmado en Drive').first().json.webViewLink || $('Guardar PDF firmado en Drive').first().json.webContentLink, emailSentAt: new Date().toISOString(), signedBy: $('Validar solicitud firmable').first().json.signature.requestedByEmail, requestedByName: $('Validar solicitud firmable').first().json.signature.requestedByName } }}",
-        "options": { "response": { "response": { "responseFormat": "json" } }, "timeout": 30000 }
+        "jsonBody": "={{ { eventId: $('Validar y normalizar solicitud').first().json.eventId, sigafRequestId: $('Validar y normalizar solicitud').first().json.sigafRequestId, correlationId: $('Validar y normalizar solicitud').first().json.correlationId, idSolicitud: $('Validar y normalizar solicitud').first().json.idSolicitud, status: 'RESPUESTA_ENVIADA', signedGoogleDocId: $('Insertar firma institucional').first().json.signedGoogleDocId || $('Validar y normalizar solicitud').first().json.googleDocId, signedGoogleDocUrl: $('Insertar firma institucional').first().json.signedGoogleDocUrl || $('Validar y normalizar solicitud').first().json.googleDocUrl, emailSentAt: new Date().toISOString(), signedBy: $('Validar y normalizar solicitud').first().json.requestedByEmail, requestedByName: $('Validar y normalizar solicitud').first().json.requestedByName } }}",
+        "options": {
+          "response": { "response": { "responseFormat": "json" } },
+          "timeout": 30000
+        }
       },
       "id": "notify-sigaf-result",
-      "name": "Notificar resultado a SIGAF",
+      "name": "Notificar firma a SIGAF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [1300, 0]
+      "position": [260, 0]
     }
   ],
   "connections": {
-    "Webhook SIGAF solicitar firma": { "main": [[{ "node": "Validar secreto SIGAF", "type": "main", "index": 0 }]] },
-    "Validar secreto SIGAF": { "main": [[{ "node": "Normalizar solicitud de firma", "type": "main", "index": 0 }]] },
-    "Normalizar solicitud de firma": { "main": [[{ "node": "Consultar solicitud en SIGAF", "type": "main", "index": 0 }]] },
-    "Consultar solicitud en SIGAF": { "main": [[{ "node": "Validar solicitud firmable", "type": "main", "index": 0 }]] },
-    "Validar solicitud firmable": { "main": [[{ "node": "Copiar Google Doc para firma", "type": "main", "index": 0 }]] },
-    "Copiar Google Doc para firma": { "main": [[{ "node": "Insertar firma institucional", "type": "main", "index": 0 }]] },
-    "Insertar firma institucional": { "main": [[{ "node": "Exportar acta firmada como PDF", "type": "main", "index": 0 }]] },
-    "Exportar acta firmada como PDF": { "main": [[{ "node": "Guardar PDF firmado en Drive", "type": "main", "index": 0 }]] },
-    "Guardar PDF firmado en Drive": { "main": [[{ "node": "Responder correo original con PDF", "type": "main", "index": 0 }]] },
-    "Responder correo original con PDF": { "main": [[{ "node": "Notificar resultado a SIGAF", "type": "main", "index": 0 }]] }
+    "Webhook SIGAF solicitar firma": {
+      "main": [[{ "node": "Validar y normalizar solicitud", "type": "main", "index": 0 }]]
+    },
+    "Validar y normalizar solicitud": {
+      "main": [[{ "node": "Insertar firma institucional", "type": "main", "index": 0 }]]
+    },
+    "Insertar firma institucional": {
+      "main": [[{ "node": "Responder Gmail al solicitante", "type": "main", "index": 0 }]]
+    },
+    "Responder Gmail al solicitante": {
+      "main": [[{ "node": "Notificar firma a SIGAF", "type": "main", "index": 0 }]]
+    }
   },
   "settings": {
     "executionOrder": "v1"

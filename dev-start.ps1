@@ -3,23 +3,43 @@
 # Requiere: ngrok instalado y configurado con authtoken
 
 $NGROK_DOMAIN = "reappoint-grass-tinkling.ngrok-free.dev"
+$root = $PSScriptRoot
 
 Write-Host "Limpiando procesos previos..." -ForegroundColor Yellow
-Stop-Process -Name "ngrok" -ErrorAction SilentlyContinue
-Stop-Process -Name "node" -ErrorAction SilentlyContinue
+Stop-Process -Name "ngrok" -ErrorAction SilentlyContinue -Force
+Stop-Process -Name "node"  -ErrorAction SilentlyContinue -Force
 
-Write-Host "Iniciando SIGAF backend + tunnel ngrok..." -ForegroundColor Cyan
+Write-Host ""
+Write-Host "  Backend:  http://localhost:3000" -ForegroundColor Green
+Write-Host "  Tunnel:   https://$NGROK_DOMAIN" -ForegroundColor Cyan
+Write-Host "  n8n URL:  https://$NGROK_DOMAIN" -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Ctrl+C para detener todo." -ForegroundColor DarkGray
+Write-Host "─────────────────────────────────────────" -ForegroundColor DarkGray
 
-# Backend en background (usando npm.cmd para evitar problemas de política de ejecución)
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "cd '$PSScriptRoot'; npm.cmd run dev:api" -WindowStyle Normal
+$apiJob = Start-Job -Name "SIGAF-API" -ScriptBlock {
+    Set-Location $using:root
+    npm.cmd run dev:api 2>&1
+}
 
 Start-Sleep -Seconds 3
 
-# ngrok tunnel en background
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "ngrok http --url=$NGROK_DOMAIN 3000" -WindowStyle Normal
+$ngrokJob = Start-Job -Name "SIGAF-NGROK" -ScriptBlock {
+    $domain = $using:NGROK_DOMAIN
+    ngrok http --url=$domain 3000 2>&1
+}
 
-Write-Host ""
-Write-Host "Backend:  http://localhost:3000" -ForegroundColor Green
-Write-Host "Tunnel:   https://$NGROK_DOMAIN" -ForegroundColor Green
-Write-Host ""
-Write-Host "SIGAF_API_URL en n8n = https://$NGROK_DOMAIN" -ForegroundColor Yellow
+try {
+    while ($true) {
+        Receive-Job $apiJob   | ForEach-Object { Write-Host "[API]   $_" -ForegroundColor Green }
+        Receive-Job $ngrokJob | ForEach-Object { Write-Host "[NGROK] $_" -ForegroundColor Cyan }
+        Start-Sleep -Milliseconds 400
+    }
+} finally {
+    Write-Host "`nDeteniendo procesos..." -ForegroundColor Yellow
+    Stop-Job    $apiJob, $ngrokJob -ErrorAction SilentlyContinue
+    Remove-Job  $apiJob, $ngrokJob -ErrorAction SilentlyContinue
+    Stop-Process -Name "ngrok" -ErrorAction SilentlyContinue -Force
+    Stop-Process -Name "node"  -ErrorAction SilentlyContinue -Force
+    Write-Host "Listo." -ForegroundColor DarkGray
+}

@@ -4,7 +4,7 @@ import * as XLSX from 'xlsx'
 import { pool } from '../infrastructure/db/client'
 
 const EXCEL_PATH = process.argv[2]
-  ?? path.join(__dirname, '../../../../', 'ACTA BAJA DE ACTIVOS (1).xlsx')
+  ?? path.join(__dirname, '../../../../data', 'ACTA BAJA DE ACTIVOS Y.xlsx')
 
 const REASON_MAP: Record<string, string> = {
   'OBSOLESCENCIA':           'OBSOLESCENCIA',
@@ -28,15 +28,22 @@ function normalizeReason(raw: string): string {
 function parseDate(val: unknown): string | null {
   if (!val) return null
   if (val instanceof Date) return val.toISOString().split('T')[0]
-  const d = new Date(String(val).trim())
+  const s = String(val).trim()
+  // Handle DD/MM/YYYY string format (e.g. ACTA-020 has "18/02/2026")
+  const ddmmyyyy = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/)
+  if (ddmmyyyy) return `${ddmmyyyy[3]}-${ddmmyyyy[2].padStart(2,'0')}-${ddmmyyyy[1].padStart(2,'0')}`
+  const d = new Date(s)
   return isNaN(d.getTime()) ? null : d.toISOString().split('T')[0]
 }
 
+// Column layout of "ACTA BAJA DE ACTIVOS Y.xlsx" (11 columns):
+// A(0): ID ACTA | B(1): # ITEM | C(2): FECHA | D(3): CARGO DE QUIÉN AUTORIZA
+// E(4): EDIFICIO | F(5): MOTIVO | G(6): DESCRIPCIÓN DEL ACTIVO
+// H(7): TIPO DE ACTIVO | I(8): N° DE PLACA/SERIAL | J(9): MARCA/MODELO | K(10): VALOR (ignored)
 interface ExcelRow {
   actaId: string; itemNum: number; date: unknown
-  authorizedBy: string; authorizedByRole: string
+  authorizedByRole: string
   building: string; reason: string
-  responsible: string; responsibleRole: string
   description: string; assetType: string
   plateSerial: string; brandModel: string
 }
@@ -56,16 +63,14 @@ async function run() {
     actaId:          clean(r[0]),
     itemNum:         Number(r[1]) || 0,
     date:            r[2],
-    authorizedBy:    clean(r[3]),
-    authorizedByRole:clean(r[4]),
-    building:        clean(r[5]),
-    reason:          normalizeReason(clean(r[6])),
-    responsible:     clean(r[7]),
-    responsibleRole: clean(r[8]),
-    description:     clean(r[9]),
-    assetType:       clean(r[10]).toUpperCase().replace(/\s+/g, ' ').replace(/\s+$/, ''),
-    plateSerial:     clean(r[11]),
-    brandModel:      clean(r[12]),
+    authorizedByRole:clean(r[3]),
+    building:        clean(r[4]),
+    reason:          normalizeReason(clean(r[5])),
+    description:     clean(r[6]),
+    assetType:       clean(r[7]).toUpperCase().replace(/\s+/g, ' ').replace(/\s+$/, ''),
+    plateSerial:     clean(r[8]),
+    brandModel:      clean(r[9]),
+    // r[10] = VALOR → not stored in this migration
   }))
 
   // Agrupar por acta
@@ -118,17 +123,18 @@ async function run() {
         parseDate(first.date),
         first.building || null,
         first.reason || 'BAJA',
-        first.authorizedBy || null,
+        null,                           // authorized_by: not available in new Excel
         first.authorizedByRole || null,
-        first.responsible || null,
-        first.responsibleRole || null,
+        null,                           // responsible: not available in new Excel
+        null,                           // responsible_role: not available in new Excel
         items.length,
       ],
     )
     const actDbId = actRes[0].id
 
     for (const item of items) {
-      const ps         = item.plateSerial.toUpperCase()
+      // Normalize: strip trailing dot to catch "NO REGISTRA." (ACTA-016)
+      const ps         = item.plateSerial.toUpperCase().trim().replace(/\.$/, '')
       const isEmpty    = !item.plateSerial
       const isNoReg    = ps === 'NO REGISTRA'
 

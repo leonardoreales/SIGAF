@@ -4,7 +4,7 @@ import {
   Package2, ArrowLeftRight, History, BarChart3,
   Trash2, ClipboardList, FileText, LayoutDashboard,
   ChevronLeft, ChevronRight, ChevronDown, FileDown,
-  Sun, Moon, LogOut, Lock, Settings, Wrench
+  Sun, Moon, LogOut, Lock, Settings, Wrench, Database,
 } from 'lucide-react'
 import { useTheme } from '../context/ThemeContext'
 import { useAuth }  from '../context/AuthContext'
@@ -73,6 +73,16 @@ const COMPRAS_NAV_SECTIONS: NavSection[] = [
     title: 'Compras',
     items: [
       { to: '/recepciones', icon: Package2, label: 'Recepciones', status: 'live' },
+    ],
+  },
+]
+
+const ADMIN_NAV_SECTIONS: NavSection[] = [
+  {
+    id: 'configuracion',
+    title: 'Configuración',
+    items: [
+      { to: '/catalogs', icon: Database, label: 'Catálogos', status: 'live' },
     ],
   },
 ]
@@ -196,7 +206,7 @@ export default function Sidebar() {
   const navigate           = useNavigate()
 
   const navSections = isAdmin
-    ? [...BASE_NAV_SECTIONS, ...COMPRAS_NAV_SECTIONS]
+    ? [...BASE_NAV_SECTIONS, ...COMPRAS_NAV_SECTIONS, ...ADMIN_NAV_SECTIONS]
     : isCompras
     ? COMPRAS_NAV_SECTIONS
     : BASE_NAV_SECTIONS

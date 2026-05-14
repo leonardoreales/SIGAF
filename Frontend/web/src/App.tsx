@@ -12,6 +12,7 @@ import NuevaRecepcionPage  from './pages/recepciones/NuevaRecepcionPage'
 import MaintenancePage     from './pages/maintenance/MaintenancePage'
 import WriteOffsPage       from './pages/writeoffs/WriteOffsPage'
 import StatisticsPage     from './pages/stats/StatisticsPage'
+import CatalogsPage       from './pages/catalogs/CatalogsPage'
 import { useRole }         from './hooks/useRole'
 import { useAuth }         from './context/AuthContext'
 import { Toaster }        from 'sonner'
@@ -60,6 +61,13 @@ export default function App() {
             {/* Análisis */}
             <Route path="/statistics"  element={<StatisticsPage />} />
             <Route path="/reports"     element={<ComingSoonPage title="Reportes" />} />
+          </Route>
+        </Route>
+
+        {/* Rutas exclusivas de ADMIN */}
+        <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+          <Route element={<Layout />}>
+            <Route path="/catalogs" element={<CatalogsPage />} />
           </Route>
         </Route>
 

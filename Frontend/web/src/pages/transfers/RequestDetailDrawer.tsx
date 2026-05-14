@@ -1,19 +1,57 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, FileText, CheckCircle2, Inbox, Mail, Calendar, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine, ArrowRight } from 'lucide-react'
+import { X, FileText, CheckCircle2, Inbox, Mail, Calendar, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine, ArrowRight, Loader2, Send, ShieldCheck, Clock } from 'lucide-react'
 import { apiTransferRequests, type TransferRequestStatus } from '../../lib/api'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
+import { useAuth } from '../../context/AuthContext'
 
 interface RequestDetailDrawerProps {
   requestId: number
   onClose: () => void
 }
 
+const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Inbox }> = {
+  RECIBIDA:                        { label: 'Recibida',              color: 'blue',    icon: Inbox },
+  PENDIENTE_GESTION_ACTIVOS_FIJOS: { label: 'Pendiente Gestión',    color: 'amber',   icon: Clock },
+  REVISION:                        { label: 'En Revisión',          color: 'amber',   icon: Clock },
+  APROBADA:                        { label: 'Aprobada',             color: 'emerald',  icon: CheckCircle2 },
+  FIRMA_SOLICITADA:                { label: 'Firma Solicitada',     color: 'purple',  icon: Send },
+  FIRMA_EN_PROCESO:                { label: 'Firmando...',          color: 'purple',  icon: Loader2 },
+  FIRMADA:                         { label: 'Firmada',              color: 'emerald',  icon: ShieldCheck },
+  PDF_GENERADO:                    { label: 'PDF Generado',         color: 'emerald',  icon: FileText },
+  RESPUESTA_ENVIANDO:              { label: 'Enviando Respuesta',   color: 'blue',    icon: Send },
+  RESPUESTA_ENVIADA:               { label: 'Respuesta Enviada',    color: 'emerald',  icon: CheckCircle2 },
+  RECHAZADA:                       { label: 'Rechazada',            color: 'red',     icon: X },
+  ERROR_FIRMA:                     { label: 'Error de Firma',       color: 'red',     icon: AlertTriangle },
+  ERROR_ENVIO_RESPUESTA:           { label: 'Error de Envío',       color: 'red',     icon: AlertTriangle },
+  REQUIERE_REVISION_MANUAL:        { label: 'Revisión Manual',      color: 'red',     icon: AlertTriangle },
+}
+
+function getStatusBadge(status: string) {
+  const cfg = STATUS_CONFIG[status] || { label: status, color: 'gray', icon: Info }
+  const colorMap: Record<string, string> = {
+    blue:    'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
+    amber:   'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
+    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
+    purple:  'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
+    red:     'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
+    gray:    'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800',
+  }
+  const Icon = cfg.icon
+  return (
+    <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${colorMap[cfg.color] || colorMap.gray}`}>
+      <Icon size={10} />
+      {cfg.label}
+    </span>
+  )
+}
+
 export default function RequestDetailDrawer({ requestId, onClose }: RequestDetailDrawerProps) {
   const [tab, setTab] = useState<'general' | 'activos' | 'documento' | 'trazabilidad'>('general')
   const queryClient = useQueryClient()
+  const { user } = useAuth()
 
   useEffect(() => {
     const fn = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -26,17 +64,30 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
     queryFn: () => apiTransferRequests.get(requestId),
   })
 
+  // Mutation: Gestionar solicitud (RECIBIDA → PENDIENTE_GESTION_ACTIVOS_FIJOS)
+  const gestionarMutation = useMutation({
+    mutationFn: () => apiTransferRequests.update(requestId, { status: 'PENDIENTE_GESTION_ACTIVOS_FIJOS' as TransferRequestStatus }),
+    onSuccess: () => {
+      toast.success('Solicitud aceptada para gestión de activos fijos')
+      queryClient.invalidateQueries({ queryKey: ['transferRequest', requestId] })
+      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+    },
+    onError: (error: any) => {
+      toast.error(`Error al gestionar: ${error.message}`)
+    }
+  })
+
+  // Mutation: Firmar acta (dispara webhook a n8n Flujo 2)
   const signMutation = useMutation({
     mutationFn: () => {
-      const userStr = localStorage.getItem('sigaf_user')
-      const user = userStr ? JSON.parse(userStr) : {}
+      if (!user?.name || !user?.email) throw new Error('Sesión de usuario requerida para firmar')
       return apiTransferRequests.sign(requestId, {
-        requestedByName: user.name || 'Leonardo Reales',
-        requestedByEmail: user.email || 'leonardoreales@americana.edu.co'
+        requestedByName:  user.name,
+        requestedByEmail: user.email,
       })
     },
-    onSuccess: () => {
-      toast.success('Solicitud de firma enviada a n8n')
+    onSuccess: (data) => {
+      toast.success(data.message || 'Firma solicitada — n8n procesando...')
       queryClient.invalidateQueries({ queryKey: ['transferRequest', requestId] })
       queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
     },
@@ -45,25 +96,16 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
     }
   })
 
-  const updateMutation = useMutation({
-    mutationFn: (data: { status: TransferRequestStatus }) => apiTransferRequests.update(requestId, data),
-    onSuccess: () => {
-      toast.success('Solicitud enviada a gestión')
-      queryClient.invalidateQueries({ queryKey: ['transferRequest', requestId] })
-      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
-    },
-    onError: (error: any) => {
-      toast.error(`Error al actualizar estado: ${error.message}`)
-    }
-  })
-
-  // Safe parsing of formData
   const formData = request?.formData as any || {}
   const movement = formData.movement || {}
   const items = request?.items || []
-  const canSign = request
-    ? ['PENDIENTE_GESTION_ACTIVOS_FIJOS', 'REVISION', 'APROBADA'].includes(request.status)
-    : false
+
+  const isRecibida   = request?.status === 'RECIBIDA'
+  const canSignRole  = ['ADMIN', 'ACTIVOS_FIJOS'].includes(user?.role ?? '')
+  const canSign      = canSignRole && (request ? ['PENDIENTE_GESTION_ACTIVOS_FIJOS', 'REVISION', 'APROBADA'].includes(request.status) : false)
+  const isInProgress = request ? ['FIRMA_SOLICITADA', 'FIRMA_EN_PROCESO', 'PDF_GENERADO', 'RESPUESTA_ENVIANDO'].includes(request.status) : false
+  const isDone       = request ? ['FIRMADA', 'RESPUESTA_ENVIADA'].includes(request.status) : false
+  const isError      = canSignRole && (request ? ['ERROR_FIRMA', 'ERROR_ENVIO_RESPUESTA', 'REQUIERE_REVISION_MANUAL'].includes(request.status) : false)
 
   return (
     <div style={{ position: 'fixed', inset: 0, zIndex: 60, display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px' }}>
@@ -98,56 +140,81 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
                   <span className="text-[11px] font-mono tracking-widest text-blue-500/80 uppercase">
                     Solicitud F-AF-039
                   </span>
-                  {request && (
-                    <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${
-                      request.status === 'RECIBIDA' ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800' :
-                      ['APROBADA', 'FIRMADA', 'PDF_GENERADO', 'RESPUESTA_ENVIADA'].includes(request.status) ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800' :
-                      ['ERROR_FIRMA', 'ERROR_ENVIO_RESPUESTA', 'RECHAZADA'].includes(request.status) ? 'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800' :
-                      'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800'
-                    }`}>
-                      {request.status === 'RECIBIDA' && <Inbox size={10} />}
-                      {request.status === 'FIRMADA' && <CheckCircle2 size={10} />}
-                      {request.status}
-                    </span>
-                  )}
+                  {request && getStatusBadge(request.status)}
                 </div>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              {request && request.status === 'RECIBIDA' && (
+              {/* Botón: Gestionar solicitud (solo cuando RECIBIDA) */}
+              {request && isRecibida && (
                 <button
-                  onClick={() => updateMutation.mutate({ status: 'PENDIENTE_GESTION_ACTIVOS_FIJOS' })}
-                  disabled={updateMutation.isPending}
+                  onClick={() => gestionarMutation.mutate()}
+                  disabled={gestionarMutation.isPending}
                   className="
                     flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold tracking-tight
                     bg-blue-500 hover:bg-blue-600 text-white shadow-lg shadow-blue-500/20
                     disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95
                   "
                 >
-                  {updateMutation.isPending ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  {gestionarMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <ArrowRight size={16} />
                   )}
                   Gestionar solicitud
                 </button>
               )}
+              {/* Botón: Firmar acta (cuando puede ser firmada) */}
               {request && canSign && (
                 <button
                   onClick={() => signMutation.mutate()}
                   disabled={signMutation.isPending}
                   className="
                     flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold tracking-tight
-                    bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20
+                    bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600
+                    text-white shadow-lg shadow-amber-500/20
                     disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95
                   "
                 >
                   {signMutation.isPending ? (
-                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <Loader2 size={16} className="animate-spin" />
                   ) : (
                     <PenLine size={16} />
                   )}
                   Firmar Acta F-AF-039
+                </button>
+              )}
+              {/* Estado: En proceso */}
+              {request && isInProgress && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <Loader2 size={16} className="animate-spin" />
+                  Firma en proceso...
+                </div>
+              )}
+              {/* Estado: Completado */}
+              {request && isDone && (
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <CheckCircle2 size={16} />
+                  Proceso completado
+                </div>
+              )}
+              {/* Estado: Error - permite reintentar */}
+              {request && isError && (
+                <button
+                  onClick={() => signMutation.mutate()}
+                  disabled={signMutation.isPending}
+                  className="
+                    flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold tracking-tight
+                    bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/20
+                    disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95
+                  "
+                >
+                  {signMutation.isPending ? (
+                    <Loader2 size={16} className="animate-spin" />
+                  ) : (
+                    <AlertTriangle size={16} />
+                  )}
+                  Reintentar firma
                 </button>
               )}
               <button 
@@ -204,7 +271,7 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
                   <div className="space-y-2">
                     <p className="text-sm"><span className="text-gray-500">De:</span> <strong className="dark:text-mi-100">{request.senderEmail}</strong></p>
                     <p className="text-sm"><span className="text-gray-500">Asunto:</span> <span className="dark:text-mi-200">{request.subject}</span></p>
-                    <p className="text-sm"><span className="text-gray-500">Recibido:</span> <span className="dark:text-mi-200">{format(new Date(request.receivedAt!), "d 'de' MMMM yyyy, HH:mm", { locale: es })}</span></p>
+                    <p className="text-sm"><span className="text-gray-500">Recibido:</span> <span className="dark:text-mi-200">{request.receivedAt ? format(new Date(request.receivedAt), "d 'de' MMMM yyyy, HH:mm", { locale: es }) : 'N/A'}</span></p>
                   </div>
                 </div>
 

@@ -57,16 +57,11 @@ export async function signTransferRequest(id: number, signData: any, requester?:
   const document = formData.document || {}
   const items = request.items || []
 
-  const requestedByName = firstNonEmpty(
-    signData?.requestedByName,
-    requester?.name,
-    'Leonardo Reales',
-  )
-  const requestedByEmail = firstNonEmpty(
-    signData?.requestedByEmail,
-    requester?.email,
-    'leonardoreales@americana.edu.co',
-  )
+  const requestedByName  = firstNonEmpty(signData?.requestedByName,  requester?.name)
+  const requestedByEmail = firstNonEmpty(signData?.requestedByEmail, requester?.email)
+
+  if (!requestedByName)  throw new AppError(400, 'requestedByName requerido para solicitar firma',  'VALIDATION_ERROR')
+  if (!requestedByEmail) throw new AppError(400, 'requestedByEmail requerido para solicitar firma', 'VALIDATION_ERROR')
 
   const payload = {
     eventType: 'TRANSFER_REQUEST_SIGN_REQUESTED',
@@ -146,7 +141,6 @@ export async function signTransferRequest(id: number, signData: any, requester?:
       timeout: 30000,
     })
   } catch (error: any) {
-    console.error('[SIGAF] Error llamando a n8n para firma:', error.message)
     throw new AppError(502, 'Error al conectar con el motor de firmas (n8n)', 'EXTERNAL_ERROR')
   }
 

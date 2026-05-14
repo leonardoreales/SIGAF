@@ -81,13 +81,29 @@ async function generateTransferNumber(): Promise<string> {
   return `TR-${ym}-${rows[0].n}`
 }
 
-function buildWhere(filter: TransferFilter): string {
-  const parts: string[] = []
-  if (filter.q)              parts.push(`(t.transfer_number ILIKE '%${filter.q}%' OR a.name ILIKE '%${filter.q}%' OR a.plate ILIKE '%${filter.q}%')`)
-  if (filter.status)         parts.push(`t.status = '${filter.status}'`)
-  if (filter.originBuilding) parts.push(`t.origin_building_id = ${filter.originBuilding}`)
-  if (filter.destBuilding)   parts.push(`t.dest_building_id   = ${filter.destBuilding}`)
-  return parts.length ? `WHERE ${parts.join(' AND ')}` : ''
+function buildWhere(filter: TransferFilter): { clause: string; params: unknown[] } {
+  const parts:  string[]  = []
+  const params: unknown[] = []
+
+  if (filter.q) {
+    params.push(`%${filter.q}%`)
+    const n = params.length
+    parts.push(`(t.transfer_number ILIKE $${n} OR a.name ILIKE $${n} OR a.plate ILIKE $${n})`)
+  }
+  if (filter.status) {
+    params.push(filter.status)
+    parts.push(`t.status = $${params.length}`)
+  }
+  if (filter.originBuilding) {
+    params.push(filter.originBuilding)
+    parts.push(`t.origin_building_id = $${params.length}`)
+  }
+  if (filter.destBuilding) {
+    params.push(filter.destBuilding)
+    parts.push(`t.dest_building_id = $${params.length}`)
+  }
+
+  return { clause: parts.length ? `WHERE ${parts.join(' AND ')}` : '', params }
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────

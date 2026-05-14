@@ -43,6 +43,15 @@ app.use('/writeoffs',  authenticate, writeoffsRouter)
 app.use(errorHandler)
 
 const PORT = Number(process.env.PORT ?? 3000)
+
+const REQUIRED_ENV = ['JWT_SECRET', 'GOOGLE_CLIENT_ID', 'DB_PASSWORD']
+for (const key of REQUIRED_ENV) {
+  if (!process.env[key]) {
+    console.error(`[SIGAF] Missing required environment variable: ${key}`)
+    process.exit(1)
+  }
+}
+
 app.listen(PORT, () => {
   console.log(`SIGAF API → http://localhost:${PORT}`)
 })

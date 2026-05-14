@@ -2,6 +2,7 @@ import { RefreshCw, Plus, Edit2, Trash2, FileDown, Activity } from 'lucide-react
 import type { LucideIcon } from 'lucide-react'
 import type { ActivityEntry, ActivityType } from '../../lib/activityBus'
 import { cn } from '../../lib/utils'
+import CardHeader from './CardHeader'
 
 // ── Meta por tipo ─────────────────────────────────────────────────────────────
 
@@ -106,19 +107,18 @@ export default function ActivityFeed({ entries, live = false }: Props) {
   return (
     <div className="card rounded-2xl flex flex-col overflow-hidden h-full">
       {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 dark:border-white/[0.05] shrink-0">
-        <div className="flex items-center gap-2">
-          <Activity size={13} className="text-gray-400 dark:text-mi-400" />
-          <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-400">
-            Actividad Reciente
-          </h3>
-        </div>
-        {live && (
-          <div className="flex items-center gap-1.5">
-            <span className="live-dot" />
-            <span className="text-[10px] font-mono text-emerald-500 dark:text-emerald-400">en vivo</span>
-          </div>
-        )}
+      <div className="px-5 py-4 border-b border-gray-100 dark:border-white/[0.05] shrink-0">
+        <CardHeader
+          icon={Activity}
+          title="Actividad Reciente"
+          className="mb-0"
+          right={live ? (
+            <div className="flex items-center gap-1.5">
+              <span className="live-dot" />
+              <span className="text-[10px] font-mono text-emerald-500 dark:text-emerald-400">en vivo</span>
+            </div>
+          ) : undefined}
+        />
       </div>
 
       {/* Feed */}

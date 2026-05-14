@@ -8,7 +8,7 @@ export const pool = new Pool({
   port:     Number(process.env.DB_PORT ?? 5432),
   database: process.env.DB_NAME     ?? 'sigaf',
   user:     process.env.DB_USER     ?? 'sigaf_user',
-  password: process.env.DB_PASSWORD ?? 'activosfijos',
+  password: process.env.DB_PASSWORD,
   ssl:      process.env.DB_SSL === 'true' ? { rejectUnauthorized: false } : false,
   max: 10,
   idleTimeoutMillis: 30_000,

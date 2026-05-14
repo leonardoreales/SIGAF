@@ -9,6 +9,27 @@ const YEAR_OPTIONS = [
   ...(['2022', '2023', '2024', '2025', '2026'] as const).map(y => ({ value: y, label: y })),
 ]
 
+const PERIOD_OPTIONS = [
+  { value: 'all', label: 'Todo el año' },
+  { value: 'q1',  label: 'Q1 — Enero a Marzo' },
+  { value: 'q2',  label: 'Q2 — Abril a Junio' },
+  { value: 'q3',  label: 'Q3 — Julio a Septiembre' },
+  { value: 'q4',  label: 'Q4 — Octubre a Diciembre' },
+]
+
+function periodParams(year: string, period: string): Record<string, string | undefined> {
+  if (!year || period === 'all') return {}
+  const y = year
+  const ranges: Record<string, [string, string]> = {
+    q1: [`${y}-01-01`, `${y}-03-31`],
+    q2: [`${y}-04-01`, `${y}-06-30`],
+    q3: [`${y}-07-01`, `${y}-09-30`],
+    q4: [`${y}-10-01`, `${y}-12-31`],
+  }
+  const [from, to] = ranges[period] ?? []
+  return from ? { acquisitionFrom: from, acquisitionTo: to } : {}
+}
+
 interface Props {
   filters: FiltersState
   onClose: () => void
@@ -16,6 +37,7 @@ interface Props {
 
 export default function ExportModal({ filters, onClose }: Props) {
   const [year,         setYear]         = useState('')
+  const [period,       setPeriod]       = useState('all')
   const [applyFilters, setApplyFilters] = useState(false)
   const [isExporting,  setIsExporting]  = useState(false)
   const [error,        setError]        = useState<string | null>(null)
@@ -27,6 +49,7 @@ export default function ExportModal({ filters, onClose }: Props) {
       const baseParams: Record<string, string | number | undefined> = {
         limit: 200,
         ...(year ? { year: Number(year) } : {}),
+        ...periodParams(year, period),
         ...(applyFilters ? {
           q:        filters.q        || undefined,
           building: filters.building || undefined,
@@ -61,8 +84,8 @@ export default function ExportModal({ filters, onClose }: Props) {
         'ÁREA RESPONSABLE':       a.areaName       ?? '',
         'CANTIDAD':               a.quantity,
         'VALOR DE REFERENCIA':    a.referenceValue != null ? parseFloat(a.referenceValue) : '',
-        'FECHA INGRESO':          a.createdAt
-                                    ? new Date(a.createdAt).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        'FECHA INGRESO':          a.acquisitionDate
+                                    ? new Date(a.acquisitionDate).toLocaleDateString('es-CO', { day: '2-digit', month: '2-digit', year: 'numeric' })
                                     : '',
       }))
 
@@ -96,8 +119,9 @@ export default function ExportModal({ filters, onClose }: Props) {
       const wb = XLSX.utils.book_new()
       XLSX.utils.book_append_sheet(wb, ws, 'Activos')
 
-      const suffix = year ? `_${year}` : ''
-      const date   = new Date().toISOString().slice(0, 10)
+      const periodSuffix = year && period !== 'all' ? `_${period.toUpperCase()}` : ''
+      const suffix       = year ? `_${year}${periodSuffix}` : ''
+      const date         = new Date().toISOString().slice(0, 10)
       XLSX.writeFile(wb, `activos${suffix}_${date}.xlsx`)
       onClose()
     } catch {
@@ -153,6 +177,29 @@ export default function ExportModal({ filters, onClose }: Props) {
               ))}
             </select>
           </div>
+
+          {year && (
+            <div>
+              <label className="block text-xs font-medium mb-1 text-gray-600 dark:text-mi-400">
+                Período
+              </label>
+              <select
+                value={period}
+                onChange={e => setPeriod(e.target.value)}
+                className="
+                  w-full px-3 py-2 text-sm border rounded-lg transition-colors
+                  bg-white border-gray-300 text-gray-900
+                  focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                  dark:bg-mi-750 dark:border-mi-600 dark:text-mi-100
+                  dark:focus:ring-mi-400
+                "
+              >
+                {PERIOD_OPTIONS.map(o => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
+          )}
 
           <label className="flex items-center gap-2.5 cursor-pointer select-none">
             <input

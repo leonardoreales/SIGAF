@@ -138,7 +138,7 @@ export const transferRequests = pgTable('transfer_requests', {
   formData:           jsonb('form_data').$type<Record<string, unknown>>(),
 
   // Estado
-  status:             varchar('status', { length: 20 }).notNull().default('RECIBIDA'),
+  status:             varchar('status', { length: 50 }).notNull().default('RECIBIDA'),
 
   // Firma
   autoSigned:         boolean('auto_signed').notNull().default(false),
@@ -172,7 +172,7 @@ export const transferRequestItems = pgTable('transfer_request_items', {
   // Traslado generado
   transferId: integer('transfer_id'),
 
-  status:     varchar('status', { length: 20 }).notNull().default('PENDIENTE'),
+  status:     varchar('status', { length: 50 }).notNull().default('PENDIENTE'),
   notes:      text('notes'),
 
   createdAt:  timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

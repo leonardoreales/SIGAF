@@ -73,15 +73,21 @@ async function generateRequestNumber(): Promise<string> {
   return `SOL-${ym}-${rows[0].n}`
 }
 
-function buildWhere(filter: TransferRequestFilter): string {
-  const parts: string[] = []
+function buildWhere(filter: TransferRequestFilter): { clause: string; params: unknown[] } {
+  const parts:  string[]  = []
+  const params: unknown[] = []
+
   if (filter.q) {
-    parts.push(
-      `(r.request_number ILIKE '%${filter.q}%' OR r.sender_email ILIKE '%${filter.q}%' OR r.subject ILIKE '%${filter.q}%')`
-    )
+    params.push(`%${filter.q}%`)
+    const n = params.length
+    parts.push(`(r.request_number ILIKE $${n} OR r.sender_email ILIKE $${n} OR r.subject ILIKE $${n})`)
   }
-  if (filter.status) parts.push(`r.status = '${filter.status}'`)
-  return parts.length ? `WHERE ${parts.join(' AND ')}` : ''
+  if (filter.status) {
+    params.push(filter.status)
+    parts.push(`r.status = $${params.length}`)
+  }
+
+  return { clause: parts.length ? `WHERE ${parts.join(' AND ')}` : '', params }
 }
 
 function getInitialStatus(data: CreateTransferRequest): TransferRequestStatus {
@@ -120,14 +126,16 @@ function getInitialStatus(data: CreateTransferRequest): TransferRequestStatus {
 export async function findMany(filter: TransferRequestFilter) {
   const where  = buildWhere(filter)
   const offset = (filter.page - 1) * filter.limit
+  const n      = where.params.length
 
   const [rowsRes, countRes] = await Promise.all([
     pool.query(
-      `${SELECT_REQUEST} ${where} GROUP BY r.id ORDER BY r.created_at DESC LIMIT $1 OFFSET $2`,
-      [filter.limit, offset],
+      `${SELECT_REQUEST} ${where.clause} GROUP BY r.id ORDER BY r.created_at DESC LIMIT $${n + 1} OFFSET $${n + 2}`,
+      [...where.params, filter.limit, offset],
     ),
     pool.query<{ total: string }>(
-      `SELECT COUNT(DISTINCT r.id) AS total FROM transfer_requests r ${where}`,
+      `SELECT COUNT(DISTINCT r.id) AS total FROM transfer_requests r ${where.clause}`,
+      where.params,
     ),
   ])
 

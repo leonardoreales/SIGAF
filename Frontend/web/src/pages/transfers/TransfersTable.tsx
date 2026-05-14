@@ -5,10 +5,10 @@ import { cn } from '../../lib/utils'
 // ── Badges ────────────────────────────────────────────────────────────────────
 
 const STATUS_STYLES: Record<string, string> = {
-  PENDIENTE:  'bg-amber-100  text-amber-800  dark:bg-amber-900/30  dark:text-amber-400',
-  EN_PROCESO: 'bg-blue-100   text-blue-800   dark:bg-blue-900/30   dark:text-blue-400',
-  COMPLETADO: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400',
-  CANCELADO:  'bg-gray-100   text-gray-600   dark:bg-mi-700/50     dark:text-mi-400',
+  PENDIENTE:  'bg-amber-50  text-amber-700  border border-amber-200  dark:bg-amber-950/40  dark:text-amber-300  dark:border-amber-800/50',
+  EN_PROCESO: 'bg-blue-50   text-blue-700   border border-blue-200   dark:bg-blue-950/40   dark:text-blue-300   dark:border-blue-800/50',
+  COMPLETADO: 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50',
+  CANCELADO:  'bg-gray-100  text-gray-600   border border-gray-200   dark:bg-mi-700/40     dark:text-mi-300     dark:border-mi-600/50',
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -19,29 +19,26 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 const REASON_LABELS: Record<string, string> = {
-  REUBICACION:              'Reubicación',
-  MANTENIMIENTO:            'Mantenimiento',
-  DONACION:                 'Donación',
-  PRESTAMO:                 'Préstamo',
-  ACTUALIZACION_RESPONSABLE:'Actualiz. responsable',
-  OTRO:                     'Otro',
+  REUBICACION:               'Reubicación',
+  MANTENIMIENTO:             'Mantenimiento',
+  DONACION:                  'Donación',
+  PRESTAMO:                  'Préstamo',
+  ACTUALIZACION_RESPONSABLE: 'Actualiz. responsable',
+  OTRO:                      'Otro',
 }
 
 // ── Skeleton ──────────────────────────────────────────────────────────────────
 
-const COL_WIDTHS = [80, 180, 130, 130, 90, 80, 50]
+const SKEL = [80, 180, 130, 130, 90, 80, 50]
 
 function SkeletonRows() {
   return (
     <>
       {Array.from({ length: 8 }).map((_, row) => (
         <tr key={row}>
-          {COL_WIDTHS.map((w, col) => (
-            <td key={col} className="px-4 py-3">
-              <div
-                className="h-4 rounded animate-pulse bg-gray-200 dark:bg-mi-700/60"
-                style={{ width: w, maxWidth: '100%' }}
-              />
+          {SKEL.map((w, col) => (
+            <td key={col} style={{ padding: '14px 16px' }}>
+              <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
             </td>
           ))}
         </tr>
@@ -62,35 +59,50 @@ interface Props {
   onEdit:       (id: number) => void
 }
 
+// ── Headers ───────────────────────────────────────────────────────────────────
+
+const HEADERS = ['N° Traslado', 'Activo', 'Origen', 'Destino', 'Motivo', 'Estado', 'Acción']
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function TransfersTable({ data, meta, isLoading, onPageChange, onEdit }: Props) {
   return (
-    <div className="rounded-xl border overflow-hidden bg-white border-gray-200 dark:bg-mi-900 dark:border-white/[0.05]">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+    <div style={{
+      background: 'var(--tbl-bg)',
+      border: '1px solid var(--tbl-border)',
+      borderRadius: 14,
+      overflow: 'hidden',
+      boxShadow: '0 1px 0 rgba(0,0,0,0.02), 0 4px 24px rgba(13,27,74,0.05)',
+    }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+
           <thead>
-            <tr className="
-              border-b text-left
-              bg-gray-50/80 border-gray-200 text-gray-600
-              dark:bg-mi-850 dark:border-white/[0.05] dark:text-mi-400
-            ">
-              <th className="px-4 py-3 font-medium whitespace-nowrap">N° Traslado</th>
-              <th className="px-4 py-3 font-medium">Activo</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden md:table-cell">Origen</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden md:table-cell">Destino</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap hidden lg:table-cell">Motivo</th>
-              <th className="px-4 py-3 font-medium whitespace-nowrap">Estado</th>
-              <th className="px-4 py-3 font-medium text-right whitespace-nowrap">Acción</th>
+            <tr style={{ background: 'var(--tbl-head-bg)', borderBottom: '1px solid var(--tbl-border)' }}>
+              {HEADERS.map((h, i) => (
+                <th key={i} style={{
+                  textAlign: i === 6 ? 'right' : 'left',
+                  padding: '11px 16px',
+                  fontSize: 10, fontWeight: 600,
+                  color: 'var(--tbl-text-sub)',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  whiteSpace: 'nowrap',
+                }}>{h}</th>
+              ))}
             </tr>
           </thead>
 
-          <tbody className="divide-y divide-gray-100 dark:divide-mi-700/30">
+          <tbody>
             {isLoading ? (
               <SkeletonRows />
             ) : data.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-16 text-center text-sm text-gray-400 dark:text-mi-500">
+                <td colSpan={7} style={{
+                  padding: '64px 16px', textAlign: 'center',
+                  color: 'var(--tbl-text-sub)', fontSize: 13,
+                }}>
                   No se encontraron traslados con los filtros aplicados.
                 </td>
               </tr>
@@ -98,58 +110,86 @@ export default function TransfersTable({ data, meta, isLoading, onPageChange, on
               data.map(t => (
                 <tr
                   key={t.id}
-                  className="row-fade transition-colors hover:bg-gray-50 dark:hover:bg-mi-750/50"
+                  className="row-fade"
+                  style={{ borderBottom: '1px solid var(--tbl-border)', transition: 'background 0.12s' }}
+                  onMouseEnter={e => { e.currentTarget.style.background = 'var(--tbl-row-hover)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = '' }}
                 >
-                  <td className="px-4 py-3 whitespace-nowrap">
-                    <span className="font-mono text-xs text-gray-500 dark:text-gold/80 tracking-wide">
+                  {/* N° Traslado */}
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                    <span style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: 11, fontWeight: 600,
+                      color: 'var(--tbl-text-sub)',
+                      letterSpacing: '0.05em',
+                    }}>
                       {t.transferNumber}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 max-w-[200px]">
-                    <p className="text-gray-900 dark:text-mi-100 line-clamp-1 leading-snug">
+                  {/* Activo */}
+                  <td style={{ padding: '12px 16px', maxWidth: 200 }}>
+                    <div style={{
+                      color: 'var(--tbl-text)', fontWeight: 500, lineHeight: 1.3,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
                       {t.assetName}
-                    </p>
+                    </div>
                     {t.assetPlate && (
-                      <p className="font-mono text-[10px] text-gray-400 dark:text-mi-400 mt-0.5">
+                      <div style={{
+                        fontFamily: '"JetBrains Mono", monospace',
+                        fontSize: 10, color: 'var(--tbl-text-sub)', marginTop: 2,
+                      }}>
                         {t.assetPlate}
-                      </p>
+                      </div>
                     )}
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell text-gray-600 dark:text-mi-300">
-                    <span className="truncate block max-w-[130px]">
+                  {/* Origen */}
+                  <td style={{ padding: '12px 16px' }} className="hidden md:table-cell">
+                    <span style={{
+                      color: 'var(--tbl-text-sub)',
+                      display: 'block', maxWidth: 130,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
                       {t.originBuildingName ?? '—'}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap hidden md:table-cell">
-                    <span className="flex items-center gap-1 text-gray-600 dark:text-mi-300">
-                      <ArrowRight size={12} className="shrink-0 text-gray-400 dark:text-mi-400" />
-                      <span className="truncate block max-w-[120px]">
+                  {/* Destino */}
+                  <td style={{ padding: '12px 16px' }} className="hidden md:table-cell">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--tbl-text-sub)' }}>
+                      <ArrowRight size={12} style={{ flexShrink: 0, opacity: 0.5 }} />
+                      <span style={{
+                        display: 'block', maxWidth: 120,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
                         {t.destBuildingName ?? '—'}
                       </span>
-                    </span>
+                    </div>
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap hidden lg:table-cell text-gray-600 dark:text-mi-300">
+                  {/* Motivo */}
+                  <td style={{ padding: '12px 16px', color: 'var(--tbl-text-sub)', whiteSpace: 'nowrap' }} className="hidden lg:table-cell">
                     {t.reason ? (REASON_LABELS[t.reason] ?? t.reason) : '—'}
                   </td>
 
-                  <td className="px-4 py-3 whitespace-nowrap">
+                  {/* Estado */}
+                  <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
                     <span className={cn(
                       'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                      STATUS_STYLES[t.status] ?? 'bg-gray-100 text-gray-600 dark:bg-mi-700/50 dark:text-mi-400',
+                      STATUS_STYLES[t.status] ?? 'bg-gray-100 text-gray-600 border border-gray-200 dark:bg-mi-700/40 dark:text-mi-300 dark:border-mi-600/50',
                     )}>
                       {STATUS_LABELS[t.status] ?? t.status}
                     </span>
                   </td>
 
-                  <td className="px-4 py-3 text-right whitespace-nowrap">
+                  {/* Acción */}
+                  <td style={{ padding: '12px 16px', textAlign: 'right', whiteSpace: 'nowrap' }}>
                     <button
                       onClick={() => onEdit(t.id)}
                       className="
-                        inline-flex items-center gap-1 text-xs font-medium transition-colors
+                        inline-flex items-center gap-1 text-xs font-medium transition-colors cursor-pointer
                         text-blue-600 hover:text-blue-800
                         dark:text-mi-300 dark:hover:text-gold
                       "
@@ -167,40 +207,46 @@ export default function TransfersTable({ data, meta, isLoading, onPageChange, on
 
       {/* Paginación */}
       {!isLoading && meta.pages > 1 && (
-        <div className="
-          flex items-center justify-between px-4 py-3 border-t
-          bg-gray-50/60 border-gray-100 text-gray-500
-          dark:bg-mi-900/40 dark:border-white/[0.04] dark:text-mi-500
-        ">
-          <span className="text-xs">
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '11px 16px',
+          borderTop: '1px solid var(--tbl-border)',
+          background: 'var(--tbl-foot-bg)',
+          fontSize: 12, color: 'var(--tbl-text-sub)',
+        }}>
+          <span>
             Página {meta.page} de {meta.pages}
             {' · '}
             {meta.total.toLocaleString('es-CO')} registros
           </span>
-          <div className="flex items-center gap-1">
+          <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => onPageChange(meta.page - 1)}
               disabled={meta.page <= 1}
-              className="
-                p-1.5 rounded-md transition-colors
-                hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed
-                dark:hover:bg-mi-700 dark:disabled:opacity-30
-              "
-              aria-label="Página anterior"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)',
+                cursor: meta.page <= 1 ? 'not-allowed' : 'pointer',
+                opacity: meta.page <= 1 ? 0.4 : 1,
+              }}
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={14} />
             </button>
             <button
               onClick={() => onPageChange(meta.page + 1)}
               disabled={meta.page >= meta.pages}
-              className="
-                p-1.5 rounded-md transition-colors
-                hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed
-                dark:hover:bg-mi-700 dark:disabled:opacity-30
-              "
-              aria-label="Página siguiente"
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)',
+                cursor: meta.page >= meta.pages ? 'not-allowed' : 'pointer',
+                opacity: meta.page >= meta.pages ? 0.4 : 1,
+              }}
             >
-              <ChevronRight size={16} />
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>

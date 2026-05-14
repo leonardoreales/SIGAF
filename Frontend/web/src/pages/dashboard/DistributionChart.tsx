@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
+import { BarChart3 } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import CardHeader from './CardHeader'
 
 interface Item { nombre: string; cantidad: number }
 
@@ -72,9 +74,7 @@ export default function DistributionChart({ title, items, color = 'bg-mi-500 dar
 
   return (
     <div className="card rounded-2xl p-5">
-      <h3 className="text-[10.5px] font-mono tracking-[0.16em] uppercase text-gray-400 dark:text-mi-400 mb-4">
-        {title}
-      </h3>
+      <CardHeader icon={BarChart3} title={title} />
 
       <div className="space-y-0">
         {loading

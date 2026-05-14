@@ -1,7 +1,8 @@
+import { ChevronRight, ChevronLeft } from 'lucide-react'
 import { format } from 'date-fns'
 import { es }     from 'date-fns/locale'
 import {
-  Inbox, CheckCircle2, Clock, XCircle, PenLine, Eye, Trash2, AlertTriangle, ArrowRight,
+  Inbox, CheckCircle2, Clock, XCircle, PenLine, Trash2, AlertTriangle,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { TransferRequest, TransferRequestStatus } from '../../lib/api'
@@ -10,20 +11,20 @@ import { cn } from '../../lib/utils'
 // ── Badge de estado ────────────────────────────────────────────────────────────
 
 const STATUS_CONFIG: Record<TransferRequestStatus, { label: string; icon: LucideIcon; className: string }> = {
-  RECIBIDA:                      { label: 'Recibida',                icon: Inbox,        className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50' },
-  PENDIENTE_GESTION_ACTIVOS_FIJOS:{ label: 'Pendiente gestión',      icon: Clock,        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-  REVISION:                      { label: 'Revisión',                icon: Clock,        className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-  APROBADA:                      { label: 'Aprobada',                icon: CheckCircle2, className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50' },
-  FIRMA_SOLICITADA:              { label: 'Firma solicitada',        icon: PenLine,      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
-  FIRMA_EN_PROCESO:              { label: 'Firma en proceso',        icon: PenLine,      className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
-  FIRMADA:                       { label: 'Firmada',                 icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  PDF_GENERADO:                  { label: 'PDF generado',            icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  RESPUESTA_ENVIANDO:            { label: 'Enviando respuesta',      icon: Clock,        className: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800/50' },
-  RESPUESTA_ENVIADA:             { label: 'Respuesta enviada',       icon: CheckCircle2, className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  RECHAZADA:                     { label: 'Rechazada',               icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  ERROR_FIRMA:                   { label: 'Error firma',             icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  ERROR_ENVIO_RESPUESTA:         { label: 'Error respuesta',         icon: XCircle,      className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  REQUIERE_REVISION_MANUAL:      { label: 'Revisión manual',         icon: AlertTriangle,className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
+  RECIBIDA:                       { label: 'Recibida',           icon: Inbox,         className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50' },
+  PENDIENTE_GESTION_ACTIVOS_FIJOS:{ label: 'Pendiente gestión',  icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
+  REVISION:                       { label: 'Revisión',           icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
+  APROBADA:                       { label: 'Aprobada',           icon: CheckCircle2,  className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50' },
+  FIRMA_SOLICITADA:               { label: 'Firma solicitada',   icon: PenLine,       className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
+  FIRMA_EN_PROCESO:               { label: 'Firma en proceso',   icon: PenLine,       className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
+  FIRMADA:                        { label: 'Firmada',            icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  PDF_GENERADO:                   { label: 'PDF generado',       icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  RESPUESTA_ENVIANDO:             { label: 'Enviando respuesta', icon: Clock,         className: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800/50' },
+  RESPUESTA_ENVIADA:              { label: 'Respuesta enviada',  icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
+  RECHAZADA:                      { label: 'Rechazada',          icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  ERROR_FIRMA:                    { label: 'Error firma',        icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  ERROR_ENVIO_RESPUESTA:          { label: 'Error respuesta',    icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
+  REQUIERE_REVISION_MANUAL:       { label: 'Revisión manual',    icon: AlertTriangle, className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
 }
 
 function StatusBadge({ status }: { status: TransferRequestStatus }) {
@@ -40,16 +41,19 @@ function StatusBadge({ status }: { status: TransferRequestStatus }) {
   )
 }
 
-// ── Skeleton row ───────────────────────────────────────────────────────────────
+// ── Skeleton ──────────────────────────────────────────────────────────────────
+
+const SKEL = [90, 160, 200, 40, 110, 80]
 
 function SkeletonRow() {
   return (
-    <tr className="border-b border-gray-100 dark:border-white/[0.05]">
-      {Array.from({ length: 6 }).map((_, i) => (
-        <td key={i} className="px-4 py-3">
-          <div className="h-4 rounded bg-gray-100 dark:bg-mi-700/50 animate-pulse" style={{ width: `${60 + (i * 13) % 40}%` }} />
+    <tr>
+      {SKEL.map((w, i) => (
+        <td key={i} style={{ padding: '14px 16px' }}>
+          <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
         </td>
       ))}
+      <td style={{ padding: '14px 16px' }} />
     </tr>
   )
 }
@@ -65,26 +69,38 @@ interface Props {
   onDelete?:    (id: number) => void
 }
 
+// ── Headers ───────────────────────────────────────────────────────────────────
+
+const HEADERS = ['N° Solicitud', 'Remitente', 'Asunto', 'Activos', 'Estado', 'Recibida', '']
+
 // ── Component ─────────────────────────────────────────────────────────────────
 
 export default function RequestsTable({ data, meta, isLoading, onPageChange, onView, onDelete }: Props) {
   return (
-    <div className="
-      rounded-xl overflow-hidden border
-      border-gray-100 dark:border-white/[0.06]
-      bg-white dark:bg-white/[0.02]
-    ">
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+    <div style={{
+      background: 'var(--tbl-bg)',
+      border: '1px solid var(--tbl-border)',
+      borderRadius: 14,
+      overflow: 'hidden',
+      boxShadow: '0 1px 0 rgba(0,0,0,0.02), 0 4px 24px rgba(13,27,74,0.05)',
+    }}>
+      <div style={{ overflowX: 'auto' }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+
           <thead>
-            <tr className="border-b border-gray-100 dark:border-white/[0.06] bg-gray-50/80 dark:bg-white/[0.02]">
-              <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-mi-400 whitespace-nowrap">N° Solicitud</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-mi-400">Remitente</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-mi-400">Asunto</th>
-              <th className="px-4 py-3 text-center font-medium text-gray-500 dark:text-mi-400 whitespace-nowrap">Activos</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-mi-400">Estado</th>
-              <th className="px-4 py-3 text-left font-medium text-gray-500 dark:text-mi-400 whitespace-nowrap">Recibida</th>
-              <th className="px-4 py-3" />
+            <tr style={{ background: 'var(--tbl-head-bg)', borderBottom: '1px solid var(--tbl-border)' }}>
+              {HEADERS.map((h, i) => (
+                <th key={i} style={{
+                  textAlign: i === 3 ? 'center' : 'left',
+                  padding: '11px 16px',
+                  fontSize: 10, fontWeight: 600,
+                  color: 'var(--tbl-text-sub)',
+                  letterSpacing: '0.18em',
+                  textTransform: 'uppercase',
+                  fontFamily: '"JetBrains Mono", monospace',
+                  whiteSpace: 'nowrap',
+                }}>{h}</th>
+              ))}
             </tr>
           </thead>
 
@@ -94,7 +110,10 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
               : data.length === 0
                 ? (
                   <tr>
-                    <td colSpan={7} className="px-4 py-12 text-center text-sm text-gray-400 dark:text-mi-500">
+                    <td colSpan={7} style={{
+                      padding: '64px 16px', textAlign: 'center',
+                      color: 'var(--tbl-text-sub)', fontSize: 13,
+                    }}>
                       No se encontraron solicitudes
                     </td>
                   </tr>
@@ -102,27 +121,39 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
                 : data.map(row => (
                   <tr
                     key={row.id}
-                    className="border-b border-gray-100 dark:border-white/[0.05] hover:bg-gray-50/50 dark:hover:bg-white/[0.02] transition-colors"
+                    className="row-fade group"
+                    onClick={() => onView(row.id)}
+                    style={{ borderBottom: '1px solid var(--tbl-border)', cursor: 'pointer', transition: 'background 0.12s' }}
+                    onMouseEnter={e => { e.currentTarget.style.background = 'var(--tbl-row-hover)' }}
+                    onMouseLeave={e => { e.currentTarget.style.background = '' }}
                   >
-                    <td className="px-4 py-3">
-                      <span className="font-mono text-xs font-semibold text-gray-700 dark:text-mi-200">
-                        {row.requestNumber}
-                      </span>
+                    {/* N° Solicitud */}
+                    <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                      <span className="plaqueta">{row.requestNumber}</span>
                     </td>
 
-                    <td className="px-4 py-3 max-w-[180px]">
-                      <span className="truncate block text-gray-700 dark:text-mi-200">
+                    {/* Remitente */}
+                    <td style={{ padding: '12px 16px', maxWidth: 180 }}>
+                      <div style={{
+                        color: 'var(--tbl-text)', fontWeight: 500,
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
                         {row.senderEmail ?? '—'}
-                      </span>
+                      </div>
                     </td>
 
-                    <td className="px-4 py-3 max-w-[220px]">
-                      <span className="truncate block text-gray-600 dark:text-mi-300">
+                    {/* Asunto */}
+                    <td style={{ padding: '12px 16px', maxWidth: 240 }}>
+                      <div style={{
+                        color: 'var(--tbl-text-sub)',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
                         {row.subject ?? '—'}
-                      </span>
+                      </div>
                     </td>
 
-                    <td className="px-4 py-3 text-center">
+                    {/* Activos */}
+                    <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                       <span className={cn(
                         'inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold',
                         row.itemsMatched > 0 && row.itemsMatched === row.itemsCount
@@ -135,68 +166,38 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
                       </span>
                     </td>
 
-                    <td className="px-4 py-3">
+                    {/* Estado */}
+                    <td style={{ padding: '12px 16px' }}>
                       <StatusBadge status={row.status} />
                     </td>
 
-                    <td className="px-4 py-3 text-gray-500 dark:text-mi-400 whitespace-nowrap text-xs">
+                    {/* Recibida */}
+                    <td style={{ padding: '12px 16px', color: 'var(--tbl-text-sub)', whiteSpace: 'nowrap', fontSize: 12 }}>
                       {row.receivedAt
                         ? format(new Date(row.receivedAt), "d MMM yyyy HH:mm", { locale: es })
                         : '—'}
                     </td>
 
-                    <td className="px-4 py-3">
-                      <div className="flex items-center justify-end gap-1">
-                        {row.status === 'RECIBIDA' && (
-                          <button
-                            onClick={() => onView(row.id)}
-                            title="Gestionar solicitud"
-                            className="
-                              p-1.5 rounded-lg text-blue-500 hover:text-blue-700 hover:bg-blue-50
-                              dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-950/40
-                              transition-colors
-                            "
-                          >
-                            <ArrowRight size={15} />
-                          </button>
-                        )}
-                        <button
-                          onClick={() => onView(row.id)}
-                          title="Ver detalle"
-                          className="
-                            p-1.5 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100
-                            dark:text-mi-500 dark:hover:text-mi-200 dark:hover:bg-white/[0.06]
-                            transition-colors
-                          "
-                        >
-                          <Eye size={15} />
-                        </button>
-                        {(['PENDIENTE_GESTION_ACTIVOS_FIJOS', 'REVISION', 'APROBADA'] as TransferRequestStatus[]).includes(row.status) && (
-                          <button
-                            onClick={() => onView(row.id)}
-                            title="Firmar acta"
-                            className="
-                              p-1.5 rounded-lg text-amber-500 hover:text-amber-700 hover:bg-amber-50
-                              dark:text-amber-400 dark:hover:text-amber-300 dark:hover:bg-amber-950/40
-                              transition-colors
-                            "
-                          >
-                            <PenLine size={15} />
-                          </button>
-                        )}
+                    {/* Acciones */}
+                    <td style={{ padding: '12px 16px' }}>
+                      <div
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 4 }}
+                        onClick={e => e.stopPropagation()}
+                      >
                         {onDelete && (
                           <button
                             onClick={() => onDelete(row.id)}
                             title="Eliminar solicitud"
                             className="
-                              p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50
-                              dark:text-mi-500 dark:hover:text-red-400 dark:hover:bg-red-900/30
-                              transition-colors
+                              p-1.5 rounded-lg transition-colors opacity-0 group-hover:opacity-100
+                              text-gray-400 hover:text-red-600 hover:bg-red-50
+                              dark:hover:text-red-400 dark:hover:bg-red-900/30
                             "
                           >
                             <Trash2 size={15} />
                           </button>
                         )}
+                        <ChevronRight size={14} style={{ color: 'var(--tbl-text-sub)', flexShrink: 0 }} />
                       </div>
                     </td>
                   </tr>
@@ -208,24 +209,46 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
 
       {/* Paginación */}
       {meta.pages > 1 && (
-        <div className="flex items-center justify-between px-4 py-3 border-t border-gray-100 dark:border-white/[0.06]">
-          <p className="text-xs text-gray-400 dark:text-mi-500">
-            {meta.total.toLocaleString('es-CO')} solicitudes · página {meta.page} de {meta.pages}
-          </p>
-          <div className="flex gap-1">
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '11px 16px',
+          borderTop: '1px solid var(--tbl-border)',
+          background: 'var(--tbl-foot-bg)',
+          fontSize: 12, color: 'var(--tbl-text-sub)',
+        }}>
+          <span>
+            Página {meta.page} de {meta.pages}
+            {' · '}
+            {meta.total.toLocaleString('es-CO')} solicitudes
+          </span>
+          <div style={{ display: 'flex', gap: 4 }}>
             <button
-              disabled={meta.page <= 1}
               onClick={() => onPageChange(meta.page - 1)}
-              className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-mi-700/60 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors dark:text-mi-300"
+              disabled={meta.page <= 1}
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)',
+                cursor: meta.page <= 1 ? 'not-allowed' : 'pointer',
+                opacity: meta.page <= 1 ? 0.4 : 1,
+              }}
             >
-              Anterior
+              <ChevronLeft size={14} />
             </button>
             <button
-              disabled={meta.page >= meta.pages}
               onClick={() => onPageChange(meta.page + 1)}
-              className="px-3 py-1.5 text-xs rounded-lg border border-gray-200 dark:border-mi-700/60 disabled:opacity-40 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors dark:text-mi-300"
+              disabled={meta.page >= meta.pages}
+              style={{
+                width: 28, height: 28, borderRadius: 6,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+                color: 'var(--tbl-text-sub)',
+                cursor: meta.page >= meta.pages ? 'not-allowed' : 'pointer',
+                opacity: meta.page >= meta.pages ? 0.4 : 1,
+              }}
             >
-              Siguiente
+              <ChevronRight size={14} />
             </button>
           </div>
         </div>

@@ -1,4 +1,4 @@
-import { eq, ilike, or, and, count, sql } from 'drizzle-orm'
+import { eq, ilike, or, and, count, sql, gte, lte } from 'drizzle-orm'
 import type { SQL } from 'drizzle-orm'
 import { db, pool } from './client'
 import { assets, catalogBuildings, catalogAssetTypes, catalogAreas } from './schema'
@@ -73,11 +73,13 @@ function buildConditions(filter: Partial<AssetFilter>): SQL[] {
       )!
     )
   }
-  if (filter.type)     conds.push(eq(assets.assetTypeCode, filter.type))
-  if (filter.status)   conds.push(eq(assets.status, filter.status))
-  if (filter.year)     conds.push(eq(assets.incorporationYear, filter.year))
-  if (filter.building) conds.push(eq(catalogBuildings.code, filter.building))
-  if (filter.areaId)   conds.push(eq(assets.areaId, filter.areaId))
+  if (filter.type)            conds.push(eq(assets.assetTypeCode,   filter.type))
+  if (filter.status)          conds.push(eq(assets.status,           filter.status))
+  if (filter.year)            conds.push(eq(assets.incorporationYear, filter.year))
+  if (filter.building)        conds.push(eq(catalogBuildings.code,   filter.building))
+  if (filter.areaId)          conds.push(eq(assets.areaId,           filter.areaId))
+  if (filter.acquisitionFrom) conds.push(gte(assets.acquisitionDate, filter.acquisitionFrom))
+  if (filter.acquisitionTo)   conds.push(lte(assets.acquisitionDate, filter.acquisitionTo))
   return conds
 }
 

@@ -35,6 +35,7 @@ export interface Asset {
   responsableRaw:  string | null
   status:          string
   incorporationYear: number | null
+  acquisitionDate:  string | null
   maintenanceArea: string | null
   criticality:     string
   notes:           string | null
@@ -74,6 +75,20 @@ export interface AssetStats {
   }
   porEdificio: Array<{ nombre: string; cantidad: number }>
   porTipo:     Array<{ nombre: string; cantidad: number }>
+}
+
+export type AssetAdvancedGroup =
+  | 'building'
+  | 'type'
+  | 'area'
+  | 'floor'
+  | 'location'
+  | 'status'
+  | 'criticality'
+
+export type AssetAdvancedStatsRow = Partial<Record<AssetAdvancedGroup, string>> & {
+  cantidad:     number
+  valor_total?: string | number
 }
 
 // ── Client ────────────────────────────────────────────────────────────────────
@@ -139,6 +154,19 @@ export const apiAssets = {
   delete: (id: number) =>
     request<void>(`/assets/${id}`, { method: 'DELETE' }),
   stats: () => request<AssetStats>('/assets/stats'),
+  advancedStats: (
+    groupBy: AssetAdvancedGroup[],
+    filters: Partial<Record<'buildingId' | 'buildingName' | 'areaName' | 'floor', string | number | undefined>> = {},
+  ) => {
+    const clean = Object.fromEntries(
+      Object.entries({
+        groupBy: groupBy.join(','),
+        ...filters,
+      }).filter(([, v]) => v !== undefined && v !== '')
+    ) as Record<string, string>
+    const qs = new URLSearchParams(clean).toString()
+    return request<AssetAdvancedStatsRow[]>(`/assets/stats/advanced?${qs}`)
+  },
 }
 
 export const apiSyncs = {
@@ -146,11 +174,47 @@ export const apiSyncs = {
 }
 
 export const apiCatalogs = {
+  // Public read (active only)
   buildings:        () => request<Building[]>('/catalogs/buildings'),
   assetTypes:       () => request<AssetType[]>('/catalogs/asset-types'),
   areas:            () => request<Area[]>('/catalogs/areas'),
   areasByBuilding:  (buildingId: number) => request<Area[]>(`/catalogs/areas/by-building/${buildingId}`),
   people:           () => request<Person[]>('/catalogs/people'),
+
+  // Admin CRUD (includes inactive)
+  admin: {
+    buildings:          () => request<Building[]>('/catalogs/admin/buildings'),
+    createBuilding:     (data: { cityCode: string; code: string; name: string }) =>
+      request<Building>('/catalogs/admin/buildings', { method: 'POST', body: JSON.stringify(data) }),
+    updateBuilding:     (id: number, data: Partial<{ cityCode: string; code: string; name: string; active: boolean }>) =>
+      request<Building>(`/catalogs/admin/buildings/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteBuilding:     (id: number) =>
+      request<Building>(`/catalogs/admin/buildings/${id}`, { method: 'DELETE' }),
+
+    assetTypes:         () => request<AssetType[]>('/catalogs/admin/asset-types'),
+    createAssetType:    (data: { code: string; name: string }) =>
+      request<AssetType>('/catalogs/admin/asset-types', { method: 'POST', body: JSON.stringify(data) }),
+    updateAssetType:    (code: string, data: Partial<{ name: string; active: boolean }>) =>
+      request<AssetType>(`/catalogs/admin/asset-types/${code}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteAssetType:    (code: string) =>
+      request<AssetType>(`/catalogs/admin/asset-types/${code}`, { method: 'DELETE' }),
+
+    areas:              () => request<Area[]>('/catalogs/admin/areas'),
+    createArea:         (data: { name: string }) =>
+      request<Area>('/catalogs/admin/areas', { method: 'POST', body: JSON.stringify(data) }),
+    updateArea:         (id: number, data: Partial<{ name: string; active: boolean }>) =>
+      request<Area>(`/catalogs/admin/areas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deleteArea:         (id: number) =>
+      request<Area>(`/catalogs/admin/areas/${id}`, { method: 'DELETE' }),
+
+    people:             () => request<Person[]>('/catalogs/admin/people'),
+    createPerson:       (data: { fullName: string; email?: string; areaId?: number }) =>
+      request<Person>('/catalogs/admin/people', { method: 'POST', body: JSON.stringify(data) }),
+    updatePerson:       (id: number, data: Partial<{ fullName: string; email: string; areaId: number | null; active: boolean }>) =>
+      request<Person>(`/catalogs/admin/people/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+    deletePerson:       (id: number) =>
+      request<Person>(`/catalogs/admin/people/${id}`, { method: 'DELETE' }),
+  },
 }
 
 // ── Transfers ─────────────────────────────────────────────────────────────────
@@ -361,6 +425,13 @@ export interface UpdateTransferRequestPayload {
   signedBy?:          string
 }
 
+export interface SignTransferRequestPayload {
+  requestedByName:       string
+  requestedByEmail:      string
+  signatureImageFileId?: string
+  signatureAnchor?:      string
+}
+
 export const apiTransferRequests = {
   list: (params: Record<string, string | number | undefined>) => {
     const clean = Object.fromEntries(
@@ -369,11 +440,11 @@ export const apiTransferRequests = {
     const qs = new URLSearchParams(clean).toString()
     return request<TransferRequestListResponse>(`/transfers/requests${qs ? `?${qs}` : ''}`)
   },
-  get:    (id: number)                                    => request<TransferRequest>(`/transfers/requests/${id}`),
-  update: (id: number, data: UpdateTransferRequestPayload) => request<TransferRequest>(`/transfers/requests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  stats:  ()                                              => request<TransferRequestStats>('/transfers/requests/stats'),
-  delete: (id: number)                                    => request<{ success: boolean }>(`/transfers/requests/${id}`, { method: 'DELETE' }),
-  sign:   (id: number, data: any)                         => request<{ ok: boolean; message: string }>(`/transfers/requests/${id}/sign`, { method: 'POST', body: JSON.stringify(data) }),
+  get:    (id: number)                                         => request<TransferRequest>(`/transfers/requests/${id}`),
+  update: (id: number, data: UpdateTransferRequestPayload)     => request<TransferRequest>(`/transfers/requests/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  stats:  ()                                                   => request<TransferRequestStats>('/transfers/requests/stats'),
+  delete: (id: number)                                         => request<{ success: boolean }>(`/transfers/requests/${id}`, { method: 'DELETE' }),
+  sign:   (id: number, data: SignTransferRequestPayload)        => request<{ ok: boolean; message: string }>(`/transfers/requests/${id}/sign`, { method: 'POST', body: JSON.stringify(data) }),
 }
 
 // ── Users ─────────────────────────────────────────────────────────────────────

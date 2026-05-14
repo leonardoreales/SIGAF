@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
-  ArrowLeftRight, Clock, CheckCircle2, XCircle, Loader2, Plus,
+  ArrowLeftRight, Clock, CheckCircle2, XCircle, Loader2,
   Search, Inbox, ShieldCheck,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
@@ -26,20 +26,22 @@ interface KpiProps {
 
 function MiniKpi({ icon: Icon, label, value, color, loading }: KpiProps) {
   return (
-    <div className="
-      flex items-center gap-3 px-4 py-3 rounded-xl
-      bg-white border border-gray-100
-      dark:bg-white/[0.02] dark:border-white/[0.06]
-    ">
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '12px 16px', borderRadius: 12,
+      background: 'var(--tbl-bg)', border: '1px solid var(--tbl-border)',
+    }}>
       <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center shrink-0', color)}>
         <Icon size={15} />
       </div>
-      <div className="min-w-0">
-        <p className="text-xs text-gray-500 dark:text-mi-500 truncate">{label}</p>
+      <div style={{ minWidth: 0 }}>
+        <p style={{ fontSize: 11, color: 'var(--tbl-text-sub)', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {label}
+        </p>
         {loading ? (
-          <div className="h-5 w-10 mt-0.5 rounded bg-gray-100 dark:bg-mi-700/50 animate-pulse" />
+          <div className="skeleton" style={{ height: 20, width: 40, marginTop: 3 }} />
         ) : (
-          <p className="text-lg font-syne font-bold text-gray-900 dark:text-mi-50 leading-tight">
+          <p className="font-syne font-bold leading-tight" style={{ fontSize: 20, color: 'var(--tbl-text)', margin: 0 }}>
             {value}
           </p>
         )}
@@ -97,6 +99,12 @@ export default function TransfersPage() {
     const es   = new EventSource(`${base}/sync/events?token=${encodeURIComponent(token)}`)
     es.addEventListener('transfer_request:created', () => {
       queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+      queryClient.invalidateQueries({ queryKey: ['transferRequests', 'stats'] })
+    })
+    es.addEventListener('transfer_request:updated', () => {
+      queryClient.invalidateQueries({ queryKey: ['transferRequests'] })
+      queryClient.invalidateQueries({ queryKey: ['transferRequests', 'stats'] })
+      queryClient.invalidateQueries({ queryKey: ['transferRequest'] })
     })
     return () => es.close()
   }, [queryClient])
@@ -143,8 +151,7 @@ export default function TransfersPage() {
 
   // ── Handlers: traslados ──
   function applyTSearch() { setTFilters(f => ({ ...f, q: tSearch, page: 1 })) }
-  function openCreate()         { setEditingId(null); setShowModal(true) }
-  function openEdit(id: number) { setEditingId(id);   setShowModal(true) }
+  function openEdit(id: number) { setEditingId(id); setShowModal(true) }
   function handleClose()        { setShowModal(false); setEditingId(null) }
   function handleSaved()        { queryClient.invalidateQueries({ queryKey: ['transfers'] }); handleClose() }
 
@@ -174,31 +181,27 @@ export default function TransfersPage() {
     <div className="space-y-6">
 
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-syne font-bold text-gray-900 dark:text-mi-50">
-            Traslados
-          </h1>
-          <p className="text-sm text-gray-500 dark:text-mi-400 mt-0.5">
-            {tab === 'solicitudes'
-              ? `${(rData?.meta.total ?? 0).toLocaleString('es-CO')} solicitudes registradas`
-              : `${(tData?.meta.total ?? 0).toLocaleString('es-CO')} traslados registrados`}
-          </p>
-        </div>
-
-        {tab === 'traslados' && (
-          <button
-            onClick={openCreate}
-            className="
-              flex items-center gap-2 text-sm font-medium px-4 py-2 rounded-lg transition-colors shrink-0
-              bg-gray-900 hover:bg-gray-800 text-white
-              dark:bg-gold dark:hover:bg-gold-300 dark:text-mi-950 dark:font-semibold
-            "
-          >
-            <Plus size={16} />
-            Nuevo traslado
-          </button>
-        )}
+      <div>
+        <p
+          className="text-[#9C6E22] dark:text-gold"
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: 10, letterSpacing: '0.28em',
+            textTransform: 'uppercase', margin: '0 0 6px',
+          }}
+        >
+          ◇ Universidad Americana · Gestión de Activos
+        </p>
+        <h1 className="font-syne font-bold text-gray-900 dark:text-mi-50 leading-none m-0" style={{ fontSize: 28, letterSpacing: '-0.02em' }}>
+          Traslados
+        </h1>
+        <div style={{ width: 100, height: 2, marginTop: 6, background: 'linear-gradient(90deg, #D9AB44, transparent)', borderRadius: 1 }} />
+        <p style={{ color: 'var(--tbl-text-sub)', fontSize: 13.5, margin: '10px 0 0' }}>
+          {tab === 'solicitudes'
+            ? <><strong style={{ color: 'var(--tbl-text)', fontWeight: 600 }}>{(rData?.meta.total ?? 0).toLocaleString('es-CO')}</strong>{' '}solicitudes registradas</>
+            : <><strong style={{ color: 'var(--tbl-text)', fontWeight: 600 }}>{(tData?.meta.total ?? 0).toLocaleString('es-CO')}</strong>{' '}traslados registrados</>
+          }
+        </p>
       </div>
 
       {/* ── Tabs ───────────────────────────────────────────────────── */}

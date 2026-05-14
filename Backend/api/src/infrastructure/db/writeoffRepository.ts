@@ -7,21 +7,30 @@ import type { WriteoffFilter, CreateWriteoffAct, UpdateWriteoffAct } from '@siga
 // ── List (paginado) ───────────────────────────────────────────────────────────
 
 export async function findMany(filter: WriteoffFilter) {
-  const conditions: string[] = []
+  const parts:  string[]  = []
+  const params: unknown[] = []
 
   if (filter.q) {
-    const q = filter.q.replace(/'/g, "''")
-    conditions.push(`w.acta_number ILIKE '%${q}%'`)
+    params.push(`%${filter.q}%`)
+    parts.push(`w.acta_number ILIKE $${params.length}`)
   }
   if (filter.building) {
-    const b = filter.building.replace(/'/g, "''")
-    conditions.push(`w.building ILIKE '%${b}%'`)
+    params.push(`%${filter.building}%`)
+    parts.push(`w.building ILIKE $${params.length}`)
   }
-  if (filter.reason)  conditions.push(`w.reason = '${filter.reason.replace(/'/g, "''")}'`)
-  if (filter.status)  conditions.push(`w.status = '${filter.status.replace(/'/g, "''")}'`)
+  if (filter.reason) {
+    params.push(filter.reason)
+    parts.push(`w.reason = $${params.length}`)
+  }
+  if (filter.status) {
+    params.push(filter.status)
+    parts.push(`w.status = $${params.length}`)
+  }
 
-  const where  = conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''
-  const offset = (filter.page - 1) * filter.limit
+  const clause    = parts.length ? `WHERE ${parts.join(' AND ')}` : ''
+  const offset    = (filter.page - 1) * filter.limit
+  const limitIdx  = params.length + 1
+  const offsetIdx = params.length + 2
 
   const [rowsRes, countRes] = await Promise.all([
     pool.query(
@@ -31,23 +40,22 @@ export async function findMany(filter: WriteoffFilter) {
          w.authorized_by AS "authorizedBy", w.authorized_by_role AS "authorizedByRole",
          w.responsible, w.responsible_role AS "responsibleRole",
          w.notes, w.created_at AS "createdAt",
-         -- Conteo de conciliación
          COUNT(wi.id) FILTER (WHERE wi.reconciled_status = 'MATCHED')     AS "matchedCount",
          COUNT(wi.id) FILTER (WHERE wi.reconciled_status = 'NOT_FOUND')   AS "notFoundCount",
          COUNT(wi.id) FILTER (WHERE wi.reconciled_status = 'NO_REGISTRA') AS "noRegistraCount",
-         -- Valor de referencia (suma de los activos conciliados)
          SUM(a.reference_value) FILTER (WHERE wi.asset_id IS NOT NULL)    AS "referenceValue"
        FROM writeoff_acts w
        LEFT JOIN writeoff_items wi ON wi.writeoff_act_id = w.id
        LEFT JOIN assets a ON a.id = wi.asset_id
-       ${where}
+       ${clause}
        GROUP BY w.id
        ORDER BY w.acta_number
-       LIMIT $1 OFFSET $2`,
-      [filter.limit, offset],
+       LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      [...params, filter.limit, offset],
     ),
     pool.query<{ total: string }>(
-      `SELECT COUNT(*) AS total FROM writeoff_acts w ${where}`,
+      `SELECT COUNT(*) AS total FROM writeoff_acts w ${clause}`,
+      params,
     ),
   ])
 

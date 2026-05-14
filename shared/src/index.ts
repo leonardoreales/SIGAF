@@ -82,14 +82,16 @@ export const UpdateAssetSchema = z.object({
 // ── FILTERS / PAGINATION ─────────────────────────────────────────────────────
 
 export const AssetFilterSchema = z.object({
-  page:     z.coerce.number().int().positive().default(1),
-  limit:    z.coerce.number().int().min(1).max(200).default(50),
-  q:        z.string().optional(),
-  building: z.string().optional(),
-  type:     AssetTypeCodeSchema.optional(),
-  status:   AssetStatusSchema.optional(),
-  year:     z.coerce.number().int().optional(),
-  areaId:   z.coerce.number().int().positive().optional(),
+  page:            z.coerce.number().int().positive().default(1),
+  limit:           z.coerce.number().int().min(1).max(200).default(50),
+  q:               z.string().optional(),
+  building:        z.string().optional(),
+  type:            AssetTypeCodeSchema.optional(),
+  status:          AssetStatusSchema.optional(),
+  year:            z.coerce.number().int().optional(),
+  areaId:          z.coerce.number().int().positive().optional(),
+  acquisitionFrom: z.string().optional(),
+  acquisitionTo:   z.string().optional(),
 })
 
 // ── AUTH ─────────────────────────────────────────────────────────────────────
@@ -258,6 +260,96 @@ export type CreateTransferRequest     = z.infer<typeof CreateTransferRequestSche
 export type UpdateTransferRequest     = z.infer<typeof UpdateTransferRequestSchema>
 export type TransferRequestFilter     = z.infer<typeof TransferRequestFilterSchema>
 
+export const CompleteTransferRequestSignatureSchema = z.object({
+  eventId:              z.string().min(1),
+  sigafRequestId:       z.string().min(1),
+  status:               TransferRequestStatusSchema.default('RESPUESTA_ENVIADA'),
+  correlationId:        z.string().optional(),
+  idSolicitud:          z.string().optional(),
+  signatureAutoriza:    z.string().optional(),
+  signedBy:             z.string().optional(),
+  requestedByName:      z.string().optional(),
+  requestedByEmail:     z.string().optional(),
+  emailSentAt:          z.string().optional(),
+  error:                z.string().nullable().optional(),
+  signedGoogleDocId:    z.string().optional(),
+  signedGoogleDocUrl:   z.string().optional(),
+  signedPdfDriveFileId: z.string().optional(),
+  signedPdfDriveUrl:    z.string().optional(),
+  document: z.object({
+    signedGoogleDocId:    z.string().optional(),
+    signedGoogleDocUrl:   z.string().optional(),
+    signedPdfDriveFileId: z.string().optional(),
+    signedPdfDriveUrl:    z.string().optional(),
+  }).optional(),
+})
+
+export type CompleteTransferRequestSignature = z.infer<typeof CompleteTransferRequestSignatureSchema>
+
+interface SignedPdfFields {
+  signedGoogleDocId?:    string
+  signedGoogleDocUrl?:   string
+  signedPdfDriveFileId?: string
+  signedPdfDriveUrl?:    string
+  emailSentAt?:          string
+}
+
+export interface TransferRequestFormData {
+  googleDocId?:         string
+  googleDocUrl?:        string
+  originalDriveFileId?: string
+  messageId?:           string
+  threadId?:            string
+  senderEmail?:         string
+  senderName?:          string
+  correlationId?:       string
+  idSolicitud?:         string
+  solicitante?:         string
+  dependencia?:         string
+  fecha?:               string
+  motivo?:              string
+  observations?:        string
+  emailContext?: {
+    messageId?:   string
+    threadId?:    string
+    senderEmail?: string
+    senderName?:  string
+    subject?:     string
+  }
+  document?: {
+    googleDocId?:          string
+    googleDocUrl?:         string
+    originalDriveFileId?:  string
+    originalDriveUrl?:     string
+    signedGoogleDocId?:    string
+    signedGoogleDocUrl?:   string
+    signedPdfDriveFileId?: string
+    signedPdfDriveUrl?:    string
+  }
+  movement?: {
+    movementType?:    string
+    destination?:     string
+    exitDateRaw?:     string
+    returnDateRaw?:   string
+    movementDateRaw?: string
+  }
+  authorizedPerson?: { fullName?: string }
+  assetResponsible?: { fullName?: string; area?: string }
+  signatureWorkflowResult?: {
+    eventId?:       string
+    status?:        string
+    correlationId?: string
+    idSolicitud?:   string
+    signedPdf?:     SignedPdfFields
+    error?:         unknown
+    updatedAt?:     string
+  }
+  signedPdf?:      SignedPdfFields
+  status?:         string
+  businessStatus?: string
+  [key: string]:   unknown
+}
+
 // ── WRITEOFFS (BAJAS) ────────────────────────────────────────────────────────
 
 export const WriteoffStatusSchema = z.enum(['BORRADOR', 'EN_REVISION', 'COMPLETADA', 'RECHAZADA'])
@@ -305,6 +397,62 @@ export type WriteoffReason      = z.infer<typeof WriteoffReasonSchema>
 export type WriteoffFilter      = z.infer<typeof WriteoffFilterSchema>
 export type CreateWriteoffAct   = z.infer<typeof CreateWriteoffActSchema>
 export type UpdateWriteoffAct   = z.infer<typeof UpdateWriteoffActSchema>
+
+// ── CATALOG CRUD ─────────────────────────────────────────────────────────────
+
+export const CreateBuildingSchema = z.object({
+  cityCode: z.string().length(1).default('1'),
+  code:     z.string().min(1).max(2),
+  name:     z.string().min(1).max(100),
+})
+
+export const UpdateBuildingSchema = z.object({
+  cityCode: z.string().length(1).optional(),
+  code:     z.string().min(1).max(2).optional(),
+  name:     z.string().min(1).max(100).optional(),
+  active:   z.boolean().optional(),
+})
+
+export const CreateAssetTypeSchema = z.object({
+  code: z.string().min(1).max(2),
+  name: z.string().min(1).max(120),
+})
+
+export const UpdateAssetTypeSchema = z.object({
+  name:   z.string().min(1).max(120).optional(),
+  active: z.boolean().optional(),
+})
+
+export const CreateAreaSchema = z.object({
+  name: z.string().min(1).max(200),
+})
+
+export const UpdateAreaSchema = z.object({
+  name:   z.string().min(1).max(200).optional(),
+  active: z.boolean().optional(),
+})
+
+export const CreatePersonSchema = z.object({
+  fullName: z.string().min(1).max(200),
+  email:    z.string().email().optional().or(z.literal('')),
+  areaId:   z.number().int().positive().optional(),
+})
+
+export const UpdatePersonSchema = z.object({
+  fullName: z.string().min(1).max(200).optional(),
+  email:    z.string().email().optional().or(z.literal('')),
+  areaId:   z.number().int().positive().nullable().optional(),
+  active:   z.boolean().optional(),
+})
+
+export type CreateBuilding  = z.infer<typeof CreateBuildingSchema>
+export type UpdateBuilding  = z.infer<typeof UpdateBuildingSchema>
+export type CreateAssetType = z.infer<typeof CreateAssetTypeSchema>
+export type UpdateAssetType = z.infer<typeof UpdateAssetTypeSchema>
+export type CreateArea      = z.infer<typeof CreateAreaSchema>
+export type UpdateArea      = z.infer<typeof UpdateAreaSchema>
+export type CreatePerson    = z.infer<typeof CreatePersonSchema>
+export type UpdatePerson    = z.infer<typeof UpdatePersonSchema>
 
 // ── RECEPCIONES — Reglas de serial por tipo ──────────────────────────────────
 
