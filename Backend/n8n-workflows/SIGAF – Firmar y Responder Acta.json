@@ -1,114 +1,463 @@
 {
-  "name": "SIGAF - Firmar y devolver Acta",
-  "active": false,
   "nodes": [
     {
       "parameters": {
         "httpMethod": "POST",
         "path": "sigaf-firmar-acta",
-        "responseMode": "onReceived",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
         "options": {}
       },
-      "id": "webhook-sign-request",
+      "id": "4b8c94f2-054d-46cf-a99d-df6e281961de",
       "name": "Webhook SIGAF solicitar firma",
       "type": "n8n-nodes-base.webhook",
-      "typeVersion": 2,
-      "position": [-700, 0]
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        144
+      ],
+      "webhookId": "a3def35d-914c-4834-bf15-3f48b3d5a298",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "F6xno1mTXSc7NUUG",
+          "name": "SIGAF"
+        }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
-        "jsCode": "function required(value, label) {\n  if (!value) throw new Error(`${label} requerido`);\n  return value;\n}\n\nconst input = $input.first().json || {};\nconst headers = Object.fromEntries(\n  Object.entries(input.headers || {}).map(([key, value]) => [key.toLowerCase(), String(value || '')]),\n);\nconst body = input.body || {};\n\nconst expectedSecret = process.env.N8N_SIGN_REQUEST_SECRET || process.env.SYNC_SECRET || '';\nif (!expectedSecret) throw new Error('N8N_SIGN_REQUEST_SECRET/SYNC_SECRET no configurado en n8n');\n\nif (headers['x-sigaf-sign-request-secret'] !== expectedSecret) {\n  throw new Error(`[SIGAF] Secreto invalido. eventId=${body.eventId || 'unknown'}`);\n}\n\nreturn [{\n  json: {\n    eventId: required(body.eventId, 'eventId'),\n    sigafRequestId: required(body.sigafRequestId, 'sigafRequestId'),\n    correlationId: body.correlationId || body.sigafRequestId,\n    idSolicitud: body.idSolicitud || body.correlationId || body.sigafRequestId,\n    googleDocId: required(body.documentToSign?.googleDocId, 'documentToSign.googleDocId'),\n    googleDocUrl: body.documentToSign?.googleDocUrl || '',\n    signatureImageFileId: required(body.signature?.signatureImageFileId, 'signature.signatureImageFileId'),\n    signatureAnchor: body.signature?.signatureAnchor || 'FIRMA DEL RESPONSABLE ACTIVOS FIJOS',\n    requestedByName: body.signature?.requestedByName || '',\n    requestedByEmail: body.signature?.requestedByEmail || '',\n    senderEmail: required(body.emailContext?.senderEmail, 'emailContext.senderEmail'),\n    senderName: body.emailContext?.senderName || '',\n    subject: body.emailContext?.subject || 'Solicitud F-AF-039',\n    messageId: body.emailContext?.messageId || '',\n    threadId: body.emailContext?.threadId || ''\n  }\n}];"
+        "jsCode": "function requiredString(value, label) {\n  if (typeof value !== 'string' || !value.trim()) {\n    throw new Error(`[SIGAF] ${label} requerido`);\n  }\n  return value.trim();\n}\n\nfunction optionalString(value, fallback = '') {\n  return typeof value === 'string' && value.trim() ? value.trim() : fallback;\n}\n\nfunction requiredEmail(value, label) {\n  const email = requiredString(value, label).toLowerCase();\n  if (!/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/.test(email)) {\n    throw new Error(`[SIGAF] ${label} no tiene formato de correo valido`);\n  }\n  return email;\n}\n\nconst input = $input.first().json || {};\nconst body = input.body || {};\n\nconst eventType = requiredString(body.eventType, 'eventType');\n\nif (eventType !== 'TRANSFER_REQUEST_SIGN_REQUESTED') {\n  throw new Error(`[SIGAF] eventType no soportado: ${eventType}`);\n}\n\nconst sigafRequestId = requiredString(body.sigafRequestId, 'sigafRequestId');\nconst correlationId = optionalString(body.correlationId, sigafRequestId);\nconst idSolicitud = optionalString(body.idSolicitud, correlationId);\n\nreturn [{\n  json: {\n    eventType,\n    eventId: requiredString(body.eventId, 'eventId'),\n    sigafRequestId,\n    correlationId,\n    idSolicitud,\n\n    documentToSign: {\n      googleDocId: requiredString(body.documentToSign?.googleDocId, 'documentToSign.googleDocId'),\n      googleDocUrl: optionalString(body.documentToSign?.googleDocUrl),\n      originalDriveFileId: optionalString(body.documentToSign?.originalDriveFileId),\n    },\n\n    emailContext: {\n      messageId: requiredString(body.emailContext?.messageId, 'emailContext.messageId'),\n      threadId: requiredString(body.emailContext?.threadId, 'emailContext.threadId'),\n      senderEmail: requiredEmail(body.emailContext?.senderEmail, 'emailContext.senderEmail'),\n      senderName: optionalString(body.emailContext?.senderName),\n      subject: optionalString(body.emailContext?.subject, 'Solicitud F-AF-039 firmada'),\n    },\n\n    signature: {\n      requestedByName: requiredString(body.signature?.requestedByName, 'signature.requestedByName'),\n      requestedByEmail: requiredEmail(body.signature?.requestedByEmail, 'signature.requestedByEmail'),\n      signatureRole: optionalString(body.signature?.signatureRole, 'RESPONSABLE_ACTIVOS_FIJOS'),\n      signatureImageFileId: requiredString(body.signature?.signatureImageFileId, 'signature.signatureImageFileId'),\n      signatureAnchor: optionalString(body.signature?.signatureAnchor, 'FIRMA DEL RESPONSABLE ACTIVOS FIJOS'),\n    },\n\n    summary: body.summary || {},\n  },\n}];\n"
       },
-      "id": "normalize-sign-request",
+      "id": "b0083adb-597d-44ec-8f7b-c322280f58f1",
       "name": "Validar y normalizar solicitud",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [-460, 0]
+      "position": [
+        464,
+        136
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, accepted: true, status: 'FIRMA_SOLICITADA', eventId: $json.eventId, sigafRequestId: $json.sigafRequestId, correlationId: $json.correlationId, receivedAt: new Date().toISOString() } }}",
+        "options": {
+          "responseCode": 202,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "f7a1b2c3-d4e5-6f78-90ab-cdef12345678",
+      "name": "Responder aceptación a SIGAF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        688,
+        144
+      ]
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SIGAF_APPS_SCRIPT_SIGN_URL }}",
-        "sendHeaders": true,
-        "headerParameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.documentToSign.googleDocId }}/copy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "x-apps-script-sign-secret", "value": "={{ $env.APPS_SCRIPT_SIGN_SECRET }}" }
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,mimeType,webViewLink"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { eventId: $json.eventId, googleDocId: $json.googleDocId, signatureImageFileId: $json.signatureImageFileId, anchorText: $json.signatureAnchor, requestedByName: $json.requestedByName, requestedByEmail: $json.requestedByEmail } }}",
+        "jsonBody": "={{ { name: $json.sigafRequestId + ' - F-AF-039 firmado', description: 'Copia de firma SIGAF. eventId=' + $json.eventId + '; correlationId=' + $json.correlationId } }}",
         "options": {
-          "response": { "response": { "responseFormat": "json" } },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
           "timeout": 30000
         }
       },
-      "id": "insert-signature",
+      "id": "c8d055f1-f3b0-4c29-a806-4f6ae5af5ef9",
+      "name": "Copiar Google Doc para firma",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        912,
+        136
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://reappoint-grass-tinkling.ngrok-free.dev/sync/sign-document",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-sigaf-sign-result-secret",
+              "value": "838e087e107355c04eab207308695af493b78cf34361b2ae32b977d70f7b0cf3"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { eventId: $('Validar y normalizar solicitud').first().json.eventId, sigafRequestId: $('Validar y normalizar solicitud').first().json.sigafRequestId, googleDocId: $json.id, signatureImageFileId: $('Validar y normalizar solicitud').first().json.signature.signatureImageFileId, anchorText: $('Validar y normalizar solicitud').first().json.signature.signatureAnchor, requestedByName: $('Validar y normalizar solicitud').first().json.signature.requestedByName, requestedByEmail: $('Validar y normalizar solicitud').first().json.signature.requestedByEmail } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "3f227ebe-a8e8-4995-82fd-83b4f20815a9",
       "name": "Insertar firma institucional",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [-220, 0]
+      "position": [
+        1136,
+        136
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 3000
     },
     {
       "parameters": {
-        "resource": "message",
-        "operation": "send",
-        "to": "={{ $('Validar y normalizar solicitud').first().json.senderEmail }}",
-        "subject": "=Re: {{ $('Validar y normalizar solicitud').first().json.subject }}",
-        "message": "=Cordial saludo,\\n\\nSe devuelve el acta F-AF-039 firmada para la solicitud {{ $('Validar y normalizar solicitud').first().json.sigafRequestId }}.\\n\\nActa firmada: {{ $('Insertar firma institucional').first().json.signedGoogleDocUrl || $('Validar y normalizar solicitud').first().json.googleDocUrl }}\\n\\nAtentamente,\\nActivos Fijos",
-        "options": {}
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.signedGoogleDocId }}/export",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "mimeType",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "signedPdf"
+            }
+          },
+          "timeout": 30000
+        }
       },
-      "id": "reply-original-email",
-      "name": "Responder Gmail al solicitante",
-      "type": "n8n-nodes-base.gmail",
-      "typeVersion": 2.1,
-      "position": [20, 0]
+      "id": "361754d4-5198-4325-8bd8-4923d5f5eaa0",
+      "name": "Exportar acta firmada como PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1360,
+        136
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
     },
     {
       "parameters": {
         "method": "POST",
-        "url": "={{ $env.SIGAF_API_URL }}/sync/transfer-request/sign-result",
+        "url": "https://www.googleapis.com/upload/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "uploadType",
+              "value": "media"
+            },
+            {
+              "name": "fields",
+              "value": "id,webViewLink,webContentLink"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
         "sendHeaders": true,
         "headerParameters": {
           "parameters": [
-            { "name": "Content-Type", "value": "application/json" },
-            { "name": "x-sigaf-sign-result-secret", "value": "={{ $env.N8N_SIGN_RESULT_SECRET || $env.SYNC_SECRET }}" }
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "signedPdf",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "42c5c811-0358-4bbf-8757-bda43f950061",
+      "name": "Guardar PDF firmado en Drive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1584,
+        64
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "id": "9a7b3c2d-4e5f-6a7b-8c9d-0e1f2a3b4c5d",
+      "name": "Fusionar PDF con metadata Drive",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1808,
+        136
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "reply",
+        "messageId": "={{ $('Validar y normalizar solicitud').first().json.emailContext.messageId }}",
+        "message": "=Cordial saludo,\n\nAdjuntamos el acta F-AF-039 firmada para la solicitud {{ $('Validar y normalizar solicitud').first().json.sigafRequestId }}.\n\nAtentamente,\nActivos Fijos",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {
+                "property": "=data"
+              }
+            ]
+          }
+        }
+      },
+      "id": "a58c5bbf-7856-4b1f-8bab-bdb89e17a86d",
+      "name": "Responder correo original con PDF",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        2032,
+        136
+      ],
+      "webhookId": "6669c926-58c4-442b-9ef9-66b5203993fd",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "H8VJFmKktgwrFju7",
+          "name": "Actas_AF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://reappoint-grass-tinkling.ngrok-free.dev/sync/transfer-request/sign-result",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-sigaf-sign-result-secret",
+              "value": "ca71eaf7261f397b8814ef4343d828c886cc94515a8af8b3a33694e6e9377e7b"
+            }
           ]
         },
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ { eventId: $('Validar y normalizar solicitud').first().json.eventId, sigafRequestId: $('Validar y normalizar solicitud').first().json.sigafRequestId, correlationId: $('Validar y normalizar solicitud').first().json.correlationId, idSolicitud: $('Validar y normalizar solicitud').first().json.idSolicitud, status: 'RESPUESTA_ENVIADA', signedGoogleDocId: $('Insertar firma institucional').first().json.signedGoogleDocId || $('Validar y normalizar solicitud').first().json.googleDocId, signedGoogleDocUrl: $('Insertar firma institucional').first().json.signedGoogleDocUrl || $('Validar y normalizar solicitud').first().json.googleDocUrl, emailSentAt: new Date().toISOString(), signedBy: $('Validar y normalizar solicitud').first().json.requestedByEmail, requestedByName: $('Validar y normalizar solicitud').first().json.requestedByName } }}",
+        "jsonBody": "={{ { eventId: $('Validar y normalizar solicitud').first().json.eventId, sigafRequestId: $('Validar y normalizar solicitud').first().json.sigafRequestId, correlationId: $('Validar y normalizar solicitud').first().json.correlationId, idSolicitud: $('Validar y normalizar solicitud').first().json.idSolicitud, status: 'RESPUESTA_ENVIADA', signedGoogleDocId: $('Insertar firma institucional').first().json.signedGoogleDocId, signedGoogleDocUrl: $('Insertar firma institucional').first().json.signedGoogleDocUrl, signedPdfDriveFileId: $('Guardar PDF firmado en Drive').first().json.id, signedPdfDriveUrl: $('Guardar PDF firmado en Drive').first().json.webViewLink || $('Guardar PDF firmado en Drive').first().json.webContentLink, emailSentAt: new Date().toISOString(), signedBy: $('Validar y normalizar solicitud').first().json.signature.requestedByEmail, requestedByName: $('Validar y normalizar solicitud').first().json.signature.requestedByName } }}",
         "options": {
-          "response": { "response": { "responseFormat": "json" } },
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
           "timeout": 30000
         }
       },
-      "id": "notify-sigaf-result",
-      "name": "Notificar firma a SIGAF",
+      "id": "f3fb3a97-1862-4380-b92d-eec9c1084914",
+      "name": "Notificar resultado a SIGAF",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.4,
-      "position": [260, 0]
+      "position": [
+        2256,
+        136
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 2000
     }
   ],
   "connections": {
     "Webhook SIGAF solicitar firma": {
-      "main": [[{ "node": "Validar y normalizar solicitud", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar solicitud",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Validar y normalizar solicitud": {
-      "main": [[{ "node": "Insertar firma institucional", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Responder aceptación a SIGAF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder aceptación a SIGAF": {
+      "main": [
+        [
+          {
+            "node": "Copiar Google Doc para firma",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copiar Google Doc para firma": {
+      "main": [
+        [
+          {
+            "node": "Insertar firma institucional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
     "Insertar firma institucional": {
-      "main": [[{ "node": "Responder Gmail al solicitante", "type": "main", "index": 0 }]]
+      "main": [
+        [
+          {
+            "node": "Exportar acta firmada como PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     },
-    "Responder Gmail al solicitante": {
-      "main": [[{ "node": "Notificar firma a SIGAF", "type": "main", "index": 0 }]]
+    "Exportar acta firmada como PDF": {
+      "main": [
+        [
+          {
+            "node": "Guardar PDF firmado en Drive",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Fusionar PDF con metadata Drive",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Guardar PDF firmado en Drive": {
+      "main": [
+        [
+          {
+            "node": "Fusionar PDF con metadata Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fusionar PDF con metadata Drive": {
+      "main": [
+        [
+          {
+            "node": "Responder correo original con PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder correo original con PDF": {
+      "main": [
+        [
+          {
+            "node": "Notificar resultado a SIGAF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "settings": {
-    "executionOrder": "v1"
-  },
+  "pinData": {},
   "meta": {
-    "templateCredsSetupCompleted": false
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d4844a6841c5935e19741038ad7abde3fc1c2772b55fc7ee28b26c1bcab33d8b"
   }
 }

@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import {
   Search, X, Building2, Layers, CircleDot,
-  CalendarDays, ChevronDown, MapPin,
+  CalendarDays, MapPin,
 } from 'lucide-react'
 import { apiCatalogs } from '../../lib/api'
 import { useTheme } from '../../context/ThemeContext'
+import { FilterSelect } from '../../components/ui/FilterSelect'
 import type { FiltersState } from './AssetsPage'
 
 const STATUS_OPTIONS = [
@@ -18,87 +19,26 @@ const STATUS_OPTIONS = [
 
 const YEAR_OPTIONS = ['2022', '2023', '2024', '2025', '2026']
 
+const MONTH_OPTIONS = [
+  { value: '1',  label: 'Enero' },
+  { value: '2',  label: 'Febrero' },
+  { value: '3',  label: 'Marzo' },
+  { value: '4',  label: 'Abril' },
+  { value: '5',  label: 'Mayo' },
+  { value: '6',  label: 'Junio' },
+  { value: '7',  label: 'Julio' },
+  { value: '8',  label: 'Agosto' },
+  { value: '9',  label: 'Septiembre' },
+  { value: '10', label: 'Octubre' },
+  { value: '11', label: 'Noviembre' },
+  { value: '12', label: 'Diciembre' },
+]
+
 type FilterFields = Omit<FiltersState, 'page' | 'limit'>
 
 interface Props {
   value:    FiltersState
   onChange: (partial: Partial<FilterFields>) => void
-}
-
-// ── FilterSelect ──────────────────────────────────────────────────────────────
-
-interface SelectProps {
-  icon:        React.ElementType
-  value:       string
-  onChange:    (v: string) => void
-  placeholder: string
-  maxWidth?:   number
-  children:    React.ReactNode
-}
-
-function FilterSelect({ icon: Icon, value, onChange, placeholder, maxWidth = 200, children }: SelectProps) {
-  const [focused, setFocused] = useState(false)
-  const { isDark } = useTheme()
-  const isActive = Boolean(value)
-  const goldText   = isDark ? '#F5C842' : '#9C6E22'
-  const goldFocus  = isDark ? '#F5C842' : '#D9AB44'
-  const goldActive = isDark ? '#E6B220' : '#C8931A'
-
-  return (
-    <div style={{ position: 'relative', flexShrink: 0 }}>
-      <Icon
-        size={13}
-        style={{
-          position: 'absolute', left: 10, top: '50%',
-          transform: 'translateY(-50%)',
-          pointerEvents: 'none',
-          color: isActive ? goldActive : focused ? goldFocus : 'var(--tbl-text-sub)',
-          transition: 'color 0.15s',
-          zIndex: 1,
-        }}
-      />
-      <select
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        style={{
-          appearance: 'none',
-          WebkitAppearance: 'none',
-          padding: '7.5px 26px 7.5px 28px',
-          fontSize: 13,
-          border: `1px solid ${
-            focused ? goldFocus :
-            isActive ? 'rgba(217,171,68,0.50)' :
-            'var(--flt-border)'
-          }`,
-          borderRadius: 10,
-          background: isActive ? 'rgba(217,171,68,0.07)' : 'var(--flt-input)',
-          color: isActive ? goldText : 'var(--tbl-text)',
-          fontWeight: isActive ? 600 : 400,
-          outline: 'none',
-          cursor: 'pointer',
-          transition: 'border-color 0.15s, background 0.15s, box-shadow 0.15s',
-          boxShadow: focused ? '0 0 0 3px rgba(217,171,68,0.18)' : 'none',
-          maxWidth,
-          minWidth: 110,
-          textOverflow: 'ellipsis',
-        }}
-      >
-        <option value="">{placeholder}</option>
-        {children}
-      </select>
-      <ChevronDown
-        size={11}
-        style={{
-          position: 'absolute', right: 9, top: '50%',
-          transform: 'translateY(-50%)',
-          pointerEvents: 'none',
-          color: 'var(--tbl-text-sub)',
-        }}
-      />
-    </div>
-  )
 }
 
 // ── ActiveChip ────────────────────────────────────────────────────────────────
@@ -179,7 +119,7 @@ export default function AssetsFilters({ value, onChange }: Props) {
 
   function clearAll() {
     setLocalQ('')
-    onChange({ q: '', building: '', type: '', status: '', year: '', area: '' })
+    onChange({ q: '', building: '', type: '', status: '', year: '', month: '', area: '' })
   }
 
   const activeChips: { key: keyof FilterFields; label: string }[] = []
@@ -201,6 +141,10 @@ export default function AssetsFilters({ value, onChange }: Props) {
   }
   if (value.year) {
     activeChips.push({ key: 'year', label: value.year })
+  }
+  if (value.month) {
+    const mo = MONTH_OPTIONS.find(m => m.value === value.month)
+    activeChips.push({ key: 'month', label: mo?.label ?? value.month })
   }
 
   return (
@@ -328,12 +272,24 @@ export default function AssetsFilters({ value, onChange }: Props) {
         <FilterSelect
           icon={CalendarDays}
           value={value.year}
-          onChange={v => onChange({ year: v })}
+          onChange={v => onChange({ year: v, month: '' })}
           placeholder="Año"
           maxWidth={120}
         >
           {YEAR_OPTIONS.map(y => <option key={y} value={y}>{y}</option>)}
         </FilterSelect>
+
+        {value.year && (
+          <FilterSelect
+            icon={CalendarDays}
+            value={value.month}
+            onChange={v => onChange({ month: v })}
+            placeholder="Mes"
+            maxWidth={145}
+          >
+            {MONTH_OPTIONS.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+          </FilterSelect>
+        )}
 
         {/* Spacer */}
         <div style={{ flex: 1 }} />

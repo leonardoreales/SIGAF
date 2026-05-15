@@ -16,6 +16,7 @@ import CatalogsPage       from './pages/catalogs/CatalogsPage'
 import { useRole }         from './hooks/useRole'
 import { useAuth }         from './context/AuthContext'
 import { Toaster }        from 'sonner'
+import ErrorBoundary       from './components/ErrorBoundary'
 
 // Componente para manejar la ruta raíz y fallback de forma inteligente según el rol
 function RootRedirect() {
@@ -35,6 +36,7 @@ function RootRedirect() {
 export default function App() {
   return (
     <>
+      <ErrorBoundary>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
 
@@ -82,6 +84,7 @@ export default function App() {
         <Route path="/" element={<RootRedirect />} />
         <Route path="*" element={<RootRedirect />} />
       </Routes>
+      </ErrorBoundary>
       <Toaster position="top-right" richColors />
     </>
   )

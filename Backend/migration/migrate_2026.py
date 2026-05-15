@@ -35,8 +35,11 @@ def main():
     conn = psycopg2.connect(DB_CONN)
     cur = conn.cursor()
 
-    cur.execute("SELECT id, name FROM catalog_areas")
+    cur.execute("SELECT id, name FROM catalog_areas WHERE active = true")
     area_lookup = {strip_accents(name): id_ for id_, name in cur.fetchall()}
+
+    cur.execute("SELECT id, full_name FROM catalog_people WHERE active = true")
+    person_lookup = {strip_accents(name): id_ for id_, name in cur.fetchall()}
 
     wb = openpyxl.load_workbook(EXCEL_PATH)
     ws = wb["CONSOLIDADO 2026"]
@@ -81,18 +84,21 @@ def main():
             continue
 
         area_id = None
-        responsable_raw = None
-        if area_raw and area_raw != "-":
-            responsable_raw = area_raw
-            area_id = area_lookup.get(strip_accents(area_raw))
+        person_id = None
+        responsable_raw = area_raw if (area_raw and area_raw != "-") else None
+        if responsable_raw:
+            normalized = strip_accents(responsable_raw)
+            area_id = area_lookup.get(normalized)
             if area_id is None:
-                warnings.append(f"Fila {row_idx}: area no mapeada '{area_raw}' [{name}]")
+                person_id = person_lookup.get(normalized)
+                if person_id is None:
+                    warnings.append(f"Fila {row_idx}: responsable no mapeado '{area_raw}' [{name}] — se creará como persona")
 
         records.append((
             name, description, asset_type_code, puc_account,
             brand, model, serial,
             "1", building_id, floor_val, None, location,
-            area_id, responsable_raw, "ACTIVO",
+            area_id, person_id, responsable_raw, "ACTIVO",
             quantity, val_ref,
             2026, acq_date, "POLIZA_2026",
         ))
@@ -114,10 +120,10 @@ def main():
             name, description, asset_type_code, puc_account,
             brand, model, serial,
             city_code, building_id, floor, block, location,
-            area_id, responsable_raw, status,
+            area_id, person_id, responsable_raw, status,
             quantity, reference_value,
             incorporation_year, acquisition_date, source_sheet
-        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
     """, records)
 
     conn.commit()

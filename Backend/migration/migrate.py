@@ -187,10 +187,25 @@ def process_row(row: dict, sheet: str, year: int | None) -> dict | None:
         "source_sheet":     sheet,
     }
 
+# ── ÁREAS CANÓNICAS (pre-seed — normalizadas sin tildes) ─────────────────────
+CANONICAL_AREAS = [
+    "PARTIKLE", "FLOW", "RECTORIA", "POSGRADOS", "INFRAESTRUCTURA",
+    "INTERNACIONALIZACION", "CV NOTICIAS", "TRANSFORMACION DIGITAL",
+    "VICERRECTORIA ACADEMICA", "VICERRECTORIA DE INVESTIGACION",
+    "FACULTAD DE EDUCACION", "MARKETING Y COMUNICACIONES",
+    "ANALITICA DE DATOS", "SISTEMAS DE INFORMACION", "DEPORTE Y CULTURA",
+    "AUTOMATIZACION", "TESORERIA", "PRESUPUESTO", "EGRESADOS",
+    "SALUD INTEGRAL", "PRODUCCION AUDIOVISUAL", "MEDIOS EDUCATIVOS",
+    "SECRETARIA GENERAL", "ADMISIONES", "FACULTAD INGENIERIA",
+    "PROGRAMA DE ING. INDUSTRIAL", "SISTEMAS", "MERCADEO",
+    "COMUNICACION SOCIAL", "INNOVACION EDUCATIVA",
+]
+
 # ── CACHÉ DE CATÁLOGOS ───────────────────────────────────────────────────────
 
 _building_cache: dict[tuple, int] = {}
 _area_cache:     dict[str, int]   = {}
+_person_cache:   dict[str, int]   = {}
 
 def get_building_id(cur, city_code, building_code, building_name) -> int | None:
     if not city_code or not building_code:
@@ -216,19 +231,43 @@ def get_building_id(cur, city_code, building_code, building_name) -> int | None:
     return bid
 
 def get_area_id(cur, area_name) -> int | None:
+    """Busca área en catalog_areas por nombre normalizado. No crea áreas nuevas."""
     if not area_name:
         return None
-    if area_name in _area_cache:
-        return _area_cache[area_name]
-    cur.execute("SELECT id FROM catalog_areas WHERE name=%s", (area_name,))
+    key = sin_tildes(area_name).upper().strip()
+    if key in _area_cache:
+        return _area_cache[key]
+    cur.execute("SELECT id FROM catalog_areas WHERE name=%s AND active=true", (key,))
     row = cur.fetchone()
     if row:
-        _area_cache[area_name] = row[0]
+        _area_cache[key] = row[0]
         return row[0]
-    cur.execute("INSERT INTO catalog_areas (name) VALUES (%s) RETURNING id", (area_name,))
-    aid = cur.fetchone()[0]
-    _area_cache[area_name] = aid
-    return aid
+    return None  # no reconocido como área → responsable irá a catalog_people
+
+def get_or_create_person_id(cur, person_name) -> int | None:
+    """Busca o crea una persona en catalog_people."""
+    if not person_name:
+        return None
+    if person_name in _person_cache:
+        return _person_cache[person_name]
+    cur.execute("SELECT id FROM catalog_people WHERE full_name=%s", (person_name,))
+    row = cur.fetchone()
+    if row:
+        _person_cache[person_name] = row[0]
+        return row[0]
+    cur.execute("INSERT INTO catalog_people (full_name) VALUES (%s) RETURNING id", (person_name,))
+    pid = cur.fetchone()[0]
+    _person_cache[person_name] = pid
+    return pid
+
+def seed_canonical_areas(cur, conn):
+    """Pre-siembra las áreas canónicas después del TRUNCATE."""
+    for name in CANONICAL_AREAS:
+        cur.execute("INSERT INTO catalog_areas (name) VALUES (%s) RETURNING id", (name,))
+        aid = cur.fetchone()[0]
+        _area_cache[name] = aid
+    conn.commit()
+    print(f"  {len(CANONICAL_AREAS)} áreas canónicas sembradas")
 
 # ── SEED PLATE_SEQUENCES ─────────────────────────────────────────────────────
 
@@ -324,6 +363,9 @@ def main():
     conn.commit()
     print("  Tablas limpias")
 
+    print("\n[3b/5] Sembrando áreas canónicas...")
+    seed_canonical_areas(cur, conn)
+
     # 4. Insertar activos
     print(f"\n[4/5] Insertando {len(all_rows):,} activos...")
     INSERT_SQL = """
@@ -332,14 +374,14 @@ def main():
           name, description, asset_type_code, puc_account,
           brand, model, serial, quantity, reference_value,
           city_code, building_id, floor, block, location,
-          area_id, responsable_raw,
+          area_id, person_id, responsable_raw,
           incorporation_year, source_sheet
         ) VALUES (
           %s, %s, %s,
           %s, %s, %s, %s,
           %s, %s, %s, 1, %s,
           %s, %s, %s, %s, %s,
-          %s, %s,
+          %s, %s, %s,
           %s, %s
         )
     """
@@ -350,12 +392,13 @@ def main():
         try:
             bid = get_building_id(cur, r["city_code"], r["building_code"], r["building_name"])
             aid = get_area_id(cur, r["responsable_raw"])
+            pid = get_or_create_person_id(cur, r["responsable_raw"]) if aid is None else None
             cur.execute(INSERT_SQL, (
                 r["plate"], r["plate_status"], r["plate_original"],
                 r["name"], r["description"], r["asset_type_code"], r["puc_account"],
                 r["brand"], r["model"], r["serial"], r["reference_value"],
                 r["city_code"], bid, r["floor"], r["block"], r["location"],
-                aid, r["responsable_raw"],
+                aid, pid, r["responsable_raw"],
                 r["incorporation_year"], r["source_sheet"],
             ))
             cur.execute("RELEASE SAVEPOINT sp")

@@ -37,3 +37,14 @@ scratch/
 .DS_Store
 Thumbs.db
 coverage/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Playwright MCP temporary snapshots
+.playwright-mcp/
+
+# Scratch files
+scratch_*.html
+scratch_*.css

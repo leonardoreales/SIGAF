@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { X, FileText, CheckCircle2, Inbox, Mail, Calendar, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine, ArrowRight, Loader2, Send, ShieldCheck, Clock } from 'lucide-react'
+import { X, FileText, CheckCircle2, Inbox, Mail, User, Info, MapPin, Truck, AlertTriangle, PlayCircle, PenLine, ArrowRight, Loader2 } from 'lucide-react'
 import { apiTransferRequests, type TransferRequestStatus } from '../../lib/api'
+import { TransferRequestBadge } from '../../components/ui/StatusBadge'
+import { TabPanel } from '../../components/ui/TabPanel'
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
 import { toast } from 'sonner'
@@ -12,41 +14,6 @@ interface RequestDetailDrawerProps {
   onClose: () => void
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Inbox }> = {
-  RECIBIDA:                        { label: 'Recibida',              color: 'blue',    icon: Inbox },
-  PENDIENTE_GESTION_ACTIVOS_FIJOS: { label: 'Pendiente Gestión',    color: 'amber',   icon: Clock },
-  REVISION:                        { label: 'En Revisión',          color: 'amber',   icon: Clock },
-  APROBADA:                        { label: 'Aprobada',             color: 'emerald',  icon: CheckCircle2 },
-  FIRMA_SOLICITADA:                { label: 'Firma Solicitada',     color: 'purple',  icon: Send },
-  FIRMA_EN_PROCESO:                { label: 'Firmando...',          color: 'purple',  icon: Loader2 },
-  FIRMADA:                         { label: 'Firmada',              color: 'emerald',  icon: ShieldCheck },
-  PDF_GENERADO:                    { label: 'PDF Generado',         color: 'emerald',  icon: FileText },
-  RESPUESTA_ENVIANDO:              { label: 'Enviando Respuesta',   color: 'blue',    icon: Send },
-  RESPUESTA_ENVIADA:               { label: 'Respuesta Enviada',    color: 'emerald',  icon: CheckCircle2 },
-  RECHAZADA:                       { label: 'Rechazada',            color: 'red',     icon: X },
-  ERROR_FIRMA:                     { label: 'Error de Firma',       color: 'red',     icon: AlertTriangle },
-  ERROR_ENVIO_RESPUESTA:           { label: 'Error de Envío',       color: 'red',     icon: AlertTriangle },
-  REQUIERE_REVISION_MANUAL:        { label: 'Revisión Manual',      color: 'red',     icon: AlertTriangle },
-}
-
-function getStatusBadge(status: string) {
-  const cfg = STATUS_CONFIG[status] || { label: status, color: 'gray', icon: Info }
-  const colorMap: Record<string, string> = {
-    blue:    'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800',
-    amber:   'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800',
-    emerald: 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800',
-    purple:  'bg-purple-50 text-purple-600 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800',
-    red:     'bg-red-50 text-red-600 border-red-200 dark:bg-red-900/30 dark:text-red-300 dark:border-red-800',
-    gray:    'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/30 dark:text-gray-300 dark:border-gray-800',
-  }
-  const Icon = cfg.icon
-  return (
-    <span className={`inline-flex items-center gap-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-full border ${colorMap[cfg.color] || colorMap.gray}`}>
-      <Icon size={10} />
-      {cfg.label}
-    </span>
-  )
-}
 
 export default function RequestDetailDrawer({ requestId, onClose }: RequestDetailDrawerProps) {
   const [tab, setTab] = useState<'general' | 'activos' | 'documento' | 'trazabilidad'>('general')
@@ -140,7 +107,7 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
                   <span className="text-[11px] font-mono tracking-widest text-blue-500/80 uppercase">
                     Solicitud F-AF-039
                   </span>
-                  {request && getStatusBadge(request.status)}
+                  {request && <TransferRequestBadge status={request.status} size="md" />}
                 </div>
               </div>
             </div>
@@ -227,29 +194,18 @@ export default function RequestDetailDrawer({ requestId, onClose }: RequestDetai
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-2 -mb-[24px]">
-            {([
-              { id: 'general', label: 'Información General', icon: Info },
-              { id: 'activos', label: 'Activos Detectados', icon: Truck },
-              { id: 'documento', label: 'Acta Original', icon: FileText },
-              { id: 'trazabilidad', label: 'Trazabilidad n8n', icon: PlayCircle },
-            ] as const).map(t => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`
-                  flex items-center gap-2 px-4 py-2.5 text-sm font-medium border-b-2 transition-all
-                  ${tab === t.id 
-                    ? 'border-blue-500 text-blue-600 dark:text-blue-400' 
-                    : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-mi-400 dark:hover:text-mi-200'
-                  }
-                `}
-              >
-                <t.icon size={15} />
-                {t.label}
-              </button>
-            ))}
-          </div>
+          <TabPanel
+            tabs={[
+              { id: 'general',      label: 'Información General', icon: Info },
+              { id: 'activos',      label: 'Activos Detectados',  icon: Truck },
+              { id: 'documento',    label: 'Acta Original',       icon: FileText },
+              { id: 'trazabilidad', label: 'Trazabilidad n8n',    icon: PlayCircle },
+            ]}
+            active={tab}
+            onChange={setTab}
+            variant="underline"
+            className="-mb-[24px]"
+          />
         </div>
 
         {/* ── Body ───────────────────────────────────────────── */}

@@ -1,10 +1,11 @@
-import { 
+import {
   Monitor, LayoutGrid, FlaskConical, ShieldCheck, Truck, Tv2, ChevronLeft, ChevronRight,
   PcCase, Laptop, Keyboard, Mouse, Printer, Server, Smartphone, Tablet,
   AudioLines, Mic, Headphones, Speaker, Lightbulb, Wifi, Router, Projector,
   Armchair, Sofa, Table, Camera, Phone, Archive
 } from 'lucide-react'
 import type { Asset } from '../../lib/api'
+import SkeletonTable from '../../components/ui/SkeletonTable'
 
 // ── Type icon map ─────────────────────────────────────────────────────────────
 
@@ -86,27 +87,6 @@ function AssetTypeIcon({ assetName, code, size = 36 }: { assetName?: string | nu
   )
 }
 
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-const SKEL = [80, 260, 100, 150, 150, 80, 72]
-
-function SkeletonRows() {
-  return (
-    <>
-      {Array.from({ length: 8 }).map((_, row) => (
-        <tr key={row}>
-          {SKEL.map((w, col) => (
-            <td key={col} style={{ padding: '14px 16px' }}>
-              <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
-            </td>
-          ))}
-          <td style={{ padding: '14px 16px' }} />
-        </tr>
-      ))}
-    </>
-  )
-}
-
 // ── Props ─────────────────────────────────────────────────────────────────────
 
 interface Meta { total: number; page: number; limit: number; pages: number }
@@ -156,7 +136,7 @@ export default function AssetsTable({ data, meta, isLoading, searchQuery, viewin
 
           <tbody>
             {isLoading ? (
-              <SkeletonRows />
+              <SkeletonTable cols={[80, 260, 100, 150, 150, 80, 72, 0]} rows={8} />
             ) : data.length === 0 ? (
               <tr>
                 <td colSpan={8} style={{

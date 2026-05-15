@@ -20,13 +20,14 @@ export interface FiltersState {
   type:     string
   status:   string
   year:     string
+  month:    string   // '1'–'12', only active when year is set
   area:     string
   page:     number
   limit:    number
 }
 
 const DEFAULT_FILTERS: FiltersState = {
-  q: '', building: '', type: '', status: '', year: '', area: '', page: 1, limit: 50,
+  q: '', building: '', type: '', status: '', year: '', month: '', area: '', page: 1, limit: 50,
 }
 
 export default function AssetsPage() {
@@ -50,6 +51,18 @@ export default function AssetsPage() {
 
   useSyncEvents(handleSync)
 
+  const monthRange = (() => {
+    if (!filters.year || !filters.month) return {}
+    const m    = Number(filters.month)
+    const y    = Number(filters.year)
+    const last = new Date(y, m, 0).getDate()
+    const mm   = String(m).padStart(2, '0')
+    return {
+      acquisitionFrom: `${filters.year}-${mm}-01`,
+      acquisitionTo:   `${filters.year}-${mm}-${String(last).padStart(2, '0')}`,
+    }
+  })()
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['assets', filters],
     queryFn:  () =>
@@ -62,6 +75,7 @@ export default function AssetsPage() {
         areaId:   filters.area   ? Number(filters.area) : undefined,
         page:     filters.page,
         limit:    filters.limit,
+        ...monthRange,
       }),
     placeholderData: (prev) => prev,
   })

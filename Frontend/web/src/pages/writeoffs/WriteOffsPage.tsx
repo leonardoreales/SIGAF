@@ -4,7 +4,8 @@ import {
   AlertCircle, TrendingDown, ChevronDown, ChevronUp,
   Layers, Monitor, Loader2, Package, ClipboardList,
   DollarSign,
-} from 'lucide-react';
+} from 'lucide-react'
+import SkeletonTable from '../../components/ui/SkeletonTable';
 import { cn, fmtCOP } from '../../lib/utils';
 import {
   apiWriteoffs,
@@ -223,8 +224,12 @@ export default function WriteOffsPage() {
 
           <div className="bg-white dark:bg-[#1A1A22]/90 border border-gray-200 dark:border-white/5 rounded-2xl shadow-sm overflow-hidden">
             {loading ? (
-              <div className="flex items-center justify-center py-16 gap-3 text-gray-400 dark:text-mi-500 text-sm">
-                <Loader2 size={20} className="animate-spin" /> Cargando actas...
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <tbody>
+                    <SkeletonTable cols={[200, 120, 60, 100, 100, 40]} rows={6} />
+                  </tbody>
+                </table>
               </div>
             ) : (
               <div className="overflow-x-auto">

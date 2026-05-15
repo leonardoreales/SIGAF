@@ -4,34 +4,28 @@ import { GoogleLogin, type CredentialResponse } from '@react-oauth/google'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
 
-// ─── Animations & Styles ───────────────────────────────────────────────────
 const styles = `
-  @keyframes pulse-soft {
-    0%, 100% { opacity: 0.3; transform: scale(1); }
-    50% { opacity: 0.5; transform: scale(1.05); }
-  }
   .glass-card {
     backdrop-filter: blur(25px) saturate(180%);
     -webkit-backdrop-filter: blur(25px) saturate(180%);
   }
+
   @keyframes card-in {
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
   }
-  .animate-card-in { animation: card-in 1s cubic-bezier(0.16, 1, 0.3, 1); }
-  
-  .shield-3d {
-    transform: perspective(1200px) rotateX(10deg) rotateY(-8deg);
-    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
-  }
-  .shield-3d:hover {
-    transform: perspective(1200px) rotateX(0deg) rotateY(0deg) scale(1.08);
+
+  .animate-card-in {
+    animation: card-in 1s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Rayo de luz diagonal */
-  .beam-light {
-    background: linear-gradient(135deg, rgba(212, 175, 55, 0) 0%, rgba(212, 175, 55, 0.05) 50%, rgba(212, 175, 55, 0) 100%);
-    transform: skewX(-20deg);
+  .brand-logo {
+    transform: perspective(1200px) translateZ(0);
+    transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+
+  .brand-logo:hover {
+    transform: perspective(1200px) translateZ(0) scale(1.03);
   }
 `
 
@@ -50,14 +44,6 @@ function MoonIcon() {
       <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
     </svg>
   )
-}
-
-const goldText: React.CSSProperties = {
-  backgroundImage: 'linear-gradient(135deg, #C8922A 0%, #F5C842 45%, #F1D279 60%, #C8922A 100%)',
-  WebkitBackgroundClip: 'text',
-  WebkitTextFillColor: 'transparent',
-  backgroundClip: 'text',
-  filter: 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25))',
 }
 
 const goldLabel: React.CSSProperties = {
@@ -81,16 +67,15 @@ export default function LoginPage() {
     try {
       await login(cred.credential)
       navigate('/dashboard', { replace: true })
-    } catch { /* error is handled in AuthContext */ }
+    } catch {
+      /* error is handled in AuthContext */
+    }
   }
 
-  // Paleta Navy & Gold Premium — extraída del logo Americana
   const navyBase = '#0D1B4A'
   const navyDeep = '#060E28'
-
   const leftBg = `linear-gradient(165deg, ${navyBase} 0%, ${navyDeep} 100%)`
   const rightBg = isDark ? navyDeep : '#F8F9FA'
-
   const sigafGradient = 'linear-gradient(165deg, #FFFFFF 0%, #E0E0E0 50%, #BDBDBD 100%)'
 
   return (
@@ -100,73 +85,46 @@ export default function LoginPage() {
     >
       <style>{styles}</style>
 
-      {/* ── Theme Toggle ─────────────────────────────────────────────── */}
       <button
         onClick={toggle}
         className="fixed top-8 right-8 z-50 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 hover:scale-110 active:scale-95 shadow-2xl"
         style={{
-          background     : 'rgba(212, 175, 55, 0.1)',
-          border         : '1px solid rgba(212, 175, 55, 0.2)',
-          color          : '#D4AF37',
-          backdropFilter : 'blur(12px)',
+          background: 'rgba(212, 175, 55, 0.1)',
+          border: '1px solid rgba(212, 175, 55, 0.2)',
+          color: '#D4AF37',
+          backdropFilter: 'blur(12px)',
         }}
+        aria-label={isDark ? 'Cambiar a tema claro' : 'Cambiar a tema oscuro'}
+        type="button"
       >
         {isDark ? <SunIcon /> : <MoonIcon />}
       </button>
 
-      {/* ════════════════════════════════════════════════════════════════════
-          LEFT PANEL — Branding & Ambiance
-      ════════════════════════════════════════════════════════════════════ */}
       <div
         className="hidden lg:flex lg:w-[58%] flex-col justify-center items-center relative overflow-hidden transition-all duration-1000"
         style={{ background: leftBg }}
       >
-        {/* Animated Background Elements */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-[-10%] left-[-5%] w-full h-[120%] beam-light" />
-          <div className="absolute top-[20%] left-[10%] w-[500px] h-[500px] rounded-full bg-gold/5 blur-[120px] animate-pulse-soft" />
           <div className="absolute bottom-[-10%] right-[5%] w-[400px] h-[400px] rounded-full bg-navyAccent/40 blur-[100px]" />
         </div>
 
-        {/* ── Branding Content ─────────────────────────────────────────── */}
-        <div className="flex flex-col items-center gap-12 max-w-2xl px-20 text-center relative z-10">
-          
-          {/* Logo / Shield Section */}
-          <div className="relative group shield-3d">
-            <div className="absolute inset-0 bg-gold/20 blur-[80px] rounded-full scale-90 opacity-40 group-hover:opacity-60 transition-opacity duration-700" />
+        <div className="flex flex-col items-center gap-12 max-w-3xl px-16 text-center relative z-10">
+          <div className="relative group brand-logo w-full max-w-[620px]">
             <img
-              src="/logo-americana.png"
-              alt="Escudo Americana"
-              className="w-[180px] h-[180px] object-contain relative z-10"
+              src="/logo-americana-completo.png"
+              alt="Americana Corporación Universitaria"
+              className="w-full h-auto object-contain relative z-10"
               style={{
                 filter: 'drop-shadow(0 20px 40px rgba(0,0,0,0.5))',
               }}
             />
           </div>
 
-          {/* Institutional Titles */}
           <div className="flex flex-col items-center gap-6">
-            <div className="flex flex-col items-center gap-3">
-              <p
-                className="font-mono text-[14px] tracking-[0.6em] uppercase font-bold"
-                style={goldLabel}
-              >
-                Corporación Universitaria
-              </p>
-              <h1
-                className="font-syne font-black leading-none"
-                style={{ fontSize: '5.5rem', letterSpacing: '-0.04em', ...goldText }}
-              >
-                AMERICANA
-              </h1>
-            </div>
-
-            {/* Premium Divider */}
             <div className="relative w-48 h-[2px] my-6">
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-gold to-transparent opacity-80" />
             </div>
 
-            {/* SIGAF Section */}
             <div className="flex flex-col items-center gap-4">
               <p
                 className="font-syne font-black leading-none"
@@ -193,7 +151,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Footer Cities */}
         <div className="absolute bottom-16 inset-x-0">
           <div className="flex items-center justify-center gap-10">
             {['Medellín', 'Barranquilla', 'Bogotá'].map((city, i) => (
@@ -208,37 +165,32 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════════════════════════════
-          RIGHT PANEL — Login Interaction
-      ════════════════════════════════════════════════════════════════════ */}
-      <div 
+      <div
         className="flex-1 flex flex-col items-center justify-center p-12 relative transition-all duration-1000"
         style={{ backgroundColor: rightBg }}
       >
         <div className="w-full max-w-[460px] animate-card-in relative z-10">
-          
-          {/* Mobile Branding */}
-          <div className="flex lg:hidden flex-col items-center gap-8 mb-16 text-center">
-            <img src="/logo-americana.png" alt="Logo" className="w-32 h-32 object-contain shield-3d" />
-            <div className="space-y-3">
-              <p className="font-mono text-[12px] tracking-[0.5em] uppercase font-bold" style={goldLabel}>Corporación Universitaria</p>
-              <p className="font-syne font-black text-6xl tracking-tighter" style={goldText}>AMERICANA</p>
-              <p className="font-mono text-[12px] tracking-[0.3em] uppercase opacity-40">Gestión de Activos Fijos</p>
-            </div>
+          <div className="flex lg:hidden flex-col items-center gap-6 mb-14 text-center">
+            <img
+              src="/logo-americana-completo.png"
+              alt="Americana Corporación Universitaria"
+              className="w-full max-w-[320px] h-auto object-contain brand-logo"
+            />
+            <p className="font-mono text-[12px] tracking-[0.3em] uppercase opacity-40">
+              Gestión de Activos Fijos
+            </p>
           </div>
 
-          {/* Login Premium Card */}
           <div
             className="glass-card relative overflow-hidden rounded-[3.5rem] transition-all duration-500"
             style={{
-              background : isDark ? 'rgba(0, 13, 26, 0.8)' : 'rgba(255, 255, 255, 0.95)',
-              border     : isDark ? '1px solid rgba(212, 175, 55, 0.15)' : '1px solid rgba(0, 26, 51, 0.08)',
-              boxShadow  : isDark 
+              background: isDark ? 'rgba(0, 13, 26, 0.8)' : 'rgba(255, 255, 255, 0.95)',
+              border: isDark ? '1px solid rgba(212, 175, 55, 0.15)' : '1px solid rgba(0, 26, 51, 0.08)',
+              boxShadow: isDark
                 ? '0 50px 100px -20px rgba(0, 0, 0, 1), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
                 : '0 30px 60px -15px rgba(0, 26, 51, 0.15)',
             }}
           >
-            {/* Elegant Top Detail */}
             <div className="absolute top-0 inset-x-20 h-[3px] bg-gradient-to-r from-transparent via-gold to-transparent opacity-100" />
 
             <div className="px-14 py-16">
@@ -251,11 +203,12 @@ export default function LoginPage() {
                 </p>
                 <div className="mt-8 inline-flex items-center gap-4 px-6 py-2.5 rounded-full bg-gold/10 border border-gold/30">
                   <span className="w-2.5 h-2.5 rounded-full bg-gold animate-pulse" />
-                  <span className="text-[14px] font-bold tracking-[0.2em]" style={goldLabel}>@americana.edu.co</span>
+                  <span className="text-[14px] font-bold tracking-[0.2em]" style={goldLabel}>
+                    @americana.edu.co
+                  </span>
                 </div>
               </div>
 
-              {/* Login Button */}
               <div className="space-y-10">
                 <div className="flex justify-center transform transition-all duration-500 hover:scale-[1.05] active:scale-[0.98]">
                   <GoogleLogin
@@ -271,13 +224,14 @@ export default function LoginPage() {
 
                 {error && (
                   <div className="rounded-3xl p-6 bg-red-500/10 border border-red-500/20 text-center animate-bounce-short">
-                    <p className="text-[12px] font-bold text-red-500 uppercase tracking-[0.3em] mb-2">Error Crítico</p>
+                    <p className="text-[12px] font-bold text-red-500 uppercase tracking-[0.3em] mb-2">
+                      Error Critico
+                    </p>
                     <p className="text-[15px] text-red-500/90 leading-snug">{error}</p>
                   </div>
                 )}
               </div>
 
-              {/* Security Badge */}
               <div className="mt-16 pt-10 border-t border-black/5 flex flex-col items-center gap-5">
                 <div className="flex items-center gap-4 text-[12px] font-mono tracking-[0.3em] uppercase opacity-30" style={{ color: isDark ? '#FFFFFF' : navyBase }}>
                   <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.2}>

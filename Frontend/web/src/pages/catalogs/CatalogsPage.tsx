@@ -151,7 +151,7 @@ const inputCls = [
 // ── Table shell ───────────────────────────────────────────────────────────────
 
 function TableShell({
-  search, onSearch, onNew, newLabel, columns, children, isLoading,
+  search, onSearch, onNew, newLabel, columns, children, isLoading, extraActions,
 }: {
   search: string
   onSearch: (v: string) => void
@@ -160,6 +160,7 @@ function TableShell({
   columns: string[]
   children: React.ReactNode
   isLoading: boolean
+  extraActions?: React.ReactNode
 }) {
   return (
     <div className="flex flex-col h-full gap-4">
@@ -173,6 +174,7 @@ function TableShell({
             className={cn(inputCls, 'pl-8 py-1.5 text-xs')}
           />
         </div>
+        {extraActions}
         <button
           onClick={onNew}
           className={cn(
@@ -485,14 +487,17 @@ function AreasTab() {
     staleTime: 30_000,
   })
 
-  const [search, setSearch]       = useState('')
-  const [modal, setModal]         = useState<{ mode: 'create' | 'edit'; row?: Area } | null>(null)
-  const [form, setForm]           = useState({ name: '' })
+  const [search, setSearch]         = useState('')
+  const [showInactive, setShowInactive] = useState(false)
+  const [modal, setModal]           = useState<{ mode: 'create' | 'edit'; row?: Area } | null>(null)
+  const [form, setForm]             = useState({ name: '' })
   const [togglingId, setTogglingId] = useState<number | null>(null)
 
   const filtered = useMemo(
-    () => data.filter(a => a.name.toLowerCase().includes(search.toLowerCase())),
-    [data, search],
+    () => data
+      .filter(a => showInactive || a.active)
+      .filter(a => a.name.toLowerCase().includes(search.toLowerCase())),
+    [data, search, showInactive],
   )
 
   const invalidate = () => {
@@ -532,6 +537,19 @@ function AreasTab() {
         newLabel="Nueva Área"
         columns={['ID', 'Nombre', 'Estado', '']}
         isLoading={isLoading}
+        extraActions={
+          <button
+            onClick={() => setShowInactive(v => !v)}
+            className={cn(
+              'flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors cursor-pointer',
+              showInactive
+                ? 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-400'
+                : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 dark:border-white/10 dark:bg-white/5 dark:text-gray-400',
+            )}
+          >
+            {showInactive ? 'Ocultar inactivas' : 'Mostrar inactivas'}
+          </button>
+        }
       >
         {filtered.length === 0 ? emptyRow(4) : filtered.map(row => (
           <tr key={row.id} className={trCls}>

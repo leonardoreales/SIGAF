@@ -1,62 +1,10 @@
-import { ChevronRight, ChevronLeft } from 'lucide-react'
+import { ChevronRight, ChevronLeft, Trash2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { es }     from 'date-fns/locale'
-import {
-  Inbox, CheckCircle2, Clock, XCircle, PenLine, Trash2, AlertTriangle,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import type { TransferRequest, TransferRequestStatus } from '../../lib/api'
+import type { TransferRequest } from '../../lib/api'
 import { cn } from '../../lib/utils'
-
-// ── Badge de estado ────────────────────────────────────────────────────────────
-
-const STATUS_CONFIG: Record<TransferRequestStatus, { label: string; icon: LucideIcon; className: string }> = {
-  RECIBIDA:                       { label: 'Recibida',           icon: Inbox,         className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800/50' },
-  PENDIENTE_GESTION_ACTIVOS_FIJOS:{ label: 'Pendiente gestión',  icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-  REVISION:                       { label: 'Revisión',           icon: Clock,         className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-  APROBADA:                       { label: 'Aprobada',           icon: CheckCircle2,  className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-300 dark:border-green-800/50' },
-  FIRMA_SOLICITADA:               { label: 'Firma solicitada',   icon: PenLine,       className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
-  FIRMA_EN_PROCESO:               { label: 'Firma en proceso',   icon: PenLine,       className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-950/40 dark:text-orange-300 dark:border-orange-800/50' },
-  FIRMADA:                        { label: 'Firmada',            icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  PDF_GENERADO:                   { label: 'PDF generado',       icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  RESPUESTA_ENVIANDO:             { label: 'Enviando respuesta', icon: Clock,         className: 'bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-950/40 dark:text-cyan-300 dark:border-cyan-800/50' },
-  RESPUESTA_ENVIADA:              { label: 'Respuesta enviada',  icon: CheckCircle2,  className: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/50' },
-  RECHAZADA:                      { label: 'Rechazada',          icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  ERROR_FIRMA:                    { label: 'Error firma',        icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  ERROR_ENVIO_RESPUESTA:          { label: 'Error respuesta',    icon: XCircle,       className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/50' },
-  REQUIERE_REVISION_MANUAL:       { label: 'Revisión manual',    icon: AlertTriangle, className: 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/50' },
-}
-
-function StatusBadge({ status }: { status: TransferRequestStatus }) {
-  const cfg  = STATUS_CONFIG[status] ?? STATUS_CONFIG.REVISION
-  const Icon = cfg.icon
-  return (
-    <span className={cn(
-      'inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full border',
-      cfg.className,
-    )}>
-      <Icon size={11} />
-      {cfg.label}
-    </span>
-  )
-}
-
-// ── Skeleton ──────────────────────────────────────────────────────────────────
-
-const SKEL = [90, 160, 200, 40, 110, 80]
-
-function SkeletonRow() {
-  return (
-    <tr>
-      {SKEL.map((w, i) => (
-        <td key={i} style={{ padding: '14px 16px' }}>
-          <div className="skeleton" style={{ height: 13, width: w, maxWidth: '100%' }} />
-        </td>
-      ))}
-      <td style={{ padding: '14px 16px' }} />
-    </tr>
-  )
-}
+import { TransferRequestBadge } from '../../components/ui/StatusBadge'
+import SkeletonTable from '../../components/ui/SkeletonTable'
 
 // ── Props ──────────────────────────────────────────────────────────────────────
 
@@ -106,7 +54,7 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
 
           <tbody>
             {isLoading
-              ? Array.from({ length: 5 }).map((_, i) => <SkeletonRow key={i} />)
+              ? <SkeletonTable cols={[90, 160, 200, 40, 110, 80, 0]} rows={5} />
               : data.length === 0
                 ? (
                   <tr>
@@ -168,7 +116,7 @@ export default function RequestsTable({ data, meta, isLoading, onPageChange, onV
 
                     {/* Estado */}
                     <td style={{ padding: '12px 16px' }}>
-                      <StatusBadge status={row.status} />
+                      <TransferRequestBadge status={row.status} />
                     </td>
 
                     {/* Recibida */}
