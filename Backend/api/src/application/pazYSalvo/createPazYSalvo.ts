@@ -18,6 +18,17 @@ function buildHmac(body: string) {
   return `sha256=${crypto.createHmac('sha256', secret).update(body).digest('hex')}`
 }
 
+function buildCallbackUrl() {
+  const baseUrl =
+    process.env.SIGAF_API_URL ||
+    process.env.BACKEND_PUBLIC_URL ||
+    process.env.API_PUBLIC_URL ||
+    process.env.PUBLIC_API_URL ||
+    `http://localhost:${process.env.PORT || 3000}`
+
+  return `${baseUrl.replace(/\/+$/, '')}/sync/paz-y-salvo/firma-completada`
+}
+
 /**
  * Flujo de un solo paso:
  * 1. Valida payload
@@ -128,7 +139,7 @@ export async function createPazYSalvo(rawData: unknown, requester?: CreateReques
     },
 
     callback: {
-      url:    `${process.env.FRONTEND_URL || 'http://localhost:3000'}/sync/paz-y-salvo/firma-completada`,
+      url:    buildCallbackUrl(),
       secret: process.env.N8N_SIGN_RESULT_SECRET || process.env.SYNC_SECRET || '',
     },
   }

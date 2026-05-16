@@ -1,0 +1,511 @@
+{
+  "name": "Paz y Salvo - Generar y Firmar Acta",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sigaf-paz-y-salvo-firmar-acta",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {
+          "onError": "continueRegularOutput"
+        }
+      },
+      "id": "pys-webhook-sigaf",
+      "name": "Webhook SIGAF Paz y Salvo",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        240,
+        160
+      ],
+      "onError": "continueRegularOutput",
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "F6xno1mTXSc7NUUG",
+          "name": "SIGAF"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "function requiredString(value, label) {\n  if (typeof value !== 'string' || !value.trim()) {\n    throw new Error(`[SIGAF/PYS] ${label} requerido`);\n  }\n  return value.trim();\n}\n\nfunction optionalString(value, fallback = '') {\n  return typeof value === 'string' && value.trim() ? value.trim() : fallback;\n}\n\nfunction stripTrailingSlash(value) {\n  let out = optionalString(value);\n  while (out.endsWith('/')) out = out.slice(0, -1);\n  return out;\n}\n\nfunction callbackBase(url) {\n  const suffix = '/sync/paz-y-salvo/firma-completada';\n  const clean = stripTrailingSlash(url);\n  return clean.endsWith(suffix) ? clean.slice(0, -suffix.length) : clean;\n}\n\nfunction cleanCell(value) {\n  return String(value ?? '').replace(/\\s+/g, ' ').trim();\n}\n\nfunction placeholder(name) {\n  return '{' + '{' + name + '}' + '}';\n}\n\nconst input = $input.first().json || {};\nconst body = input.body || input;\nconst eventType = requiredString(body.eventType, 'eventType');\n\nif (eventType !== 'PAZ_Y_SALVO_SIGN_REQUESTED') {\n  throw new Error(`[SIGAF/PYS] eventType no soportado: ${eventType}`);\n}\n\nconst eventId = requiredString(body.eventId, 'eventId');\nconst sigafCaseId = requiredString(body.sigafCaseId, 'sigafCaseId');\nconst actaNumber = requiredString(body.actaNumber, 'actaNumber');\nconst fechaActa = optionalString(body.fechaActa, new Date().toLocaleDateString('es-CO'));\nconst motivo = optionalString(body.motivo, 'DESVINCULACION');\nconst motivoLabels = {\n  DESVINCULACION: 'Desvinculacion',\n  RENUNCIA: 'Renuncia',\n  JUBILACION: 'Jubilacion',\n  TRASLADO_EXTERNO: 'Traslado externo',\n  OTRO: 'Otro',\n};\n\nconst funcionarioEntrega = {\n  fullName: requiredString(body.funcionarioEntrega?.fullName, 'funcionarioEntrega.fullName'),\n  identificacion: requiredString(body.funcionarioEntrega?.identificacion, 'funcionarioEntrega.identificacion'),\n  cargo: optionalString(body.funcionarioEntrega?.cargo),\n  area: optionalString(body.funcionarioEntrega?.area),\n  contractEndDate: optionalString(body.funcionarioEntrega?.contractEndDate),\n};\n\nconst funcionarioRecibe = {\n  fullName: optionalString(body.funcionarioRecibe?.fullName, 'RESPONSABLE ACTIVOS FIJOS'),\n  email: optionalString(body.funcionarioRecibe?.email),\n};\n\nconst signature = {\n  signatureImageFileId: requiredString(body.signature?.signatureImageFileId, 'signature.signatureImageFileId'),\n  signatureAnchor: optionalString(body.signature?.signatureAnchor, 'FIRMA RESPONSABLE ACTIVOS FIJOS'),\n};\n\nconst callback = {\n  url: optionalString(body.callback?.url),\n  baseUrl: callbackBase(body.callback?.url),\n  secret: optionalString(body.callback?.secret),\n};\n\nconst itemsRaw = Array.isArray(body.items) ? body.items : [];\nif (!itemsRaw.length) {\n  throw new Error('[SIGAF/PYS] items debe tener al menos un activo');\n}\n\nconst items = itemsRaw.map((item, index) => ({\n  itemNumber: Number.isFinite(Number(item.itemNumber)) ? Number(item.itemNumber) : index + 1,\n  name: requiredString(item.name, `items[${index}].name`),\n  plate: optionalString(item.plate),\n  estadoFisico: optionalString(item.estadoFisico, 'BUENO'),\n  notes: optionalString(item.notes),\n}));\n\nconst activosTabla = [\n  'No.\\tActivo\\tPlaca\\tEstado\\tObservaciones',\n  ...items.map((item) => [\n    item.itemNumber,\n    cleanCell(item.name),\n    cleanCell(item.plate || 'N/A'),\n    cleanCell(item.estadoFisico),\n    cleanCell(item.notes || ''),\n  ].join('\\t')),\n].join('\\n');\n\nconst replacements = [\n  [placeholder('CODIGO_ACTA'), actaNumber],\n  [placeholder('FECHA_ACTA'), fechaActa],\n  [placeholder('VERSION'), optionalString(body.version, '1.0')],\n  [placeholder('MOTIVO'), motivoLabels[motivo] || motivo],\n  [placeholder('FUNCIONARIO_ENTREGA_NOMBRE'), funcionarioEntrega.fullName],\n  [placeholder('FUNCIONARIO_ENTREGA_IDENTIFICACION'), funcionarioEntrega.identificacion],\n  [placeholder('CARGO_FUNCIONARIO'), funcionarioEntrega.cargo],\n  [placeholder('AREA_ENTREGA'), funcionarioEntrega.area],\n  [placeholder('FECHA_TERMINACION_CONTRATO'), funcionarioEntrega.contractEndDate],\n  [placeholder('FUNCIONARIO_RECIBE_NOMBRE'), funcionarioRecibe.fullName],\n  [placeholder('FUNCIONARIO_RECIBE_EMAIL'), funcionarioRecibe.email],\n  [placeholder('OBSERVACIONES'), optionalString(body.observaciones)],\n  [placeholder('ACTIVOS_TABLA'), activosTabla],\n].map(([placeholderText, value]) => ({ placeholder: placeholderText, value: String(value ?? '') }));\n\nreturn [{\n  json: {\n    eventType,\n    eventId,\n    sigafCaseId,\n    actaNumber,\n    fechaActa,\n    motivo,\n    funcionarioEntrega,\n    funcionarioRecibe,\n    observaciones: optionalString(body.observaciones),\n    signature,\n    callback,\n    items,\n    replacements,\n    document: {\n      name: `${actaNumber} - Paz y Salvo firmado`,\n      pdfName: `${actaNumber} - Paz y Salvo firmado.pdf`,\n      description: `SIGAF Paz y Salvo. eventId=${eventId}; sigafCaseId=${sigafCaseId}`,\n    },\n    receivedAt: new Date().toISOString(),\n  },\n}];\n"
+      },
+      "id": "pys-validar-normalizar",
+      "name": "Validar y normalizar Paz y Salvo",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { ok: true, accepted: true, status: 'FIRMA_SOLICITADA', eventId: $json.eventId, sigafCaseId: $json.sigafCaseId, actaNumber: $json.actaNumber, receivedAt: new Date().toISOString() } }}",
+        "options": {
+          "responseCode": 202,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              }
+            ]
+          }
+        }
+      },
+      "id": "pys-responder-aceptacion",
+      "name": "Responder aceptacion a SIGAF",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        760,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $vars.PAZ_Y_SALVO_TEMPLATE_DOC_ID }}/copy",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,mimeType,webViewLink"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: $('Validar y normalizar Paz y Salvo').first().json.document.name, description: $('Validar y normalizar Paz y Salvo').first().json.document.description, parents: [ $vars.PAZ_Y_SALVO_DRIVE_FOLDER_ID ] } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-copiar-template",
+      "name": "Copiar plantilla Google Doc",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1020,
+        160
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://docs.googleapis.com/v1/documents/{{ $json.id }}:batchUpdate",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { requests: $('Validar y normalizar Paz y Salvo').first().json.replacements.map((entry) => ({ replaceAllText: { containsText: { text: entry.placeholder, matchCase: true }, replaceText: entry.value } })) } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-reemplazar-marcadores",
+      "name": "Reemplazar marcadores en acta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1280,
+        160
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($vars.SIGAF_API_URL || '').replace(/\\/$/, '') + '/sync/sign-document' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-sigaf-sign-result-secret",
+              "value": "={{ $vars.SIGAF_SIGN_DOCUMENT_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { eventId: $('Validar y normalizar Paz y Salvo').first().json.eventId, sigafRequestId: $('Validar y normalizar Paz y Salvo').first().json.sigafCaseId, googleDocId: $('Copiar plantilla Google Doc').first().json.id, signatureImageFileId: $('Validar y normalizar Paz y Salvo').first().json.signature.signatureImageFileId, anchorText: $('Validar y normalizar Paz y Salvo').first().json.signature.signatureAnchor } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "id": "pys-insertar-firma",
+      "name": "Insertar firma institucional",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1540,
+        160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.signedGoogleDocId }}/export",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "mimeType",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file",
+              "outputPropertyName": "signedPdf"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-exportar-pdf",
+      "name": "Exportar acta firmada como PDF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        1800,
+        160
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://www.googleapis.com/upload/drive/v3/files",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "uploadType",
+              "value": "media"
+            },
+            {
+              "name": "fields",
+              "value": "id,webViewLink,webContentLink"
+            },
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/pdf"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "signedPdf",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-guardar-pdf",
+      "name": "Guardar PDF firmado en Drive",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2060,
+        80
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://www.googleapis.com/drive/v3/files/{{ $json.id }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "googleDriveOAuth2Api",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "supportsAllDrives",
+              "value": "true"
+            },
+            {
+              "name": "addParents",
+              "value": "={{ $vars.PAZ_Y_SALVO_DRIVE_FOLDER_ID }}"
+            },
+            {
+              "name": "fields",
+              "value": "id,name,webViewLink,webContentLink"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { name: $('Validar y normalizar Paz y Salvo').first().json.document.pdfName, description: $('Validar y normalizar Paz y Salvo').first().json.document.description } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-renombrar-pdf",
+      "name": "Nombrar PDF y mover a carpeta",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2320,
+        80
+      ],
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "w8uwjeJ8xlkaenZc",
+          "name": "Actas_AF"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ ($vars.SIGAF_API_URL || $('Validar y normalizar Paz y Salvo').first().json.callback.baseUrl || '').replace(/\\/$/, '') + '/sync/paz-y-salvo/firma-completada' }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "x-sigaf-sign-result-secret",
+              "value": "={{ $('Validar y normalizar Paz y Salvo').first().json.callback.secret || $vars.SIGAF_SYNC_SECRET }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { eventId: $('Validar y normalizar Paz y Salvo').first().json.eventId, sigafCaseId: $('Validar y normalizar Paz y Salvo').first().json.sigafCaseId, status: 'COMPLETADA', signedBy: $('Validar y normalizar Paz y Salvo').first().json.funcionarioRecibe.email || $('Validar y normalizar Paz y Salvo').first().json.funcionarioRecibe.fullName, document: { signedGoogleDocId: $('Insertar firma institucional').first().json.signedGoogleDocId, signedGoogleDocUrl: $('Insertar firma institucional').first().json.signedGoogleDocUrl, signedPdfDriveFileId: $('Nombrar PDF y mover a carpeta').first().json.id, signedPdfDriveUrl: $('Nombrar PDF y mover a carpeta').first().json.webViewLink || $('Nombrar PDF y mover a carpeta').first().json.webContentLink } } }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "id": "pys-callback-sigaf",
+      "name": "Notificar resultado Paz y Salvo a SIGAF",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        2580,
+        160
+      ],
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 5000
+    }
+  ],
+  "connections": {
+    "Webhook SIGAF Paz y Salvo": {
+      "main": [
+        [
+          {
+            "node": "Validar y normalizar Paz y Salvo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validar y normalizar Paz y Salvo": {
+      "main": [
+        [
+          {
+            "node": "Responder aceptacion a SIGAF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Responder aceptacion a SIGAF": {
+      "main": [
+        [
+          {
+            "node": "Copiar plantilla Google Doc",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Copiar plantilla Google Doc": {
+      "main": [
+        [
+          {
+            "node": "Reemplazar marcadores en acta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reemplazar marcadores en acta": {
+      "main": [
+        [
+          {
+            "node": "Insertar firma institucional",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insertar firma institucional": {
+      "main": [
+        [
+          {
+            "node": "Exportar acta firmada como PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Exportar acta firmada como PDF": {
+      "main": [
+        [
+          {
+            "node": "Guardar PDF firmado en Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Guardar PDF firmado en Drive": {
+      "main": [
+        [
+          {
+            "node": "Nombrar PDF y mover a carpeta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nombrar PDF y mover a carpeta": {
+      "main": [
+        [
+          {
+            "node": "Notificar resultado Paz y Salvo a SIGAF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Bogota",
+    "saveDataSuccessExecution": "all",
+    "saveDataErrorExecution": "all",
+    "saveManualExecutions": true,
+    "executionTimeout": 300
+  },
+  "pinData": {},
+  "meta": {
+    "templateCredsSetupCompleted": true
+  }
+}
