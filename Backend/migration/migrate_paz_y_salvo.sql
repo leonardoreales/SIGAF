@@ -8,8 +8,10 @@ ALTER TABLE catalog_people
   ADD COLUMN IF NOT EXISTS identificacion      VARCHAR(20) UNIQUE,
   ADD COLUMN IF NOT EXISTS cargo               VARCHAR(200),
   ADD COLUMN IF NOT EXISTS contract_start_date DATE,
-  ADD COLUMN IF NOT EXISTS contract_end_date   DATE;
+  ADD COLUMN IF NOT EXISTS contract_end_date   DATE,
+  ADD COLUMN IF NOT EXISTS updated_at          TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW();
 -- contract_end_date NULL = contrato indefinido
+-- updated_at requerido por importer idempotente (ON CONFLICT DO UPDATE SET updated_at = NOW())
 
 -- ── Fase 1.2 — Tabla de casos de paz y salvo ─────────────────────────────────
 CREATE TABLE IF NOT EXISTS paz_y_salvo_cases (

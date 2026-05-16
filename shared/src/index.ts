@@ -467,3 +467,107 @@ export const ASSET_TYPE_SERIAL_RULES: Record<string, SerialRule> = {
   '70': 'required',   // EQUIPOS DE COMUNICACIÓN Y COMPUTACIÓN
   '75': 'disabled',   // PLANTAS, DUCTOS Y TÚNELES
 }
+
+// ── PAZ Y SALVO (ACTAS DE DEVOLUCIÓN) ────────────────────────────────────────
+
+export const PazYSalvoStatusSchema = z.enum([
+  'FIRMA_SOLICITADA',
+  'FIRMA_EN_PROCESO',
+  'FIRMADA',
+  'COMPLETADA',
+  'CANCELADA',
+  'ERROR_FIRMA',
+])
+
+export const PazYSalvoMotivoSchema = z.enum([
+  'DESVINCULACION',
+  'RENUNCIA',
+  'JUBILACION',
+  'TRASLADO_EXTERNO',
+  'OTRO',
+])
+
+export const PazYSalvoEstadoFisicoSchema = z.enum(['BUENO', 'REGULAR', 'MALO'])
+
+export const PazYSalvoItemInputSchema = z.object({
+  itemNumber:   z.number().int().positive(),
+  nameRaw:      z.string().min(1).max(300),
+  plateRaw:     z.string().max(20).optional(),
+  estadoFisico: PazYSalvoEstadoFisicoSchema.default('BUENO'),
+  notes:        z.string().max(500).optional(),
+})
+
+export const CreatePazYSalvoSchema = z.object({
+  personId:          z.number().int().positive(),
+  motivoTerminacion: PazYSalvoMotivoSchema.default('DESVINCULACION'),
+  observaciones:     z.string().max(1000).optional(),
+  items:             z.array(PazYSalvoItemInputSchema).min(1).max(50),
+})
+
+export const UpdatePazYSalvoSchema = z.object({
+  status:        PazYSalvoStatusSchema.optional(),
+  observaciones: z.string().max(1000).optional(),
+  notes:         z.string().optional(),
+})
+
+export const PazYSalvoFilterSchema = z.object({
+  page:     z.coerce.number().int().positive().default(1),
+  limit:    z.coerce.number().int().min(1).max(100).default(50),
+  q:        z.string().optional(),
+  status:   PazYSalvoStatusSchema.optional(),
+  personId: z.coerce.number().int().positive().optional(),
+})
+
+export const PazYSalvoPeopleFilterSchema = z.object({
+  page:           z.coerce.number().int().positive().default(1),
+  limit:          z.coerce.number().int().min(1).max(200).default(50),
+  q:              z.string().optional(),
+  proxVencimiento: z.coerce.boolean().optional(),   // true → contract_end_date ≤ +30d
+  soloActivos:    z.coerce.boolean().optional(),
+})
+
+export const CompletePazYSalvoSignatureSchema = z.object({
+  eventId:    z.string().min(1),
+  sigafCaseId: z.string().min(1),
+  status:     PazYSalvoStatusSchema.default('COMPLETADA'),
+  signedBy:   z.string().optional(),
+  document:   z.object({
+    signedGoogleDocId:    z.string().optional(),
+    signedGoogleDocUrl:   z.string().optional(),
+    signedPdfDriveFileId: z.string().optional(),
+    signedPdfDriveUrl:    z.string().optional(),
+  }).optional(),
+  error:      z.string().nullable().optional(),
+})
+
+export type PazYSalvoStatus              = z.infer<typeof PazYSalvoStatusSchema>
+export type PazYSalvoMotivo              = z.infer<typeof PazYSalvoMotivoSchema>
+export type PazYSalvoEstadoFisico        = z.infer<typeof PazYSalvoEstadoFisicoSchema>
+export type PazYSalvoItemInput           = z.infer<typeof PazYSalvoItemInputSchema>
+export type CreatePazYSalvo              = z.infer<typeof CreatePazYSalvoSchema>
+export type UpdatePazYSalvo              = z.infer<typeof UpdatePazYSalvoSchema>
+export type PazYSalvoFilter              = z.infer<typeof PazYSalvoFilterSchema>
+export type PazYSalvoPeopleFilter        = z.infer<typeof PazYSalvoPeopleFilterSchema>
+export type CompletePazYSalvoSignature   = z.infer<typeof CompletePazYSalvoSignatureSchema>
+
+// Items por defecto que prepoblan el modal del frontend.
+// Source of truth — el frontend los importa desde aquí.
+export const PAZ_Y_SALVO_DEFAULT_ITEMS: ReadonlyArray<Omit<PazYSalvoItemInput, 'itemNumber'>> = [
+  { nameRaw: 'SILLA GIRATORIA',       estadoFisico: 'BUENO' },
+  { nameRaw: 'PUESTO DE TRABAJO',     estadoFisico: 'BUENO' },
+  { nameRaw: 'COMPUTADOR ALL IN ONE', estadoFisico: 'BUENO' },
+] as const
+
+// Transiciones de status válidas. Estados finales (COMPLETADA, CANCELADA) no aceptan más cambios.
+export const PAZ_Y_SALVO_STATUS_TRANSITIONS: Record<PazYSalvoStatus, ReadonlyArray<PazYSalvoStatus>> = {
+  FIRMA_SOLICITADA: ['FIRMA_EN_PROCESO', 'CANCELADA', 'ERROR_FIRMA'],
+  FIRMA_EN_PROCESO: ['FIRMADA', 'ERROR_FIRMA'],
+  FIRMADA:          ['COMPLETADA'],
+  ERROR_FIRMA:      ['FIRMA_SOLICITADA', 'CANCELADA'],   // permite retry manual
+  COMPLETADA:       [],
+  CANCELADA:        [],
+}
+
+export function canTransitionPazYSalvoStatus(from: PazYSalvoStatus, to: PazYSalvoStatus): boolean {
+  return PAZ_Y_SALVO_STATUS_TRANSITIONS[from]?.includes(to) ?? false
+}

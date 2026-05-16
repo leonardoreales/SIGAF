@@ -30,12 +30,18 @@ export const catalogAreas = pgTable('catalog_areas', {
 })
 
 export const catalogPeople = pgTable('catalog_people', {
-  id:        serial('id').primaryKey(),
-  fullName:  varchar('full_name', { length: 200 }).notNull(),
-  email:     varchar('email', { length: 200 }),
-  areaId:    integer('area_id'),
-  active:    boolean('active').notNull().default(true),
-  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  id:                 serial('id').primaryKey(),
+  fullName:           varchar('full_name', { length: 200 }).notNull(),
+  email:              varchar('email', { length: 200 }),
+  areaId:             integer('area_id'),
+  active:             boolean('active').notNull().default(true),
+  // Enriquecimiento desde import_funcionarios.py (relación RRHH oficial)
+  identificacion:     varchar('identificacion', { length: 20 }).unique(),
+  cargo:              varchar('cargo', { length: 200 }),
+  contractStartDate:  date('contract_start_date'),
+  contractEndDate:    date('contract_end_date'),
+  createdAt:          timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:          timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 })
 
 export const assets = pgTable('assets', {
@@ -259,4 +265,47 @@ export const writeoffItems = pgTable('writeoff_items', {
   // MATCHED | NOT_FOUND | NO_REGISTRA | EMPTY
   reconciledStatus: varchar('reconciled_status', { length: 30 }).notNull().default('PENDING'),
   createdAt:        timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+// ── PAZ Y SALVO (ACTAS DE DEVOLUCIÓN) ────────────────────────────────────────
+
+export const pazYSalvoCases = pgTable('paz_y_salvo_cases', {
+  id:                serial('id').primaryKey(),
+  personId:          integer('person_id').notNull().references(() => catalogPeople.id),
+  actaNumber:        varchar('acta_number', { length: 20 }).notNull().unique(),
+  status:            varchar('status', { length: 50 }).notNull().default('FIRMA_SOLICITADA'),
+  motivoTerminacion: varchar('motivo_terminacion', { length: 60 }).notNull().default('DESVINCULACION'),
+  // Snapshots tomados al crear el caso (no mutan si catalog_people cambia después)
+  contractEndDate:   date('contract_end_date'),
+  areaSnapshot:      varchar('area_snapshot', { length: 200 }),
+  observaciones:     text('observaciones'),
+  // Google Doc / PDF (poblados por n8n)
+  docxDriveUrl:      text('docx_drive_url'),
+  pdfDriveUrl:       text('pdf_drive_url'),
+  // n8n integration
+  n8nEventId:        varchar('n8n_event_id', { length: 100 }),
+  n8nWebhookSentAt:  timestamp('n8n_webhook_sent_at', { withTimezone: true }),
+  n8nNotified:       boolean('n8n_notified').notNull().default(false),
+  n8nError:          text('n8n_error'),
+  // Firma
+  signedAt:          timestamp('signed_at', { withTimezone: true }),
+  signedBy:          varchar('signed_by', { length: 200 }),
+  // Auditoría
+  createdBy:         integer('created_by').references(() => systemUsers.id),
+  notes:             text('notes'),
+  createdAt:         timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt:         timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+})
+
+export const pazYSalvoItems = pgTable('paz_y_salvo_items', {
+  id:           serial('id').primaryKey(),
+  caseId:       integer('case_id').notNull().references(() => pazYSalvoCases.id, { onDelete: 'cascade' }),
+  itemNumber:   integer('item_number').notNull(),
+  assetId:      integer('asset_id').references(() => assets.id),
+  plateRaw:     varchar('plate_raw', { length: 20 }),
+  nameRaw:      varchar('name_raw', { length: 300 }),
+  // BUENO | REGULAR | MALO
+  estadoFisico: varchar('estado_fisico', { length: 20 }).notNull().default('BUENO'),
+  notes:        text('notes'),
+  createdAt:    timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 })

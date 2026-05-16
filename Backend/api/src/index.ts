@@ -12,6 +12,7 @@ import historyRouter   from './interfaces/http/history.router'
 import reportsRouter   from './interfaces/http/reports.router'
 import maintenanceRouter from './interfaces/http/maintenance.router'
 import writeoffsRouter   from './interfaces/http/writeoffs.router'
+import pazYSalvoRouter   from './interfaces/http/pazYSalvo.router'
 import { errorHandler } from './shared/middleware/error'
 import { authenticate } from './shared/middleware/authenticate'
 
@@ -39,6 +40,7 @@ app.use('/history',   authenticate, historyRouter)
 app.use('/reports',   authenticate, reportsRouter)
 app.use('/maintenance', authenticate, maintenanceRouter)
 app.use('/writeoffs',  authenticate, writeoffsRouter)
+app.use('/paz-y-salvo', authenticate, pazYSalvoRouter)
 
 app.use(errorHandler)
 

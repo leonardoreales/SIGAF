@@ -5,6 +5,7 @@ import { notifySync, getLastSync, listSyncs }              from '../../applicati
 import { sseManager }                           from '../../infrastructure/sse/SseManager'
 import { createTransferRequest }               from '../../application/transferRequests/createTransferRequest'
 import { completeTransferRequestSignature }     from '../../application/transferRequests/completeTransferRequestSignature'
+import { completePazYSalvoSignature }           from '../../application/pazYSalvo/completePazYSalvoSignature'
 import * as transferRequestRepo                 from '../../infrastructure/db/transferRequestRepository'
 import { insertSignatureInDoc }                 from '../../infrastructure/google/docsSignatureService'
 
@@ -61,6 +62,21 @@ export async function transferRequestSignResult(req: Request, res: Response, nex
     }
 
     const result = await completeTransferRequestSignature(req.body)
+    res.json(result)
+  } catch (err) { next(err) }
+}
+
+// POST /sync/paz-y-salvo/firma-completada — n8n informa resultado de firma del acta de devolución
+export async function pazYSalvoFirmaCompletada(req: Request, res: Response, next: NextFunction) {
+  try {
+    const secret = process.env.N8N_SIGN_RESULT_SECRET || process.env.SYNC_SECRET
+    if (!secret) return next(new AppError(500, 'N8N_SIGN_RESULT_SECRET/SYNC_SECRET no configurado', 'CONFIG_ERROR'))
+
+    if (req.headers['x-sigaf-sign-result-secret'] !== secret) {
+      return next(new AppError(401, 'Secreto de resultado de firma inválido', 'UNAUTHORIZED'))
+    }
+
+    const result = await completePazYSalvoSignature(req.body)
     res.json(result)
   } catch (err) { next(err) }
 }
